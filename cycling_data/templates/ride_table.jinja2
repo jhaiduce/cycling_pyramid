@@ -1,0 +1,29 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+<p>{{rides.count()}} total rides</p>
+
+<table>
+<tr>
+<th>Start time</th>
+<th>End time</th>
+<th>Start location</th>
+<th>End location</th>
+<th>Distance</th>
+<th>Average speed</th>
+<th>Equipment</th>
+</tr>
+{% for ride in rides %}
+<tr>
+<td>{{ride.start_time}}</td>
+<td>{{ride.end_time}}</td>
+<td>{{ride.startloc}}</td>
+<td>{{ride.endloc}}</td>
+<td>{{ride.distance}}</td>
+<td>{{ride.avspeed}}</td>
+<td>{{ride.equipment.name}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock content %}

@@ -1,0 +1,3 @@
+[run]
+source = cycling_data
+omit = cycling_data/test*
