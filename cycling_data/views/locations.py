@@ -5,6 +5,11 @@ from pyramid.httpexceptions import HTTPFound
 
 from ..models.cycling_models import Location, Ride, LocationType
 
+from deform.renderer import configure_zpt_renderer
+
+# Make Deform widgets aware of our widget template paths
+configure_zpt_renderer(["cycling_data:templates"])
+
 @colander.deferred
 def get_loctype_widget(node, kw):
 
@@ -12,6 +17,9 @@ def get_loctype_widget(node, kw):
         LocationType).order_by(LocationType.id)
     choices=[(loctype.id,loctype.name) for loctype in loctypes]
     return deform.widget.SelectWidget(values=choices)
+
+class CoordinatesWidget(deform.widget.MappingWidget):
+    template='coordinates_widget'
 
 class LocationCoordinatesMapping(colander.MappingSchema):
 
@@ -22,7 +30,7 @@ class LocationCoordinatesMapping(colander.MappingSchema):
 class LocationForm(colander.MappingSchema):
 
     name=colander.SchemaNode(colander.String())
-    coordinates=LocationCoordinatesMapping()
+    coordinates=LocationCoordinatesMapping(widget=CoordinatesWidget())
     description=colander.SchemaNode(colander.String(),missing=None)
     remarks=colander.SchemaNode(colander.String(),missing=None)
     loctype=colander.SchemaNode(
