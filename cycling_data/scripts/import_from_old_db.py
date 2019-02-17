@@ -86,7 +86,7 @@ def import_data(session,new_session):
             else: return None
             
         new_ride.rolling_time=time_to_timedelta(ride.ridetime)
-        new_ride.rolling_time=time_to_timedelta(ride.total_time)
+        new_ride.total_time=time_to_timedelta(ride.total_time)
         new_ride.odometer=ride.odometer
         new_ride.estdist=ride.estdist
         new_ride.estime=ride.estime
