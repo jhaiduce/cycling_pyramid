@@ -32,7 +32,7 @@ class LocationType(Base):
 class Location(Base):
     __tablename__ = 'location'
     id = Column(Integer, Sequence('location_seq'), primary_key=True)
-    name = Column(String)
+    name = Column(String,index=True)
     lat = Column(Float)
     lon = Column(Float)
     elevation = Column(Float)
