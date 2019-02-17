@@ -128,7 +128,9 @@
                                 console.log('No results found');
                             }
                         }
-                        console.log('Elevation service failed due to: ' + status);
+                        else {
+                            console.log('Elevation service failed due to: ' + status);
+                        }
                     }
                 )
             });
