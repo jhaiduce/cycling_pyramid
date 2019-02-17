@@ -38,17 +38,27 @@ def get_location_widget(node,kw):
         
     )
 
+def get_datetime_widget():
+    return deform.widget.TextInputWidget(mask='9999-99-99 99:99:99')
+
+def get_timedelta_widget():
+    return deform.widget.TextInputWidget(mask='99:99:99')
+
 class RideForm(colander.MappingSchema):
         
-    start_time=colander.SchemaNode(colander.DateTime())
-    end_time=colander.SchemaNode(colander.DateTime())
+    start_time=colander.SchemaNode(colander.DateTime(),
+        widget=get_datetime_widget())
+    end_time=colander.SchemaNode(colander.DateTime(),
+        widget=get_datetime_widget())
     startloc=colander.SchemaNode(colander.String(),
         widget=get_location_widget)
     endloc=colander.SchemaNode(colander.String(),
         widget=get_location_widget)
     route=colander.SchemaNode(colander.String())
-    rolling_time=colander.SchemaNode(colander.Time())
-    total_time=colander.SchemaNode(colander.Time())
+    rolling_time=colander.SchemaNode(colander.Time(),
+        widget=get_timedelta_widget())
+    total_time=colander.SchemaNode(colander.Time(),
+        widget=get_timedelta_widget())
     distance=colander.SchemaNode(colander.Float())
     odometer=colander.SchemaNode(colander.Float())
     avspeed=colander.SchemaNode(colander.Float())
@@ -69,7 +79,8 @@ class RideForm(colander.MappingSchema):
         default=get_default_ridergroup,
         widget=get_ridergroup_widget
     )
-    remarks=colander.SchemaNode(colander.String())
+    remarks=colander.SchemaNode(colander.String(),
+        widget=deform.widget.TextAreaWidget())
 
 class RideViews(object):
     def __init__(self, request):
