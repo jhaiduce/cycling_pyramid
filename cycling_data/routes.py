@@ -5,3 +5,4 @@ def includeme(config):
     config.add_route('rides', '/rides')
     config.add_route('rides_add', '/rides/add')
     config.add_route('locations_autocomplete', '/locations/autocomplete')
+    config.add_route('location_add', '/locations/add')
