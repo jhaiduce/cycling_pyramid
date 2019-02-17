@@ -48,40 +48,40 @@ def get_timedelta_widget():
 class RideForm(colander.MappingSchema):
         
     start_time=colander.SchemaNode(colander.DateTime(),
-        widget=get_datetime_widget())
+        widget=get_datetime_widget(),missing=None)
     end_time=colander.SchemaNode(colander.DateTime(),
-        widget=get_datetime_widget())
+        widget=get_datetime_widget(),missing=None)
     startloc=colander.SchemaNode(colander.String(),
-        widget=get_location_widget)
+        widget=get_location_widget,missing=None)
     endloc=colander.SchemaNode(colander.String(),
-        widget=get_location_widget)
-    route=colander.SchemaNode(colander.String())
+        widget=get_location_widget,missing=None)
+    route=colander.SchemaNode(colander.String(),missing=None)
     rolling_time=colander.SchemaNode(colander.Time(),
-        widget=get_timedelta_widget())
+        widget=get_timedelta_widget(),missing=None)
     total_time=colander.SchemaNode(colander.Time(),
-        widget=get_timedelta_widget())
-    distance=colander.SchemaNode(colander.Float())
-    odometer=colander.SchemaNode(colander.Float())
-    avspeed=colander.SchemaNode(colander.Float())
-    maxpeed=colander.SchemaNode(colander.Float())
-    trailer=colander.SchemaNode(colander.Boolean())
+        widget=get_timedelta_widget(),missing=None)
+    distance=colander.SchemaNode(colander.Float(),missing=None)
+    odometer=colander.SchemaNode(colander.Float(),missing=None)
+    avspeed=colander.SchemaNode(colander.Float(),missing=None)
+    maxpeed=colander.SchemaNode(colander.Float(),missing=None)
+    trailer=colander.SchemaNode(colander.Boolean(),missing=None)
     equipment=colander.SchemaNode(
         colander.Integer(),
         default=get_default_equipment,
-        widget=get_equipment_widget
+        widget=get_equipment_widget,missing=None
     )
     surface=colander.SchemaNode(
         colander.Integer(),
         default=get_default_surface,
-        widget=get_surface_widget
+        widget=get_surface_widget,missing=None
     )
     ridergroup=colander.SchemaNode(
         colander.Integer(),
         default=get_default_ridergroup,
-        widget=get_ridergroup_widget
+        widget=get_ridergroup_widget,missing=None
     )
     remarks=colander.SchemaNode(colander.String(),
-        widget=deform.widget.TextAreaWidget())
+        widget=deform.widget.TextAreaWidget(),missing=None)
 
 class RideViews(object):
     def __init__(self, request):
