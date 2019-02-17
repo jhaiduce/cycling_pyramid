@@ -1,8 +1,9 @@
 from pyramid.view import view_config
 import colander
 import deform.widget
+from pyramid.httpexceptions import HTTPFound
 
-from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup
+from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
 
 @colander.deferred
 def get_equipment_widget(node, kw):
@@ -110,4 +111,29 @@ class RideViews(object):
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
         form=self.ride_form.render()
+
+        dbsession=self.request.dbsession
+
+        if 'submit' in self.request.params:
+            controls=self.request.POST.items()
+            try:
+                appstruct=self.ride_form.validate(controls)
+            except deform.ValidationFailure as e:
+                return dict(form=e.render())
+
+            startloc=dbsession.query(Location).filter(
+                Location.name==appstruct['startloc']).one()
+            endloc=dbsession.query(Location).filter(
+                Location.name==appstruct['endloc']).one()
+            dbsession.add(Ride(
+                startloc=startloc,
+                endloc=endloc,
+                start_time=appstruct['start_time'],
+                end_time=appstruct['end_time']
+            ))
+
+
+            url = self.request.route_url('rides')
+            return HTTPFound(url)
+
         return dict(form=form)
