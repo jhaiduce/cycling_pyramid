@@ -81,7 +81,7 @@ class RideViews(object):
         equipment_choices=[(equipment.id,equipment.name) for equipment in all_equipment]
         surfacetypes = self.request.dbsession.query(SurfaceType)
         surface_choices=[(surface.id,surface.name) for surface in surfacetypes]
-        ridergroups = self.request.dbsession.query(SurfaceType)
+        ridergroups = self.request.dbsession.query(RiderGroup)
         ridergroup_choices=[(ridergroup.id,ridergroup.name) for ridergroup in ridergroups]
         schema=RideForm().bind(
             request=self.request,
