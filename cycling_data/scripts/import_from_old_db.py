@@ -18,6 +18,13 @@ def parse_args(argv):
     )
     return parser.parse_args(argv[1:])
 
+def clobber_previous_imports(session):
+    session.query(models.cycling_models.Location).delete()
+    session.query(models.cycling_models.LocationType).delete()
+    session.query(models.cycling_models.Ride).delete()
+    session.query(models.cycling_models.RideWeatherData).delete()
+    session.query(models.cycling_models.WeatherData).delete()
+
 def import_data(session,new_session):
 
 
@@ -135,4 +142,5 @@ def main(argv=sys.argv):
 
     with env['request'].tm:
         new_session=env['request'].dbsession
+        clobber_previous_imports(new_session)
         import_data(session,new_session)
