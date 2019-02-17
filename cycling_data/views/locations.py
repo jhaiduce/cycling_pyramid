@@ -9,7 +9,7 @@ class LocationViews(object):
         self.request = request
 
     @view_config(route_name='locations_autocomplete', renderer='json')
-    def ride_table(self):
+    def locations_autocomplete(self):
         term=self.request.GET['term']
 
         # Subquery to get the first ride of each location
