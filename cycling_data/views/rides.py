@@ -67,7 +67,7 @@ class RideForm(colander.MappingSchema):
     distance=colander.SchemaNode(colander.Float(),missing=None)
     odometer=colander.SchemaNode(colander.Float(),missing=None)
     avspeed=colander.SchemaNode(colander.Float(),missing=None)
-    maxpeed=colander.SchemaNode(colander.Float(),missing=None)
+    maxspeed=colander.SchemaNode(colander.Float(),missing=None)
     trailer=colander.SchemaNode(colander.Boolean(),missing=None)
     equipment=colander.SchemaNode(
         colander.Integer(),
