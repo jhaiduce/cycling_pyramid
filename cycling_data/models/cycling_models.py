@@ -221,6 +221,7 @@ class Ride(Base):
     heartrate_min = Column(Float)
     heartrate_max = Column(Float)
     ridergroup_id = Column(Integer, ForeignKey('ridergroup.id'))
+    ridergroup=relationship(RiderGroup,foreign_keys=ridergroup_id)
 
     # Equipment fields
     equipment_id = Column(
