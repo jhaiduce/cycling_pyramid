@@ -5,6 +5,10 @@ from pyramid.httpexceptions import HTTPFound
 
 from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
 
+def time_to_timedelta(time):
+    from datetime import datetime, date
+    return datetime.combine(date.min,time)-datetime.min
+
 @colander.deferred
 def get_equipment_widget(node, kw):
     return deform.widget.SelectWidget(values=kw['equipment_choices'])
@@ -125,11 +129,20 @@ class RideViews(object):
                 Location.name==appstruct['startloc']).one()
             endloc=dbsession.query(Location).filter(
                 Location.name==appstruct['endloc']).one()
+
             dbsession.add(Ride(
                 startloc=startloc,
                 endloc=endloc,
+                distance=appstruct['distance'],
+                rolling_time=time_to_timedelta(appstruct['rolling_time']),
+                total_time=time_to_timedelta(appstruct['total_time']),
                 start_time=appstruct['start_time'],
-                end_time=appstruct['end_time']
+                end_time=appstruct['end_time'],
+                avspeed=appstruct['avspeed'],
+                maxspeed=appstruct['maxspeed'],
+                trailer=appstruct['trailer'],
+                equipment_id=appstruct['equipment'],
+                ridergroup_id=appstruct['ridergroup']
             ))
 
 
