@@ -212,6 +212,7 @@ class Ride(Base):
     endloc_id = Column(Integer, ForeignKey('location.id',name='fk_endloc_id'))
     endloc=relationship(Location,foreign_keys=endloc_id)
     route = Column(String)
+    timezone = Column(String)
 
     # Rider fields
     rider = Column(
