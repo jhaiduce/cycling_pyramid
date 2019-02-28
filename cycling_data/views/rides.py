@@ -7,6 +7,8 @@ from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Lo
 
 def time_to_timedelta(time):
     from datetime import datetime, date
+    if time is None:
+        return None
     return datetime.combine(date.min,time)-datetime.min
 
 @colander.deferred
