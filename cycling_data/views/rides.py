@@ -2,10 +2,16 @@ from pyramid.view import view_config
 import colander
 import deform.widget
 from pyramid.httpexceptions import HTTPFound
+from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
 
 from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
+
+import matplotlib
+matplotlib.use('agg')
+
+from matplotlib import pyplot as plt
 
 def time_to_timedelta(time):
     from datetime import datetime, date
@@ -118,6 +124,46 @@ class RideViews(object):
         rides=self.request.dbsession.query(Ride).order_by(Ride.start_time.desc())
         page=SqlalchemyOrmPage(rides,page=current_page,items_per_page=30)
         return dict(rides=rides,page=page)
+
+    @view_config(route_name='rides_scatter')
+    def rides_scatter(self):
+        
+        xvar=self.request.params.get('x','start_time')
+        yvar=self.request.params.get('y','avspeed')
+        
+        from sqlalchemy import inspect
+        mapper=inspect(Ride)
+        
+        # Make sure xvar is a valid column name
+        if xvar not in mapper.attrs:
+            raise ValueError('Invalid field {0}'.format(xvar))
+        
+        # Make sure yvar is a valid column name
+        if yvar not in mapper.attrs:
+            raise ValueError('Invalid field {0}'.format(yvar))
+            
+        rides=self.request.dbsession.query(Ride).with_entities(getattr(Ride,xvar),getattr(Ride,yvar))
+        
+        x,y=zip(*[(getattr(ride,xvar),getattr(ride,yvar)) for ride in rides])
+        fig=plt.figure()
+        ax=fig.add_subplot(1,1,1)
+        ax.plot(x,y,marker='.',linestyle='',markersize=2)
+        ax.set_xlabel(xvar)
+        ax.set_ylabel(yvar)
+        
+        import io
+        
+        buf=io.BytesIO()
+        fig.savefig(buf,format='png')
+        plt.close(fig)
+        
+        buf.seek(0)
+        response=Response(body=buf.read(),content_type='image/png')
+        buf.close()
+        
+        return response
+        
+        
 
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
