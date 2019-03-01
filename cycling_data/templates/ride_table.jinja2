@@ -4,6 +4,8 @@
 
 <p>{{rides.count()}} total rides</p>
 
+{{page.pager(url="/rides?page=$page")|safe}}
+
 <table>
 <tr>
 <th>Start time</th>
@@ -16,7 +18,7 @@
 <th>Average speed</th>
 <th>Equipment</th>
 </tr>
-{% for ride in rides %}
+{% for ride in page.items %}
 <tr>
 <td>{{ride.start_time}}</td>
 <td>{{ride.end_time}}</td>
@@ -30,4 +32,7 @@
 </tr>
 {% endfor %}
 </table>
+
+{{page.pager(url="/rides?page=$page")|safe}}
+
 {% endblock content %}

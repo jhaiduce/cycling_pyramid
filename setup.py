@@ -22,6 +22,7 @@ requires = [
     'zope.sqlalchemy',
     'mysqlclient',
     'deform',
+    'paginate'
 ]
 
 tests_require = [

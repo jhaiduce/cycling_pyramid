@@ -3,6 +3,8 @@ import colander
 import deform.widget
 from pyramid.httpexceptions import HTTPFound
 
+from .showtable import SqlalchemyOrmPage
+
 from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
 
 def time_to_timedelta(time):
@@ -111,8 +113,11 @@ class RideViews(object):
 
     @view_config(route_name='rides', renderer='../templates/ride_table.jinja2')
     def ride_table(self):
+
+        current_page = int(self.request.params.get("page",1))
         rides=self.request.dbsession.query(Ride)
-        return dict(rides=rides)
+        page=SqlalchemyOrmPage(rides,page=current_page,items_per_page=30)
+        return dict(rides=rides,page=page)
 
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
