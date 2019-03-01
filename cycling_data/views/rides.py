@@ -115,7 +115,7 @@ class RideViews(object):
     def ride_table(self):
 
         current_page = int(self.request.params.get("page",1))
-        rides=self.request.dbsession.query(Ride)
+        rides=self.request.dbsession.query(Ride).order_by(Ride.start_time.desc())
         page=SqlalchemyOrmPage(rides,page=current_page,items_per_page=30)
         return dict(rides=rides,page=page)
 
