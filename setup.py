@@ -23,7 +23,10 @@ requires = [
     'mysqlclient',
     'deform',
     'paginate',
-    'matplotlib'
+    'matplotlib',
+    'mpld3',
+    'bokeh',
+    'seaborn'
 ]
 
 tests_require = [

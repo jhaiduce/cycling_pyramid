@@ -8,11 +8,6 @@ from .showtable import SqlalchemyOrmPage
 
 from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
 
-import matplotlib
-matplotlib.use('agg')
-
-from matplotlib import pyplot as plt
-
 def time_to_timedelta(time):
     from datetime import datetime, date
     if time is None:
@@ -125,8 +120,11 @@ class RideViews(object):
         page=SqlalchemyOrmPage(rides,page=current_page,items_per_page=30)
         return dict(rides=rides,page=page)
 
-    @view_config(route_name='rides_scatter')
+    @view_config(route_name='rides_scatter', renderer='../templates/rides_scatter.jinja2')
     def rides_scatter(self):
+    
+        from bokeh.plotting import figure
+        from bokeh.embed import components
         
         xvar=self.request.params.get('x','start_time')
         yvar=self.request.params.get('y','avspeed')
@@ -145,23 +143,20 @@ class RideViews(object):
         rides=self.request.dbsession.query(Ride).with_entities(getattr(Ride,xvar),getattr(Ride,yvar))
         
         x,y=zip(*[(getattr(ride,xvar),getattr(ride,yvar)) for ride in rides])
-        fig=plt.figure()
-        ax=fig.add_subplot(1,1,1)
-        ax.plot(x,y,marker='.',linestyle='',markersize=2)
-        ax.set_xlabel(xvar)
-        ax.set_ylabel(yvar)
         
-        import io
+        bokeh_kwargs={}
+        if xvar.endswith('time'):
+            bokeh_kwargs['x_axis_type']='datetime'
+        if yvar.endswith('time'):
+            bokeh_kwargs['y_axis_type']='datetime'
+            
+        plot=figure(**bokeh_kwargs)
         
-        buf=io.BytesIO()
-        fig.savefig(buf,format='png')
-        plt.close(fig)
+        plot.circle(x,y)
         
-        buf.seek(0)
-        response=Response(body=buf.read(),content_type='image/png')
-        buf.close()
+        bokeh_script,bokeh_div=components(plot)
         
-        return response
+        return dict(bokeh_script=bokeh_script,bokeh_div=bokeh_div)
         
         
 
