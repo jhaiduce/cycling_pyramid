@@ -132,17 +132,46 @@ class RideViews(object):
         from sqlalchemy import inspect
         mapper=inspect(Ride)
         
+        computed_vars=['avspeed_est']
+        
+        # List of valid variable names
+        valid_vars=Ride.__table__.columns.keys()+computed_vars
+        
         # Make sure xvar is a valid column name
-        if xvar not in mapper.attrs:
+        if xvar not in valid_vars:
             raise ValueError('Invalid field {0}'.format(xvar))
         
         # Make sure yvar is a valid column name
-        if yvar not in mapper.attrs:
+        if yvar not in valid_vars:
             raise ValueError('Invalid field {0}'.format(yvar))
-            
-        rides=self.request.dbsession.query(Ride).with_entities(getattr(Ride,xvar),getattr(Ride,yvar))
+
+        # Build list of columns to fetch
+        fetch_entities=[Ride.distance,Ride.rolling_time]
+        for var in xvar,yvar:
+            if var in Ride.__table__.columns.keys():
+                fetch_entities.append(getattr(Ride,var))
+
+        # Fetch the data
+        rides=self.request.dbsession.query(Ride).with_entities(*fetch_entities)
         
-        x,y=zip(*[(getattr(ride,xvar),getattr(ride,yvar)) for ride in rides])
+        # Convert data to pandas
+        import pandas as pd
+        import numpy as np
+        df=pd.read_sql_query(rides.statement,rides.session.bind)
+        
+        # Fill in missing average speeds
+        if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar]:
+            rolling_time_hours=df['rolling_time']/np.timedelta64(1,'h')
+            df['avspeed_est']=pd.Series(df['distance']/rolling_time_hours,index=df.index)
+        if 'avspeed' in list(df.columns)+[xvar,yvar]:
+            df['avspeed'].fillna(df['avspeed_est'])
+            
+        # Get x and y data
+        x=df[xvar]
+        y=df[yvar]
+        
+        print(x.min())
+        print(x.max())
         
         bokeh_kwargs={}
         if xvar.endswith('time'):
