@@ -170,9 +170,6 @@ class RideViews(object):
         x=df[xvar]
         y=df[yvar]
         
-        print(x.min())
-        print(x.max())
-        
         bokeh_kwargs={}
         if xvar.endswith('time'):
             bokeh_kwargs['x_axis_type']='datetime'
