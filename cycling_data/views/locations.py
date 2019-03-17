@@ -7,6 +7,8 @@ from ..models.cycling_models import Location, Ride, LocationType
 
 from deform.renderer import configure_zpt_renderer
 
+from .showtable import SqlalchemyOrmPage
+
 # Make Deform widgets aware of our widget template paths
 configure_zpt_renderer(["cycling_data:templates"])
 
@@ -97,3 +99,54 @@ class LocationViews(object):
             return HTTPFound(url)
 
         return dict(form=form)
+        
+        
+
+    @view_config(route_name='location_edit', renderer='../templates/location_addedit.jinja2')
+    def location_edit(self):
+
+        dbsession=self.request.dbsession
+    
+        location_id = int(self.request.matchdict['location_id'])
+        location = dbsession.query(Location).filter_by(id=location_id).one()
+
+        if 'submit' in self.request.params:
+            controls=self.request.POST.items()
+            try:
+                appstruct=self.location_form.validate(controls)
+            except deform.ValidationFailure as e:
+                return dict(form=e.render())
+
+            location.name=appstruct['name']
+            location.lat=appstruct['coordinates']['lat']
+            location.lon=appstruct['coordinates']['lon']
+            location.elevation=appstruct['coordinates']['elevation']
+            location.description=appstruct['description']
+            location.remarks=appstruct['remarks']
+            location.loctype_id=appstruct['loctype']
+            url = self.request.route_url('locations_table')
+            return HTTPFound(url)
+
+
+            url = self.request.route_url('rides')
+            return HTTPFound(url)
+
+        form=self.location_form.render(dict(
+            name=location.name,
+            description=location.description,
+            remarks=location.remarks,
+            loctype=location.loctype_id,
+            coordinates=dict(
+                lat=location.lat,lon=location.lon
+            )
+        ))
+
+        return dict(form=form)
+
+    @view_config(route_name='locations_table', renderer='../templates/location_table.jinja2')
+    def location_table(self):
+
+        current_page = int(self.request.params.get("page",1))
+        locations=self.request.dbsession.query(Location).order_by(Location.id.desc())
+        page=SqlalchemyOrmPage(locations,page=current_page,items_per_page=30)
+        return dict(locations=locations,page=page)

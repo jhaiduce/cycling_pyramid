@@ -1,0 +1,32 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+<p>{{locations.count()}} total locations</p>
+
+{{page.pager(url="/locations/list?page=$page")|safe}}
+
+<table>
+<tr>
+<th>Name</th>
+<th>Lat</th>
+<th>Lon</th>
+<th>Elev</th>
+<th>Description</th>
+<th>Remarks</th>
+</tr>
+{% for location in page.items %}
+<tr>
+<td><a href="/locations/{{location.id}}/edit">{{location.name}}</a></td>
+<td>{{location.lat}}</td>
+<td>{{location.lon}}</td>
+<td>{{location.elevation}}</td>
+<td>{{location.description}}</td>
+<td>{{location.remarks}}</td>
+</tr>
+{% endfor %}
+</table>
+
+{{page.pager(url="/locations/list?page=$page")|safe}}
+
+{% endblock content %}

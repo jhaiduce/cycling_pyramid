@@ -7,3 +7,5 @@ def includeme(config):
     config.add_route('rides_scatter', '/rides/scatter')
     config.add_route('locations_autocomplete', '/locations/autocomplete')
     config.add_route('location_add', '/locations/add')
+    config.add_route('location_edit','/locations/{location_id}/edit')
+    config.add_route('locations_table','/locations/list')
