@@ -92,6 +92,18 @@ class RideForm(colander.MappingSchema):
     remarks=colander.SchemaNode(colander.String(),
         widget=deform.widget.TextAreaWidget(),missing=None)
 
+def get_location_by_name(dbsession,name):
+
+    from sqlalchemy.orm.exc import NoResultFound
+
+    try:
+        location=dbsession.query(Location).filter(
+            Location.name==name).one()
+    except NoResultFound:
+        location=Location(name=name)
+        dbsession.add(location)
+    return location
+
 class RideViews(object):
     def __init__(self, request):
         self.request = request
@@ -203,10 +215,8 @@ class RideViews(object):
             except deform.ValidationFailure as e:
                 return dict(form=e.render())
 
-            startloc=dbsession.query(Location).filter(
-                Location.name==appstruct['startloc']).one()
-            endloc=dbsession.query(Location).filter(
-                Location.name==appstruct['endloc']).one()
+            startloc=get_location_by_name(dbsession,appstruct['startloc'])
+            endloc=get_location_by_name(dbsession,appstruct['endloc'])
 
             dbsession.add(Ride(
                 startloc=startloc,
