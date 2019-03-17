@@ -165,15 +165,19 @@ class RideViews(object):
             df['avspeed_est']=pd.Series(df['distance']/rolling_time_hours,index=df.index)
         if 'avspeed' in list(df.columns)+[xvar,yvar]:
             df['avspeed'].fillna(df['avspeed_est'])
-            
+
+        for column in 'rolling_time', 'total_time':
+            if column in df:
+                df[column]=df[column].dt.total_seconds()/60
+
         # Get x and y data
         x=df[xvar]
         y=df[yvar]
-        
+
         bokeh_kwargs={}
-        if xvar.endswith('time'):
+        if xvar in ('start_time','end_time'):
             bokeh_kwargs['x_axis_type']='datetime'
-        if yvar.endswith('time'):
+        if yvar in ('start_time','end_time'):
             bokeh_kwargs['y_axis_type']='datetime'
             
         plot=figure(**bokeh_kwargs)
