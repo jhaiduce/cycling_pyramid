@@ -222,6 +222,7 @@ class RideViews(object):
                 startloc=startloc,
                 endloc=endloc,
                 distance=appstruct['distance'],
+                odometer=appstruct['odometer'],
                 rolling_time=time_to_timedelta(appstruct['rolling_time']),
                 total_time=time_to_timedelta(appstruct['total_time']),
                 start_time=appstruct['start_time'],
