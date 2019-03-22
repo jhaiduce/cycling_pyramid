@@ -31,7 +31,7 @@ def plot_odometer_deltas(session):
     print(df)
 
     #plt.hist(df['distance'],bins=500,normed=True)
-    plt.hist(df['odo_delta'],bins=np.linspace(-2,2,400),normed=True)
+    plt.hist(df['odo_delta'],bins=np.linspace(-50,50,400),normed=True)
 
     print(df['odo_delta'].quantile(0.1))
     print(df['odo_delta'].quantile(0.9))
