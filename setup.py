@@ -1,8 +1,12 @@
 import os
 
 from setuptools import setup, find_packages
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from setuptools.command.egg_info import egg_info
 
 here = os.path.abspath(os.path.dirname(__file__))
+
 with open(os.path.join(here, 'README.txt')) as f:
     README = f.read()
 with open(os.path.join(here, 'CHANGES.txt')) as f:
@@ -29,6 +33,23 @@ requires = [
     'seaborn'
 ]
 
+import subprocess
+
+class NPMInstall(install):
+    def run(self):
+        subprocess.call(['npm','install'],cwd='cycling_data')
+        install.run(self)
+
+class NPMDevelop(develop):
+    def run(self):
+        subprocess.call(['npm','install'],cwd='cycling_data')
+        develop.run(self)
+
+class NPMEggInfo(egg_info):
+    def run(self):
+        subprocess.call(['npm','install'],cwd='cycling_data')
+        egg_info.run(self)
+
 tests_require = [
     'WebTest >= 1.3.1',  # py3 compat
     'pytest >= 3.7.4',
@@ -46,6 +67,11 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
+    cmdclass={
+        'install':NPMInstall,
+        'develop': NPMDevelop,
+        'egg_info': NPMEggInfo,
+    },
     author='',
     author_email='',
     url='',
