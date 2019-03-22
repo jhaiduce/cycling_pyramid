@@ -40,27 +40,46 @@ class BaseTest(unittest.TestCase):
         Base.metadata.drop_all(self.engine)
 
 
-class TestMyViewSuccessCondition(BaseTest):
+class RideViewTests(BaseTest):
 
     def setUp(self):
-        super(TestMyViewSuccessCondition, self).setUp()
+        super(RideViewTests, self).setUp()
         self.init_database()
 
-        from .models import MyModel
+        from .models import Ride
 
-        model = MyModel(name='one', value=55)
-        self.session.add(model)
+        from datetime import datetime,timedelta
+        ride = Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=timedelta(minutes=15),
+            rolling_time=timedelta(minutes=12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(ride)
 
-    def test_passing_view(self):
-        from .views.default import my_view
-        info = my_view(dummy_request(self.session))
-        self.assertEqual(info['one'].name, 'one')
-        self.assertEqual(info['project'], 'cycling_data')
+    def test_ride_table(self):
+        from .views.rides import RideViews
 
+        views=RideViews(dummy_request(self.session))
+        info = views.ride_table()
+        self.assertEqual(info['rides'].count(),1)
+        self.assertEqual(info['page'].items_per_page,30)
+        self.assertEqual(info['page'].page,1)
 
-class TestMyViewFailureCondition(BaseTest):
+    def test_rides_scatter(self):
+        from .views.rides import RideViews
+        views=RideViews(dummy_request(self.session))
+        from .models import Ride
 
-    def test_failing_view(self):
-        from .views.default import my_view
-        info = my_view(dummy_request(self.session))
-        self.assertEqual(info.status_int, 500)
+        # Runnnig a query through sqlalchemy seems to be needed to let
+        # pandas see the data in sqlite
+        self.session.query(Ride).count()
+
+        info = views.rides_scatter()
