@@ -15,10 +15,10 @@ $(function() {
 	}
 	hours=t[0]+t[1]/60.0+t[2]/3600.0
 	calcspeed=distance/hours
-	amountOff=(value/calcspeed-1)
-	if(Math.abs(amountOff)>0.1) return false;
+	ratio=value/calcspeed
+	if(ratio<0.99 || ratio>1.02) return false;
 	else return true;
-    },'Average speed may not be consistent with the time and distance entered');
+    },'Average speed is inconsistent with the time and distance entered');
     
   // Initialize form validation on the registration form.
   // It has the name attribute "registration"
