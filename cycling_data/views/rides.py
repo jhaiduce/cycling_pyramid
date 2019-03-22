@@ -239,3 +239,14 @@ class RideViews(object):
             return HTTPFound(url)
 
         return dict(form=form)
+
+    @view_config(route_name='last_odo', renderer='json')
+    def last_odo(self):
+        equipment_id=int(self.request.GET['equipment_id'])
+        
+        ride=self.request.dbsession.query(Ride).filter(
+            Ride.equipment_id==equipment_id).order_by(
+            Ride.start_time.desc()).first()
+
+        return dict(odometer=ride.odometer)
+

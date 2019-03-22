@@ -20,17 +20,47 @@ $(function() {
 	else return true;
     },'Average speed is inconsistent with the time and distance entered');
     
+    jQuery.validator.addMethod('checkOdometerDistance',function(value,element){
+	try{
+	    distance=parseFloat($("input[name='distance']").val())
+	}
+	catch(TypeError){
+	    return true;
+	}
+	try{
+	    odometer=parseFloat($("input[name='odometer']").val())
+	}
+	catch(TypeError){
+	    return true;
+	}
+	equipment_id=parseInt($("select[name='equipment'] option:selected").val())
+
+	$.ajax({
+	    url:'/rides/last_odo?equipment_id='+equipment_id,
+	    async:false,
+	    dataType: 'json',
+	    success:function(result){
+		odometer_last=result.odometer
+	    }});
+	if(Math.abs(odometer_last+distance-odometer)>0.1){
+	    return false;
+	}
+	else return true;
+    },'Odometer value and ride distance do not match');
+
   // Initialize form validation on the registration form.
   // It has the name attribute "registration"
     $("form[id='deform']").validate({
 	rules:{
 	    distance:{
 		min:0,
-		number:true
+		number:true,
+		checkOdometerDistance:true
 	    },
 	    odometer:{
 		min:0,
-		number:true
+		number:true,
+		checkOdometerDistance:true
 	    },
 	    maxspeed:{
 		min:0,
