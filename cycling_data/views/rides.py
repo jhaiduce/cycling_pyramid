@@ -231,7 +231,8 @@ class RideViews(object):
                 maxspeed=appstruct['maxspeed'],
                 trailer=appstruct['trailer'],
                 equipment_id=appstruct['equipment'],
-                ridergroup_id=appstruct['ridergroup']
+                ridergroup_id=appstruct['ridergroup'],
+                surface_id=appstruct['surface']
             ))
 
 
