@@ -24,13 +24,9 @@ requires = [
     'SQLAlchemy',
     'transaction',
     'zope.sqlalchemy',
-    'mysqlclient',
     'deform',
     'paginate',
-    'matplotlib',
-    'mpld3',
     'bokeh',
-    'seaborn'
 ]
 
 import subprocess
