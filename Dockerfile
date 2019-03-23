@@ -16,4 +16,4 @@ EXPOSE 80
 
 ENV NAME World
 
-CMD ["/usr/bin/pserve","/app/production.ini"]
+CMD ["/app/pyramid_start.sh"]
