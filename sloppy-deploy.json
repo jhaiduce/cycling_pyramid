@@ -1,0 +1,33 @@
+{
+    "project":"cycling-pyramid",
+    "services":[
+	{
+	    "id":"frontend",
+	    "apps": [
+		{
+		    "id":"wsgi",
+		    "domain": {
+			"uri":"$domain"
+		    },
+                    "mem": 512,
+                    "image": "jhaiduce/cycling-pyramid",
+                    "instances": 1,
+                    "port_mappings": [
+                        {
+                            "container_port": 80
+                        }
+                    ],
+                    "env": {
+                        "MESSAGE": "Cycling application running."
+                    },
+		    "volumes":[
+			{
+			    "container_path":"/var/db",
+			    "size":"8GB"
+			}
+		    ]
+		}
+	    ]
+	}
+    ]
+}
