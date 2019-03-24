@@ -5,7 +5,8 @@ import zope.sqlalchemy
 
 # import or define all models here to ensure they are attached to the
 # Base.metadata prior to any initialization routines
-from .cycling_models import Ride, Location  # flake8: noqa
+from .cycling_models import Base, Ride, Location  # flake8: noqa
+from .security import User  # flake8: noqa
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup
