@@ -27,6 +27,7 @@ requires = [
     'deform',
     'paginate',
     'bokeh',
+    'bcrypt'
 ]
 
 import subprocess
