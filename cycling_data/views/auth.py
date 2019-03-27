@@ -7,10 +7,11 @@ from pyramid.view import (
     forbidden_view_config,
     view_config,
 )
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ..models import User
 
-@view_config(route_name='login', renderer='../templates/login.jinja2')
+@view_config(route_name='login', renderer='../templates/login.jinja2',permission=NO_PERMISSION_REQUIRED)
 def login(request):
     next_url = request.params.get('next', request.referrer)
     if not next_url:
