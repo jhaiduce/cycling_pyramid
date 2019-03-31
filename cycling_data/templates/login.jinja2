@@ -2,25 +2,22 @@
 
 {% block title %}Login - {% endblock title %}
 
+{% block page_includes %}
+<link href="{{request.static_url('cycling_data:static/signin.css')}}" rel="stylesheet">
+{% endblock page_includes %}
+
 {% block content %}
-<p>
-<strong>
-    Login
-</strong><br>
-{{ message }}
-</p>
-<form action="{{ url }}" method="post">
+<div class="container">
+<form class="form-signin" action="{{ url }}" method="post">
+<h2 class="form-signin-heading">Login
+</h2>
+<p>{{ message }}</p>
 <input type="hidden" name="next" value="{{ next_url }}">
-<div class="form-group">
-    <label for="login">Username</label>
-    <input type="text" name="login" value="{{ login }}">
-</div>
-<div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" name="password">
-</div>
-<div class="form-group">
+    <label for="login" class="sr-only">Username</label>
+    <input type="text" name="login" class="form-control" placeholder="Username" value="{{ login }}" required autofocus>
+    <label for="password" class="sr-only">Password</label>
+    <input type="password" class="form-control" name="password" placeholder="Password" required>
     <button type="submit" name="form.submitted" value="Log In" class="btn btn-default">Log In</button>
-</div>
 </form>
+</div>
 {% endblock content %}
