@@ -75,10 +75,10 @@ class MemoryTmpStore(dict):
         def preview_url(self, uid):
             return None
 
-tmpstore=MemoryTmpStore
+tmpstore=MemoryTmpStore()
 
-class RestoreUploadFormSchema(colander.Schema):
-    name = colander.SchemaNode(
+class RestoreUploadFormSchema(colander.MappingSchema):
+    file = colander.SchemaNode(
         deform.FileData(),
         widget=deform.widget.FileUploadWidget(tmpstore),
         title='Backup data to restore'
@@ -108,4 +108,26 @@ class SaveRestoreViews(object):
 
         dbsession=self.request.dbsession
 
+        if 'Restore' in self.request.params:
+            controls=self.request.POST.items()
+            try:
+                appstruct=self.restore_form.validate(controls)
+            except deform.ValidationFailure as e:
+                return dict(form=e.render())
+
+            input_file=appstruct['file']
+
+            loaded_data=load_backup(input_file)
+
+            for class_name in loaded_data.keys():
+                self.assertEqual(len(backup[class_name]),
+                                 len(loaded_data[class_name]))
+
+                for instance in loaded_data[class_name]:
+                    self.session.merge(instance)
+
+            url = self.request.route_url('home')
+            return HTTPFound(url)
+
+                    
         return dict(form=form)
