@@ -27,7 +27,8 @@ requires = [
     'deform',
     'paginate',
     'bokeh',
-    'bcrypt'
+    'bcrypt',
+    'marshmallow-sqlalchemy'
 ]
 
 import subprocess

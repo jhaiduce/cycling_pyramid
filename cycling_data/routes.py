@@ -5,6 +5,8 @@ def includeme(config):
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_route('home', '/')
+    config.add_route('backup', '/backup')
+    config.add_route('restore', '/restore')
     config.add_route('rides', '/rides')
     config.add_route('rides_add', '/rides/add')
     config.add_route('rides_scatter', '/rides/scatter')

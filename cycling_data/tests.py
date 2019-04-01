@@ -106,3 +106,67 @@ class AuthenticationTests(BaseTest):
 
         self.assertTrue(user.check_password('password'))
         self.assertFalse(user.check_password('pa$$word'))
+
+class SerializeTests(BaseTest):
+
+    def setUp(self):
+        super(SerializeTests, self).setUp()
+
+        from .models.cycling_models import Ride, Location
+        from .models.security import User
+
+        from datetime import datetime, timedelta
+        
+        user=User(
+            name='jhaiduce'
+        )
+
+        user.set_password('password')
+
+        self.session.add(user)
+        
+        ride = Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=timedelta(minutes=15),
+            rolling_time=timedelta(minutes=12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(ride)
+
+        self.init_database()
+
+    def test_sqlalchemy_serialize(self):
+
+        from .views.serialize import dump_backup, load_backup
+
+        backup=dump_backup(self.session)
+
+        self.assertEqual(len(backup['Ride']),1)
+        self.assertEqual(len(backup['User']),1)
+        self.assertEqual(len(backup['Equipment']),0)
+
+        loaded_data=load_backup(backup)
+
+        for class_name in backup.keys():
+            self.assertEqual(len(backup[class_name]),
+                             len(loaded_data[class_name]))
+
+            for instance in loaded_data[class_name]:
+                self.session.merge(instance)
+
+        from .models.cycling_models import Ride, Location
+        from .models.security import User
+
+        test_classes={'Ride':Ride,'Location':Location,'User':User}
+
+        for class_name,cls in test_classes.items():
+            
+            query=self.session.query(cls)
+            self.assertEqual(query.count(),len(backup[class_name]))
