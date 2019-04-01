@@ -141,9 +141,6 @@ class RideViews(object):
         xvar=self.request.params.get('x','start_time')
         yvar=self.request.params.get('y','avspeed')
         
-        from sqlalchemy import inspect
-        mapper=inspect(Ride)
-        
         computed_vars=['avspeed_est']
         
         # List of valid variable names
