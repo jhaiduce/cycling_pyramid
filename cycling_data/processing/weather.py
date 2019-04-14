@@ -6,24 +6,25 @@ import requests
 
 def download_metars(station,dtstart,dtend):
     
-    url="https://www.ogimet.com/display_metars2.php?lang=en&lugar={station}&tipo=ALL&ord=REV&nil=SI&fmt=txt&ano={yearstart}&mes={monthstart}&day={daystart}&hora={hourstart}&anof={yearend}&mesf={monthend}&dayf={dayend}&horaf={hourend}&minf=59&send=send".format(station=station,yearstart=dtstart.year,monthstart=dtstart.month,daystart=dtstart.day,hourstart=dtstart.hour,yearend=dtend.year,monthend=dtend.month,dayend=dtend.day,hourend=dtend.hour)
+    url="https://www.ogimet.com/cgi-bin/getmetar?lang=en&icao={station}&begin={yearstart}{monthstart:02d}{daystart:02d}{hourstart:02d}00&end={yearend}{monthend:02d}{dayend:02d}{hourend:02d}59".format(station=station,yearstart=dtstart.year,monthstart=dtstart.month,daystart=dtstart.day,hourstart=dtstart.hour,yearend=dtend.year,monthend=dtend.month,dayend=dtend.day,hourend=dtend.hour)
 
     r=requests.get(url)
 
-    html=r.text
+    print(r.text)
 
-    print(html)
-
-    import re
-    matches=re.findall(r'(\d+) ((METAR|SPECI)[^=,]*)',html)
+    lines=r.text.splitlines()
 
     metars=[]
-    for match in matches:
+    for line in lines:
         try:
-            timestamp=match[0]
-            metar=Metar.Metar(match[1],
-                              year=int(timestamp[:4]),
-                              month=int(timestamp[4:6]),utcdelta=0)
+            tokens=line.split(',')
+            if len(tokens)==0: continue
+            metar_code=tokens[6]
+            year=int(tokens[1])
+            month=int(tokens[2])
+            metar=Metar.Metar(metar_code,
+                              year=year,
+                              month=month,utcdelta=0)
             if metar.time is None:
                 print('METAR time invalid')
                 print(match)
