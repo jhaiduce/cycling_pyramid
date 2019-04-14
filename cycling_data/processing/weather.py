@@ -30,8 +30,8 @@ def download_metars(station,dtstart,dtend):
                 print(match)
                 continue
             metars.append(metar)
-        except (Metar.ParserError,e):
-            print(match[0])
+        except Metar.ParserError as e:
+            print(line)
             print(e)
 
     metars=sorted(metars,key=lambda m: m.time)
