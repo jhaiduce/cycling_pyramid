@@ -1,4 +1,4 @@
-from ..models.cycling_models import Location, Route
+from ..models.cycling_models import Location
 
 def great_circle_distance(lat1,lon1,lat2,lon2):
     """
