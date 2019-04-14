@@ -54,6 +54,23 @@ tests_require = [
     'pytest-cov',
 ]
 
+def compile_extension_functions():
+    """Used the subprocess module to compile/install the C software."""
+    src_path = '.'
+
+    # compile the software
+    cmd = "cmake ."
+    subprocess.check_call(cmd, cwd=src_path, shell=True)
+
+    # install the software (into the virtualenv bin dir if present)
+    subprocess.check_call('make', cwd=src_path, shell=True)
+
+class ExtensionFunctionsInstall(NPMInstall):
+    """Custom handler for the 'install' command."""
+    def run(self):
+        compile_and_install_software()
+        super().run()
+
 setup(
     name='cycling_data',
     version='0.0',
@@ -66,7 +83,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
     cmdclass={
-        'install':NPMInstall,
+        'install':ExtensionFunctionsInstall,
         'develop': NPMDevelop,
         'egg_info': NPMEggInfo,
     },
@@ -92,4 +109,7 @@ setup(
             'plot_odometer_deltas=cycling_data.scripts.plot_odometer_deltas:main',
         ],
     },
+    package_data = {
+        'cycling_data':['lib/*']
+    }
 )
