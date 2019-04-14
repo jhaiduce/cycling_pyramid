@@ -170,3 +170,65 @@ class SerializeTests(BaseTest):
             
             query=self.session.query(cls)
             self.assertEqual(query.count(),len(backup[class_name]))
+
+class MetarTests(BaseTest):
+
+    def setUp(self):
+        super(MetarTests, self).setUp()
+
+        from .models.cycling_models import Ride, Location
+        from .models.security import User
+
+        from datetime import datetime, timedelta
+        
+        self.init_database()
+
+    def test_fetch_metars_for_ride(self):
+
+        from .processing.weather import fetch_metars_for_ride
+        from .models import Ride, Location
+
+        from datetime import datetime
+
+        washington_monument=Location(
+                name='Washington Monument',
+                lat=38.88920847908595,
+                lon=-77.03452329465938,
+                elevation=9.911861419677734
+            )
+        us_capitol=Location(
+                name='US Capitol',
+                lat=38.889794641870104,
+                lon=-77.0102077819937,
+                elevation=12.86381340026855
+        )
+
+        dca=Location(
+            name='KDCA',
+            lat=38.86,
+            lon=-77.03,
+            elevation=16.076,
+            loctype_id=2
+        )
+        bwi=Location(
+            name='KBWI',
+            lat=39.19,
+            lon=-76.67,
+            elevation=147.966,
+            loctype_id=2
+        )
+        
+        ride = Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            startloc=washington_monument,
+            endloc=us_capitol
+        )
+        self.session.add(ride)
+        self.session.add(dca)
+        self.session.add(bwi)
+        
+        locations=self.session.query(Location)
+        
+        metars=fetch_metars_for_ride(self.session,ride)
+        self.assertEqual(metars[0].station.name,'KDCA')
