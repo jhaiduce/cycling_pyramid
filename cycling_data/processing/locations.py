@@ -9,7 +9,7 @@ def great_circle_distance(lat1,lon1,lat2,lon2):
 
     Returns: Great circle distance between the two points, in km.
     """
-    from numpy import pi#,cos,sin,arctan2,arcsin,sqrt
+    from numpy import pi
 
     from sqlalchemy.sql.expression import func
     sin=func.sin

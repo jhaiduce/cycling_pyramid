@@ -28,7 +28,9 @@ requires = [
     'paginate',
     'bokeh',
     'bcrypt',
-    'marshmallow-sqlalchemy'
+    'marshmallow-sqlalchemy',
+    'metar',
+    'requests'
 ]
 
 import subprocess
