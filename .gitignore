@@ -19,3 +19,10 @@ Data.fs*
 .DS_Store
 coverage
 test
+cycling_data/CMakeCache.txt
+\#sloppy.yml\#
+cycling_data/CMakeFiles
+cycling_data/Makefile
+cycling_data/cmake_install.cmake
+cycling_data/lib
+.eggs
