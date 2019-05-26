@@ -1,0 +1,36 @@
+version: '3.7'
+services:
+  db:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    configs:
+      - source: mysql-config-cycling
+        target: /etc/mysql/conf.d/mysql-config-cycling.cnf
+    logging:
+      driver: journald
+    secrets:
+      - mysql_root_password
+  cycling_web:
+    image: jhaiduce/cycling-pyramid
+    ports:
+      - "80:80"
+    secrets:
+      - storage_key
+    volumes:
+      - cycling-data:/var/lib/cycling_data
+    logging:
+      driver: journald
+secrets:
+  storage_key:
+    file: ./storage_key.keyfile
+  mysql_root_password:
+    file: ./mysql_root_pw
+volumes:
+  cycling-data:
+  mysql-data:
+configs:
+  mysql-config-cycling:
+    file: ./mysql-config-cycling.cnf
