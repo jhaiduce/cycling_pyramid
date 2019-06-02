@@ -30,7 +30,8 @@ requires = [
     'bcrypt',
     'marshmallow-sqlalchemy',
     'metar',
-    'requests'
+    'requests',
+    'mysqlclient',
 ]
 
 import subprocess
