@@ -110,6 +110,7 @@ setup(
             'import_from_old_db=cycling_data.scripts.import_from_old_db:main',
             'plot_speed_deltas=cycling_data.scripts.plot_speed_deltas:main',
             'plot_odometer_deltas=cycling_data.scripts.plot_odometer_deltas:main',
+            'docker_secrets_to_ini=cycling_data.scripts.docker_secrets_to_ini:main'
         ],
     },
     package_data = {
