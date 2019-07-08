@@ -13,16 +13,14 @@ services:
       driver: journald
     secrets:
       - mysql_root_password
+    ports:
+      - '3306:3306'
   cycling_web:
     image: jhaiduce/cycling-pyramid
     ports:
       - "80:80"
     secrets:
-      - storage_key
-      - mysql_production_password
-      - mysql_root_password
-      - pyramid_auth_secret
-      - cycling_admin_password
+      - production.ini      
     volumes:
       - cycling-data:/var/lib/cycling_data
     logging:
@@ -31,14 +29,15 @@ secrets:
   storage_key:
     file: ./storage_key.keyfile
   mysql_root_password:
-    file: ./mysql_root_pw
+    file: ./mysql_root_password
   mysql_production_password:
-    file: ./mysql_production_pw
+    file: ./mysql_production_password
   pyramid_auth_secret:
     file: ./pyramid_auth_secret
   cycling_admin_password:
     file: ./cycling_admin_password
-    
+  production.ini:
+    file: ./production.ini
 volumes:
   cycling-data:
   mysql-data:

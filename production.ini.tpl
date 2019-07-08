@@ -3,9 +3,6 @@
 # https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/environment.html
 ###
 
-[secrets]
-use = config:production-secrets.ini
-
 [app:main]
 use = egg:cycling_data
 
@@ -19,9 +16,13 @@ retry.attempts = 3
 
 filter-with = proxy-prefix
 
-sqlalchemy.url = mysql://cycling:{secrets:mysql_production_password}@localhost/cycling
+sqlalchemy.url = mysql://cycling:{mysql_production_password}@cycling_stack_db:3306/cycling
 
-auth.secret={secrets:pyramid_auth_secret}
+auth.secret={pyramid_auth_secret}
+
+sqlalchemy_admin.url = mysql://root:{mysql_root_password}@cycling_stack_db:3306
+mysql_cycling_password={mysql_production_password}
+admin_password={cycling_admin_password}
 
 [pshell]
 setup = cycling_data.pshell.setup
@@ -35,8 +36,7 @@ setup = cycling_data.pshell.setup
 script_location = cycling_data/alembic
 file_template = %%(year)d%%(month).2d%%(day).2d_%%(rev)s
 # file_template = %%(rev)s_%%(slug)s
-sqlalchemy.url = mysql://root:@localhost/cycling
-sqlalchemy.password = %(mysql_root_password)s
+sqlalchemy.url = mysql://root:{mysql_root_password}@cycling_stack_db:3306/cycling
 
 [server:main]
 use = egg:waitress#main
@@ -84,4 +84,4 @@ format = %(asctime)s %(levelname)-5.5s [%(name)s:%(lineno)s][%(threadName)s] %(m
 
 [filter:proxy-prefix]
 use = egg:PasteDeploy#prefix
-scheme=https
+scheme=http

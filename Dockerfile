@@ -15,7 +15,6 @@ COPY MANIFEST.in /app
 COPY CHANGES.txt /app
 COPY README.txt /app
 RUN pip3 install --trusted-host pypi.python.org -e .
-COPY production.ini /app
 COPY pyramid_start.sh /app
 
 VOLUME ["/var/db"]
