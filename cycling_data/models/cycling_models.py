@@ -3,6 +3,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     Float,
     ForeignKey,
     Sequence,
@@ -26,18 +27,18 @@ def register_function(raw_con, conn_record):
 class LocationType(Base):
     __tablename__ = 'locationtype'
     id = Column(Integer, Sequence('locationtype_seq'), primary_key=True)
-    name = Column(String)
-    description = Column(String)
+    name = Column(String(255))
+    description = Column(Text)
         
 class Location(Base):
     __tablename__ = 'location'
     id = Column(Integer, Sequence('location_seq'), primary_key=True)
-    name = Column(String,index=True)
+    name = Column(String(512),index=True)
     lat = Column(Float)
     lon = Column(Float)
     elevation = Column(Float)
-    description = Column(String)
-    remarks = Column(String)
+    description = Column(Text)
+    remarks = Column(Text)
     loctype_id = Column(Integer, ForeignKey('locationtype.id',name='fk_location_type_id'))
     loctype = relationship(LocationType,foreign_keys=loctype_id)
 
@@ -75,7 +76,7 @@ class Location(Base):
 class Equipment(Base):
     __tablename__ = 'equipment'
     id = Column(Integer, Sequence('equipment_seq'), primary_key=True)
-    name = Column(String)
+    name = Column(String(255))
 
     def __repr__(self):
         return self.name
@@ -83,7 +84,7 @@ class Equipment(Base):
 class SurfaceType(Base):
     __tablename__ = 'surfacetype'
     id = Column(Integer, Sequence('surfacetype_seq'), primary_key=True)
-    name = Column(String)
+    name = Column(String(255))
 
     def __repr__(self):
         return self.name
@@ -91,7 +92,7 @@ class SurfaceType(Base):
 class Riders(Base):
     __tablename__ = 'rider'
     id = Column(Integer, Sequence('rider_seq'), primary_key=True)
-    name = Column(String)
+    name = Column(String(255))
 
     def __repr__(self):
         return self.name
@@ -99,7 +100,7 @@ class Riders(Base):
 class RiderGroup(Base):
     __tablename__ = 'ridergroup'
     id = Column(Integer, Sequence('ridergroup_seq'), primary_key=True)
-    name = Column(String)
+    name = Column(String(255))
 
     def __repr__(self):
         return self.name
@@ -118,7 +119,7 @@ class WeatherData(Base):
     relative_humidity = Column(Float)
     wx_station = Column(Integer, ForeignKey('location.id',name='fk_location_id'))
     station=relationship(Location)
-    kind = Column(String)
+    kind = Column(String(255))
 
     __mapper_args__ = {
         'polymorphic_on': kind,
@@ -129,7 +130,7 @@ class RideWeatherData(WeatherData):
     __tablename__='rideweatherdata'
     id = Column(
             Integer, 
-            ForeignKey('weatherdata.id',name='fk_weatherdata_id'),  
+            ForeignKey('weatherdata.id',name='fk_weatherdata_rideweatherdata_id'),  
             primary_key=True)
     rain = Column(Float)
     snow = Column(Float)
@@ -141,11 +142,11 @@ class StationWeatherData(WeatherData):
     __tablename__='stationweatherdata'
     id = Column(
             Integer, 
-            ForeignKey('weatherdata.id',name='fk_weatherdata_id'),  
+            ForeignKey('weatherdata.id',name='fk_weatherdata_stationweatherdata_id'),  
             primary_key=True)
-    metar = Column(String)
+    metar = Column(Text)
     report_time = Column(DateTime)
-    weather = Column(String)
+    weather = Column(String(255))
     __mapper_args__ = {
         'polymorphic_identity':'stationweatherdata'
         }
@@ -202,8 +203,8 @@ class Ride(Base):
     # Date and time fields
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    start_timezone = Column(String)
-    end_timezone = Column(String)
+    start_timezone = Column(String(255))
+    end_timezone = Column(String(255))
 
     # Location fields
     startloc_id = Column(
@@ -211,8 +212,8 @@ class Ride(Base):
     startloc=relationship(Location,foreign_keys=startloc_id)
     endloc_id = Column(Integer, ForeignKey('location.id',name='fk_endloc_id'))
     endloc=relationship(Location,foreign_keys=endloc_id)
-    route = Column(String)
-    timezone = Column(String)
+    route = Column(Text)
+    timezone = Column(String(255))
 
     # Rider fields
     rider = Column(
@@ -250,10 +251,10 @@ class Ride(Base):
     badData = Column(Boolean)
     mechanicalFailure = Column(Float)
     mishapSeverity = Column(Float)
-    remarks = Column(String)
+    remarks = Column(Text)
 
     # Weather conditions
     wxdata_id = Column(Integer,
-        ForeignKey('weatherdata.id',name='fk_weatherdata_id'))
+        ForeignKey('weatherdata.id',name='fk_weatherdata_ride_id'))
     wxdata=relationship('RideWeatherData')
 

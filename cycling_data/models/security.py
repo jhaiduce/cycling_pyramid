@@ -21,8 +21,8 @@ import bcrypt
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, Sequence('locationtype_seq'), primary_key=True)
-    name = Column(String)
-    pwhash = Column(String)
+    name = Column(String(255))
+    pwhash = Column(String(255))
     pw_timestamp = Column(DateTime)
 
     def check_password(self,pw):
