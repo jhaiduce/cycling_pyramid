@@ -1,0 +1,4 @@
+[mysqld]
+plugin_load_add=file_key_management
+file_key_management_filename = /etc/mysql/encryption/keyfile
+file_key_management_encryption_algorithm = AES_CTR

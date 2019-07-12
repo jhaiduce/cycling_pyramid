@@ -7,12 +7,14 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     configs:
-      - source: mysql-config-cycling
+      - source: mysql-config-cycling.2
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
     logging:
       driver: journald
     secrets:
       - mysql_root_password
+      - source: storage_key.1
+        target: /etc/mysql/encryption/keyfile
     ports:
       - '3306:3306'
   cycling_web:
@@ -20,13 +22,12 @@ services:
     ports:
       - "80:80"
     secrets:
-      - production.ini      
-    volumes:
-      - cycling-data:/var/lib/cycling_data
+      - source: production.ini.1
+        target: /run/secrets/production.ini
     logging:
       driver: journald
 secrets:
-  storage_key:
+  storage_key.1:
     file: ./storage_key.keyfile
   mysql_root_password:
     file: ./mysql_root_password
@@ -36,11 +37,11 @@ secrets:
     file: ./pyramid_auth_secret
   cycling_admin_password:
     file: ./cycling_admin_password
-  production.ini:
+  production.ini.1:
     file: ./production.ini
 volumes:
   cycling-data:
   mysql-data:
 configs:
-  mysql-config-cycling:
+  mysql-config-cycling.2:
     file: ./mysql-config-cycling.cnf
