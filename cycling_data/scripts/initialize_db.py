@@ -61,6 +61,28 @@ def main(argv=sys.argv):
 
     engine_admin=models.get_engine(settings,prefix='sqlalchemy_admin.')
 
+    while True:
+
+        # Here we try to connect to database server until connection succeeds.
+        # This is needed because the database server may take longer
+        # to start than the application
+        
+        import sqlalchemy.exc
+
+        try:
+            print("Checking database connection")
+            conn=engine_admin.connect()
+            conn.execute("select 'OK'")
+
+        except sqlalchemy.exc.OperationalError:
+            import time
+            print("Connection failed. Sleeping.")
+            time.sleep(1)
+            continue
+        
+        # If we get to this line, connection has succeeded so we break
+        # out of the loop
+        break
     try:
         
         create_database(engine_admin,settings)
