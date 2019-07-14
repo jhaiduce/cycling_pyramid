@@ -73,7 +73,7 @@ def main(argv=sys.argv):
         except sqlalchemy.exc.OperationalError:
             import time
             print("Connection failed. Sleeping.")
-            time.sleep(1)
+            time.sleep(2)
             continue
         
         # If we get to this line, connection has succeeded so we break
