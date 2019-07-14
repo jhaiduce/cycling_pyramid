@@ -26,12 +26,16 @@ def register_function(raw_con, conn_record):
 
 class LocationType(Base):
     __tablename__ = 'locationtype'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('locationtype_seq'), primary_key=True)
     name = Column(String(255))
     description = Column(Text)
         
 class Location(Base):
     __tablename__ = 'location'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('location_seq'), primary_key=True)
     name = Column(String(512),index=True)
     lat = Column(Float)
@@ -75,6 +79,8 @@ class Location(Base):
 
 class Equipment(Base):
     __tablename__ = 'equipment'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('equipment_seq'), primary_key=True)
     name = Column(String(255))
 
@@ -83,6 +89,8 @@ class Equipment(Base):
 
 class SurfaceType(Base):
     __tablename__ = 'surfacetype'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('surfacetype_seq'), primary_key=True)
     name = Column(String(255))
 
@@ -91,6 +99,8 @@ class SurfaceType(Base):
 
 class Riders(Base):
     __tablename__ = 'rider'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('rider_seq'), primary_key=True)
     name = Column(String(255))
 
@@ -99,6 +109,8 @@ class Riders(Base):
 
 class RiderGroup(Base):
     __tablename__ = 'ridergroup'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('ridergroup_seq'), primary_key=True)
     name = Column(String(255))
 
@@ -107,6 +119,7 @@ class RiderGroup(Base):
 
 class WeatherData(Base):
     __tablename__ = 'weatherdata'
+    __table_args__={'mysql_encrypted':'yes'}    
 
     id = Column(Integer, Sequence('weatherdata_seq'), primary_key=True)
 
@@ -128,6 +141,8 @@ class WeatherData(Base):
     
 class RideWeatherData(WeatherData):
     __tablename__='rideweatherdata'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(
             Integer, 
             ForeignKey('weatherdata.id',name='fk_weatherdata_rideweatherdata_id'),  
@@ -140,6 +155,8 @@ class RideWeatherData(WeatherData):
 
 class StationWeatherData(WeatherData):
     __tablename__='stationweatherdata'
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(
             Integer, 
             ForeignKey('weatherdata.id',name='fk_weatherdata_stationweatherdata_id'),  
@@ -197,7 +214,8 @@ class StationWeatherData(WeatherData):
 
 class Ride(Base):
     __tablename__ = 'ride'
-
+    __table_args__={'mysql_encrypted':'yes'}
+    
     id = Column(Integer, Sequence('ride_seq'), primary_key=True)
 
     # Date and time fields
