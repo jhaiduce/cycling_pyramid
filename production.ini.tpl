@@ -84,4 +84,4 @@ format = %(asctime)s %(levelname)-5.5s [%(name)s:%(lineno)s][%(threadName)s] %(m
 
 [filter:proxy-prefix]
 use = egg:PasteDeploy#prefix
-scheme=http
+scheme=https
