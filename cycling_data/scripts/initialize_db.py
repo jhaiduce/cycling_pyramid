@@ -36,10 +36,6 @@ def create_admin_user(dbsession,settings):
         name='admin'
     )
 
-    import pprint
-    pp=pprint.PrettyPrinter(indent=2)
-    pp.pprint(settings)
-
     user.set_password(settings['admin_password'])
     dbsession.add(user)
 
