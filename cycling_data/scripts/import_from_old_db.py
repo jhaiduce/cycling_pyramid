@@ -43,7 +43,7 @@ def import_data(session,new_session):
 
     # Import locations
     for location in locations:
-        print(location.name)
+        print('{} ({})'.format(location.name,location.type))
         new_location=models.cycling_models.Location()
         new_location.name=location.name
         new_location.lon=location.lon
@@ -55,7 +55,6 @@ def import_data(session,new_session):
             models.cycling_models.LocationType).filter(
             models.cycling_models.LocationType.name==location.type
         ).first()
-        print(loctype.name)
         new_location.loctype=loctype
         new_session.add(new_location)
 
