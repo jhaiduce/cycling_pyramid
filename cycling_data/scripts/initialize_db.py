@@ -87,11 +87,16 @@ def main(argv=sys.argv):
         with transaction.manager:
             admin_session_factory=models.get_session_factory(engine_admin)
             admin_session=models.get_tm_session(admin_session_factory,transaction.manager)
+            
             setup_models(admin_session)
         
         with env['request'].tm:
             
             dbsession = env['request'].dbsession
-            create_admin_user(dbsession,settings)
+            admin_exists=dbsession.query(models.User).filter(
+                models.User.name=='admin').count()
+            if not admin_exists:
+                create_admin_user(dbsession,settings)
+
     except OperationalError:
         raise
