@@ -58,6 +58,25 @@ def import_data(session,new_session):
         new_location.loctype=loctype
         new_session.add(new_location)
 
+    ridergroup_ids=session.query(Base.classes.rides.rode_with_others).group_by(Base.classes.rides.rode_with_others)
+
+    for ridergroup_id, in ridergroup_ids:
+        ridergroup=models.cycling_models.RiderGroup(id=ridergroup_id+1,name=str(ridergroup_id))
+        new_session.add(ridergroup)
+        
+    equipment_ids=session.query(Base.classes.rides.equipment_id).group_by(Base.classes.rides.equipment_id)
+
+    for equipment_id, in equipment_ids:
+        equipment=models.cycling_models.Equipment(id=equipment_id+1,name=str(equipment_id))
+        new_session.add(equipment)
+        
+    surfacetype_ids=session.query(Base.classes.rides.surface).group_by(Base.classes.rides.surface)
+    
+    for surfacetype_id, in surfacetype_ids:
+        if surfacetype_id is None: continue
+        surface=models.cycling_models.SurfaceType(id=surfacetype_id+1,name=str(surfacetype_id))
+        new_session.add(surface)
+        
     rides=session.query(Base.classes.rides)
 
     for ride in rides:
@@ -76,13 +95,27 @@ def import_data(session,new_session):
         new_ride.route=ride.midway_stops
         new_ride.heartrate_avg=ride.heartrate_avg
         new_ride.heartrate_max=ride.heartrate_max
-        new_ride.ridergroup_id=ride.rode_with_others
-        new_ride.equipment_id=ride.equipment_id
+        new_ride.ridergroup=new_session.query(
+            models.cycling_models.RiderGroup).filter(
+                models.cycling_models.RiderGroup.id==ride.rode_with_others+1
+            ).one()
+        new_ride.equipment=new_session.query(
+            models.cycling_models.Equipment).filter(
+                models.cycling_models.Equipment.id==ride.equipment_id+1
+            ).one()
         new_ride.trailer=ride.trailer
         new_ride.roadwet=ride.roadWet
         new_ride.roadice=ride.roadIce
         new_ride.roadsnow=ride.roadSnow
-        new_ride.surface_id=ride.surface
+        from sqlalchemy.orm.exc import NoResultFound
+        if ride.surface is not None:
+            surfacetype=new_session.query(
+                models.cycling_models.SurfaceType).filter(
+                    models.cycling_models.SurfaceType.id==ride.surface+1
+                ).one()
+        else:
+            surfacetype=None
+        new_ride.surface=surfacetype
         new_ride.distance=ride.distance
         
         def time_to_timedelta(timeobj):
@@ -132,7 +165,7 @@ def main(argv=sys.argv):
     setup_logging(args.config_uri)
     env = bootstrap(args.config_uri)
 
-    engine = create_engine("mysql://cycling:cycling@localhost/cycling")
+    engine = create_engine("mysql://cycling:cycling@172.18.0.1/cycling")
      
     # mapped classes are now created with names by default
     # matching that of the table name.
