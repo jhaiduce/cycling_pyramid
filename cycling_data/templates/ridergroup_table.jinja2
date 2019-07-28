@@ -1,0 +1,22 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+<p>{{ridergroups.count()}} total rider groups</p>
+
+{{page.pager(url="/ridergroups/list?page=$page")|safe}}
+
+<table>
+<tr>
+<th>Name</th>
+</tr>
+{% for ridergroup in page.items %}
+<tr>
+<td><a href="/ridergroups/{{ridergroup.id}}/edit">{{ridergroup.name}}</a></td>
+</tr>
+{% endfor %}
+</table>
+
+{{page.pager(url="/ridergroups/list?page=$page")|safe}}
+
+{% endblock content %}
