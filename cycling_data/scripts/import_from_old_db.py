@@ -9,6 +9,20 @@ import sys
 
 from .. import models
 
+def find_or_create_location(session,location_name):
+    location=session.query(
+        models.cycling_models.Location).filter(
+            models.cycling_models.Location.name==location_name
+    ).first()
+        
+    if location is None:
+        location=models.cycling_models.Location(
+            name=location_name
+        )
+        session.add(location)
+
+    return location
+        
 
 def parse_args(argv):
     parser = argparse.ArgumentParser()
@@ -84,14 +98,8 @@ def import_data(session,new_session):
         print('{} {} - {}'.format(ride.start_time,ride.startloc,ride.endloc))
         new_ride.start_time=ride.start_time
         new_ride.end_time=ride.end_time
-        new_ride.startloc=new_session.query(
-            models.cycling_models.Location).filter(
-            models.cycling_models.Location.name==ride.startloc
-        ).first()
-        new_ride.endloc=new_session.query(
-            models.cycling_models.Location).filter(
-            models.cycling_models.Location.name==ride.endloc
-        ).first()
+        new_ride.startloc=find_or_create_location(new_session,ride.startloc)
+        new_ride.endloc=find_or_create_location(new_session,ride.endloc)
         new_ride.route=ride.midway_stops
         new_ride.heartrate_avg=ride.heartrate_avg
         new_ride.heartrate_max=ride.heartrate_max
