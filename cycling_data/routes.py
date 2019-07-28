@@ -19,3 +19,6 @@ def includeme(config):
     config.add_route('ridergroup_add', '/ridergroups/add')
     config.add_route('ridergroup_edit','/ridergroups/{ridergroup_id}/edit')
     config.add_route('ridergroups_table','/ridergroups/list')
+    config.add_route('equipment_add', '/equipment/add')
+    config.add_route('equipment_edit','/equipment/{equipment_id}/edit')
+    config.add_route('equipment_table','/equipment/list')

@@ -1,0 +1,22 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+<p>{{equipment.count()}} total</p>
+
+{{page.pager(url="/equipment/list?page=$page")|safe}}
+
+<table>
+<tr>
+<th>Name</th>
+</tr>
+{% for equipment in page.items %}
+<tr>
+<td><a href="/equipment/{{equipment.id}}/edit">{{equipment.name}}</a></td>
+</tr>
+{% endfor %}
+</table>
+
+{{page.pager(url="/equipment/list?page=$page")|safe}}
+
+{% endblock content %}
