@@ -133,8 +133,8 @@ class LocationViews(object):
 
         form=self.location_form.render(dict(
             name=location.name,
-            description=location.description,
-            remarks=location.remarks,
+            description=location.description or '',
+            remarks=location.remarks or '',
             loctype=location.loctype_id,
             coordinates=dict(
                 lat=location.lat,lon=location.lon
