@@ -26,3 +26,5 @@ cycling_data/Makefile
 cycling_data/cmake_install.cmake
 cycling_data/lib
 .eggs
+\#*\#
+.\#.\#
