@@ -14,6 +14,11 @@ def time_to_timedelta(time):
         return None
     return datetime.combine(date.min,time)-datetime.min
 
+def timedelta_to_time(timedelta):
+    from datetime import datetime, date
+
+    return (datetime.min+timedelta).time()
+
 @colander.deferred
 def get_equipment_widget(node, kw):
     return deform.widget.SelectWidget(values=kw['equipment_choices'])
@@ -196,9 +201,37 @@ class RideViews(object):
         bokeh_script,bokeh_div=components(plot)
         
         return dict(bokeh_script=bokeh_script,bokeh_div=bokeh_div)
-        
-        
 
+
+    def appstruct_to_ride(dbsession,existing_ride=None):
+
+        if existing_ride:
+            ride=existing_ride
+        else:
+            ride=Ride()
+            
+        startloc=get_location_by_name(dbsession,appstruct['startloc'])
+        endloc=get_location_by_name(dbsession,appstruct['endloc'])
+
+        ride.startloc=startloc,
+        ride.endloc=endloc,
+        ride.distance=appstruct['distance'],
+        ride.odometer=appstruct['odometer'],
+        ride.rolling_time=time_to_timedelta(appstruct['rolling_time']),
+        ride.total_time=time_to_timedelta(appstruct['total_time']),
+        ride.start_time=appstruct['start_time'],
+        ride.end_time=appstruct['end_time'],
+        ride.avspeed=appstruct['avspeed'],
+        ride.maxspeed=appstruct['maxspeed'],
+        ride.trailer=appstruct['trailer'],
+        ride.equipment_id=appstruct['equipment'],
+        ride.ridergroup_id=appstruct['ridergroup'],
+        ride.surface_id=appstruct['surface']
+        ride.route=appstruct['route']
+        ride.remarks=appstruct['remarks']
+
+        return ride
+            
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
         form=self.ride_form.render()
@@ -212,32 +245,56 @@ class RideViews(object):
             except deform.ValidationFailure as e:
                 return dict(form=e.render())
 
-            startloc=get_location_by_name(dbsession,appstruct['startloc'])
-            endloc=get_location_by_name(dbsession,appstruct['endloc'])
-
-            dbsession.add(Ride(
-                startloc=startloc,
-                endloc=endloc,
-                distance=appstruct['distance'],
-                odometer=appstruct['odometer'],
-                rolling_time=time_to_timedelta(appstruct['rolling_time']),
-                total_time=time_to_timedelta(appstruct['total_time']),
-                start_time=appstruct['start_time'],
-                end_time=appstruct['end_time'],
-                avspeed=appstruct['avspeed'],
-                maxspeed=appstruct['maxspeed'],
-                trailer=appstruct['trailer'],
-                equipment_id=appstruct['equipment'],
-                ridergroup_id=appstruct['ridergroup'],
-                surface_id=appstruct['surface']
-            ))
-
+            ride=appstruct_to_ride(dbsession,appstruct)
+            dbsession.add(ride)
 
             url = self.request.route_url('rides')
             return HTTPFound(url)
 
         return dict(form=form)
 
+    @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
+    def ride_edit(self):
+        form=self.ride_form.render()
+
+        dbsession=self.request.dbsession
+
+        ride_id=int(self.request.matchdict['ride_id'])
+        ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+
+        if 'submit' in self.request.params:
+            controls=self.request.POST.items()
+            try:
+                appstruct=self.ride_form.validate(controls)
+            except deform.ValidationFailure as e:
+                return dict(form=e.render())
+
+            ride=appstruct_to_ride(dbsession,appstruct,ride)
+            dbsession.add(ride)
+
+            url = self.request.route_url('rides')
+            return HTTPFound(url)
+
+        form=self.ride_form.render(dict(
+            startloc=ride.startloc.name if ride.startloc else '',
+            endloc=ride.endloc.name if ride.endloc else '',
+            distance=ride.distance,
+            odometer=ride.odometer,
+            rolling_time=timedelta_to_time(ride.rolling_time),
+            total_time=timedelta_to_time(ride.total_time),
+            start_time=ride.start_time,
+            route=ride.route if ride.route else '',
+            end_time=ride.end_time,
+            avspeed=ride.avspeed,
+            maxspeed=ride.maxspeed,
+            trailer=ride.trailer,
+            equipment_id=ride.equipment_id,
+            surface_id=ride.surface_id,
+            remarks=ride.remarks if ride.remarks else ''
+        ))
+        
+        return dict(form=form)
+    
     @view_config(route_name='last_odo', renderer='json')
     def last_odo(self):
         equipment_id=int(self.request.GET['equipment_id'])

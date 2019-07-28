@@ -8,6 +8,7 @@
 
 <table>
 <tr>
+<th></th>
 <th>Start time</th>
 <th>End time</th>
 <th>Start location</th>
@@ -17,9 +18,11 @@
 <th>Total time</th>
 <th>Average speed</th>
 <th>Equipment</th>
+<th>Rider group</th>
 </tr>
 {% for ride in page.items %}
 <tr>
+<td><a href="/rides/{{ride.id}}/edit">edit</a></td>
 <td>{{ride.start_time}}</td>
 <td>{{ride.end_time}}</td>
 <td>{{ride.startloc}}</td>
@@ -29,6 +32,7 @@
 <td>{{ride.total_time}}</td>
 <td>{{ride.avspeed}}</td>
 <td>{{ride.equipment.name}}</td>
+<td>{{ride.ridergroup.name}}</td>
 </tr>
 {% endfor %}
 </table>
