@@ -60,7 +60,8 @@ def get_timedelta_widget():
     return deform.widget.TextInputWidget(mask='99:99:99')
 
 class RideForm(colander.MappingSchema):
-        
+    id=colander.SchemaNode(colander.Integer(),
+        widget=deform.widget.HiddenWidget(),missing=None)
     start_time=colander.SchemaNode(colander.DateTime(),
         widget=get_datetime_widget(),missing=None)
     end_time=colander.SchemaNode(colander.DateTime(),
@@ -108,6 +109,35 @@ def get_location_by_name(dbsession,name):
         location=Location(name=name)
         dbsession.add(location)
     return location
+
+def appstruct_to_ride(dbsession,appstruct,existing_ride=None):
+
+    if existing_ride:
+        ride=existing_ride
+    else:
+        ride=Ride()
+
+    startloc=get_location_by_name(dbsession,appstruct['startloc'])
+    endloc=get_location_by_name(dbsession,appstruct['endloc'])
+
+    ride.startloc=startloc
+    ride.endloc=endloc
+    ride.distance=appstruct['distance']
+    ride.odometer=appstruct['odometer']
+    ride.rolling_time=time_to_timedelta(appstruct['rolling_time'])
+    ride.total_time=time_to_timedelta(appstruct['total_time'])
+    ride.start_time=appstruct['start_time']
+    ride.end_time=appstruct['end_time']
+    ride.avspeed=appstruct['avspeed']
+    ride.maxspeed=appstruct['maxspeed']
+    ride.trailer=appstruct['trailer']
+    ride.equipment_id=appstruct['equipment']
+    ride.ridergroup_id=appstruct['ridergroup']
+    ride.surface_id=appstruct['surface']
+    ride.route=appstruct['route']
+    ride.remarks=appstruct['remarks']
+
+    return ride
 
 class RideViews(object):
     def __init__(self, request):
@@ -201,36 +231,6 @@ class RideViews(object):
         bokeh_script,bokeh_div=components(plot)
         
         return dict(bokeh_script=bokeh_script,bokeh_div=bokeh_div)
-
-
-    def appstruct_to_ride(dbsession,existing_ride=None):
-
-        if existing_ride:
-            ride=existing_ride
-        else:
-            ride=Ride()
-            
-        startloc=get_location_by_name(dbsession,appstruct['startloc'])
-        endloc=get_location_by_name(dbsession,appstruct['endloc'])
-
-        ride.startloc=startloc,
-        ride.endloc=endloc,
-        ride.distance=appstruct['distance'],
-        ride.odometer=appstruct['odometer'],
-        ride.rolling_time=time_to_timedelta(appstruct['rolling_time']),
-        ride.total_time=time_to_timedelta(appstruct['total_time']),
-        ride.start_time=appstruct['start_time'],
-        ride.end_time=appstruct['end_time'],
-        ride.avspeed=appstruct['avspeed'],
-        ride.maxspeed=appstruct['maxspeed'],
-        ride.trailer=appstruct['trailer'],
-        ride.equipment_id=appstruct['equipment'],
-        ride.ridergroup_id=appstruct['ridergroup'],
-        ride.surface_id=appstruct['surface']
-        ride.route=appstruct['route']
-        ride.remarks=appstruct['remarks']
-
-        return ride
             
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
@@ -276,6 +276,7 @@ class RideViews(object):
             return HTTPFound(url)
 
         form=self.ride_form.render(dict(
+            id=ride.id,
             startloc=ride.startloc.name if ride.startloc else '',
             endloc=ride.endloc.name if ride.endloc else '',
             distance=ride.distance,
@@ -297,10 +298,14 @@ class RideViews(object):
     
     @view_config(route_name='last_odo', renderer='json')
     def last_odo(self):
+        from datetime import datetime
         equipment_id=int(self.request.GET['equipment_id'])
+        start_time=datetime.strptime('%Y-%m-%d %H:%M:%S',self.request.GET['start_time'])
         
         ride=self.request.dbsession.query(Ride).filter(
-            Ride.equipment_id==equipment_id).order_by(
+            Ride.equipment_id==equipment_id,
+            Ride.end_time<=start_time
+        ).order_by(
             Ride.start_time.desc()).first()
 
         return dict(odometer=ride.odometer)
