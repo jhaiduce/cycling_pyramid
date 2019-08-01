@@ -34,7 +34,7 @@ $(function() {
 	    return true;
 	}
 	equipment_id=parseInt($("select[name='equipment'] option:selected").val())
-	start_time=parseInt($("select[name='start_time']").val())
+	start_time=$("input[name='start_time']").val()
 
 	$.ajax({
 	    url:'/rides/last_odo?equipment_id='+equipment_id+'&start_time='+start_time,
