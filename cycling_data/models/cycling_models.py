@@ -29,7 +29,7 @@ class LocationType(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('locationtype_seq'), primary_key=True)
-    name = Column(String(255))
+    name = Column(String(255),unique=True)
     description = Column(Text)
         
 class Location(Base):
@@ -37,7 +37,7 @@ class Location(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('location_seq'), primary_key=True)
-    name = Column(String(512),index=True)
+    name = Column(String(512),index=True,unique=True)
     lat = Column(Float)
     lon = Column(Float)
     elevation = Column(Float)
@@ -82,7 +82,7 @@ class Equipment(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('equipment_seq'), primary_key=True)
-    name = Column(String(255))
+    name = Column(String(255),unique=True)
 
     def __repr__(self):
         return self.name
@@ -92,7 +92,7 @@ class SurfaceType(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('surfacetype_seq'), primary_key=True)
-    name = Column(String(255))
+    name = Column(String(255),unique=True)
 
     def __repr__(self):
         return self.name
@@ -102,7 +102,7 @@ class Riders(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('rider_seq'), primary_key=True)
-    name = Column(String(255))
+    name = Column(String(255),unique=True)
 
     def __repr__(self):
         return self.name
@@ -112,7 +112,7 @@ class RiderGroup(Base):
     __table_args__={'mysql_encrypted':'yes'}
     
     id = Column(Integer, Sequence('ridergroup_seq'), primary_key=True)
-    name = Column(String(255))
+    name = Column(String(255),unique=True)
 
     def __repr__(self):
         return self.name
