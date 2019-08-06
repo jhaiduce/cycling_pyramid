@@ -33,15 +33,15 @@ def get_ridergroup_widget(node, kw):
 
 @colander.deferred
 def get_default_equipment(node, kw):
-    return 0
+    return 1
 
 @colander.deferred
 def get_default_surface(node, kw):
-    return 0
+    return 1
 
 @colander.deferred
 def get_default_ridergroup(node, kw):
-    return 0
+    return 1
 
 @colander.deferred
 def get_location_widget(node,kw):
