@@ -7,14 +7,21 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     configs:
-      - source: mysql-config-cycling.2
+      - source: mysql-config-cycling.4
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
     logging:
       driver: journald
     secrets:
-      - mysql_root_password
+      - source: mysql_root_password.1
+        target: mysql_root_password
       - source: storage_key.1
         target: /etc/mysql/encryption/keyfile
+      - source: mysql_ca
+        target: /etc/my.cnf.d/certificates/ca.pem
+      - source: mysql_cert
+        target: /etc/my.cnf.d/certificates/server-cert.pem
+      - source: mysql_key
+        target: /etc/my.cnf.d/certificates/server-key.pem
     ports:
       - '3306:3306'
   cycling_web:
@@ -22,26 +29,32 @@ services:
     ports:
       - "80:80"
     secrets:
-      - source: production.ini.1
+      - source: production.ini.3
         target: /run/secrets/production.ini
     logging:
       driver: journald
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
-  mysql_root_password:
+  mysql_root_password.1:
     file: ./mysql_root_password
-  mysql_production_password:
+  mysql_production_password.1:
     file: ./mysql_production_password
-  pyramid_auth_secret:
+  pyramid_auth_secret.1:
     file: ./pyramid_auth_secret
-  cycling_admin_password:
+  cycling_admin_password.1:
     file: ./cycling_admin_password
-  production.ini.1:
+  production.ini.3:
     file: ./production.ini
+  mysql_ca:
+    file: ./ca.pem
+  mysql_cert:
+    file: ./server-cert.pem
+  mysql_key:
+    file: ./server-key.pem
 volumes:
   cycling-data:
   mysql-data:
 configs:
-  mysql-config-cycling.2:
+  mysql-config-cycling.4:
     file: ./mysql-config-cycling.cnf
