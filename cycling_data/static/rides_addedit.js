@@ -20,6 +20,23 @@ $(function() {
 	else return true;
     },'Average speed is inconsistent with the time and distance entered');
     
+    jQuery.validator.addMethod('checkMaxspeedGteAvspeed',function(value,element){
+	try{
+	    avspeed=parseFloat($("input[name='avspeed']").val())
+	}
+	catch(TypeError){
+	    return true;
+	}
+	try{
+	    maxspeed=parseFloat($("input[name='maxspeed']").val())
+	}
+	catch(TypeError){
+	    return true;
+	}
+	if(maxspeed>avspeed) return true;
+	else return false;
+    },'Max speed should be greater than average speed.');
+    
     jQuery.validator.addMethod('checkOdometerDistance',function(value,element){
 	try{
 	    distance=parseFloat($("input[name='distance']").val())
@@ -66,12 +83,14 @@ $(function() {
 	    },
 	    maxspeed:{
 		min:0,
-		number:true
+		number:true,
+		checkMaxspeedGteAvspeed:true
 	    },
 	    avspeed:{
 		min:0,
 		number:true,
-		avspeed_consistent:true
+		avspeed_consistent:true,
+		checkMaxspeedGteAvspeed:true
 	    }
 	},
     });
