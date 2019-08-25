@@ -1,4 +1,20 @@
+function parseDate(datestr) {
+    var [datestr,timestr]=datestr.split(" ")
+    var [y,mon,d]=datestr.split("-").map(parseFloat)
+    var [h,min,s]=timestr.split(":").map(parseFloat)
+    return new Date(y,mon-1,d,h,min,s)
+}
+
 $(function() {
+
+    jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
+	start_time=parseDate($("input[name='start_time']").val())
+	end_time=parseDate($("input[name='end_time']").val())
+
+	if(start_time<end_time) return true;
+	else return false;
+
+    },'End time should be after start time')
 
     jQuery.validator.addMethod('avspeed_consistent',function(value,element){
 	try{
@@ -71,6 +87,12 @@ $(function() {
     $("form[id='deform']").validate({
 	onsubmit:false,
 	rules:{
+	    start_time:{
+		end_time_after_start_time:true
+	    },
+	    end_time:{
+		end_time_after_start_time:true
+	    },
 	    distance:{
 		min:0,
 		number:true,
