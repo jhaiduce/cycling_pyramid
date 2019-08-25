@@ -62,6 +62,11 @@ def get_timedelta_widget():
 class RideForm(colander.MappingSchema):
     id=colander.SchemaNode(colander.Integer(),
         widget=deform.widget.HiddenWidget(),missing=None)
+    equipment=colander.SchemaNode(
+        colander.Integer(),
+        default=get_default_equipment,
+        widget=get_equipment_widget,missing=None
+    )
     start_time=colander.SchemaNode(colander.DateTime(),
         widget=get_datetime_widget(),missing=None)
     end_time=colander.SchemaNode(colander.DateTime(),
@@ -80,11 +85,6 @@ class RideForm(colander.MappingSchema):
     avspeed=colander.SchemaNode(colander.Float(),missing=None)
     maxspeed=colander.SchemaNode(colander.Float(),missing=None)
     trailer=colander.SchemaNode(colander.Boolean(),missing=None)
-    equipment=colander.SchemaNode(
-        colander.Integer(),
-        default=get_default_equipment,
-        widget=get_equipment_widget,missing=None
-    )
     surface=colander.SchemaNode(
         colander.Integer(),
         default=get_default_surface,
