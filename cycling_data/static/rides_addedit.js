@@ -42,6 +42,18 @@ $(function() {
 
     },'Total time is inconsistent with start and end times')
     
+    jQuery.validator.addMethod('check_total_time_gte_rolling_time',function(value,element){
+	var [h,m,s]=$("input[name='total_time']").val().split(':').map(parseFloat)
+	total_time_s=(h*3600+m*60+s)
+	
+	var [h,m,s]=$("input[name='rolling_time']").val().split(':').map(parseFloat)
+	rolling_time_s=(h*3600+m*60+s)
+
+	if(rolling_time_s<total_time_s) return true;
+	else return false;
+
+    },'Total time should be greater than rolling time')
+    
     jQuery.validator.addMethod('avspeed_consistent',function(value,element){
 	try{
 	    distance=parseFloat($("input[name='distance']").val())
@@ -122,7 +134,8 @@ $(function() {
 		check_total_time_consistent:true
 	    },
 	    total_time:{
-		check_total_time_consistent:true
+		check_total_time_consistent:true,
+		check_total_time_gte_rolling_time:true
 	    },
 	    distance:{
 		min:0,
