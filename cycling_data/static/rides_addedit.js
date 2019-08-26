@@ -16,6 +16,22 @@ $(function() {
 
     },'End time should be after start time')
 
+    jQuery.validator.addMethod('check_total_time_consistent',function(value,element){
+	start_time=parseDate($("input[name='start_time']").val())
+	end_time=parseDate($("input[name='end_time']").val())
+
+	interval_s=(end_time-start_time)/1000
+
+	var [h,m,s]=$("input[name='total_time']").val().split(':').map(parseFloat)
+	total_time_s=(h*3600+m*60+s)
+
+	delta=Math.abs(interval_s-total_time_s)
+
+	if(delta<60) return true;
+	else return false;
+
+    },'Total time is inconsistent with start and end times')
+    
     jQuery.validator.addMethod('avspeed_consistent',function(value,element){
 	try{
 	    distance=parseFloat($("input[name='distance']").val())
@@ -88,10 +104,15 @@ $(function() {
 	onsubmit:false,
 	rules:{
 	    start_time:{
-		end_time_after_start_time:true
+		end_time_after_start_time:true,
+		check_total_time_consistent:true
 	    },
 	    end_time:{
-		end_time_after_start_time:true
+		end_time_after_start_time:true,
+		check_total_time_consistent:true
+	    },
+	    total_time:{
+		check_total_time_consistent:true
 	    },
 	    distance:{
 		min:0,
