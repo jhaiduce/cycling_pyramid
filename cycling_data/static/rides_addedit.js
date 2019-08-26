@@ -157,6 +157,10 @@ $(function() {
 		number:true,
 		avspeed_consistent:true,
 		checkMaxspeedGteAvspeed:true
+	    },
+	    rolling_time:{
+		avspeed_consistent:true,
+		check_total_time_gte_rolling_time:true
 	    }
 	},
     });
