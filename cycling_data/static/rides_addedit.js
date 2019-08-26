@@ -5,6 +5,19 @@ function parseDate(datestr) {
     return new Date(y,mon-1,d,h,min,s)
 }
 
+function time_string_to_seconds(str){
+    tokens=str.split(':')
+    if(tokens.length!=3) throw Error("Invalid time string")
+    try{
+	var [h,m,s]=tokens.map(parseFloat)
+    }
+    catch(err){
+	throw Error("Invalid time string")
+    }
+    
+    return (h*3600+m*60+s)
+}
+
 $(function() {
 
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
@@ -32,8 +45,12 @@ $(function() {
 
 	interval_s=(end_time-start_time)/1000
 
-	var [h,m,s]=$("input[name='total_time']").val().split(':').map(parseFloat)
-	total_time_s=(h*3600+m*60+s)
+	try{
+	    total_time_s=time_string_to_seconds($("input[name='total_time']").val())
+	}
+	catch(err){
+	    return true
+	}
 
 	delta=Math.abs(interval_s-total_time_s)
 
@@ -43,11 +60,13 @@ $(function() {
     },'Total time is inconsistent with start and end times')
     
     jQuery.validator.addMethod('check_total_time_gte_rolling_time',function(value,element){
-	var [h,m,s]=$("input[name='total_time']").val().split(':').map(parseFloat)
-	total_time_s=(h*3600+m*60+s)
-	
-	var [h,m,s]=$("input[name='rolling_time']").val().split(':').map(parseFloat)
-	rolling_time_s=(h*3600+m*60+s)
+	try{
+	    total_time_s=time_string_to_seconds($("input[name='total_time']").val())
+	    rolling_time_s=time_string_to_seconds($("input[name='rolling_time']").val())
+	}
+	catch(err){
+	    return true
+	}
 
 	if(rolling_time_s<total_time_s) return true;
 	else return false;
@@ -62,12 +81,12 @@ $(function() {
 	    return true;
 	}
 	try{
-	    t=$("input[name='rolling_time']").val().split(':').map(parseFloat)
+	    hours=time_string_to_seconds($("input[name='rolling_time']").val())/3600.0
 	}
-	catch(TypeError){
+	catch(err){
 	    return true;
 	}
-	hours=t[0]+t[1]/60.0+t[2]/3600.0
+
 	calcspeed=distance/hours
 	ratio=value/calcspeed
 	if(ratio<0.99 || ratio>1.02) return false;
