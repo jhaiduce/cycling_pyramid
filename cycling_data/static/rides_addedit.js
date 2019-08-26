@@ -18,6 +18,17 @@ function time_string_to_seconds(str){
     return (h*3600+m*60+s)
 }
 
+function seconds_to_time_string(t){
+    h=Math.floor(t/3600)
+    m=Math.floor((t/3600-h)*60)
+    s=t%60
+    return [h,m,s].map(function(val){
+	tokens=val.toString().split('.');
+	tokens[0]=tokens[0].padStart(2,'0')
+	return tokens.join('.')
+    }).join(':')
+}
+
 $(function() {
 
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
@@ -54,10 +65,21 @@ $(function() {
 
 	delta=Math.abs(interval_s-total_time_s)
 
-	if(delta<60) return true;
-	else return false;
+	tol=60
 
-    },'Total time is inconsistent with start and end times')
+	if(delta<tol) return true
+	else return false
+
+    },function(params,element){
+	start_time=parseDate($("input[name='start_time']").val())
+	end_time=parseDate($("input[name='end_time']").val())
+	interval_s=(end_time-start_time)/1000
+	return jQuery.validator.format(
+	    'Expected total time is between {0} and {1}',
+	    seconds_to_time_string(interval_s-tol),
+	    seconds_to_time_string(interval_s+tol)
+	)
+    })
     
     jQuery.validator.addMethod('check_total_time_gte_rolling_time',function(value,element){
 	try{
