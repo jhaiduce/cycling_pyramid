@@ -8,8 +8,13 @@ function parseDate(datestr) {
 $(function() {
 
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
-	start_time=parseDate($("input[name='start_time']").val())
-	end_time=parseDate($("input[name='end_time']").val())
+	try{
+	    start_time=parseDate($("input[name='start_time']").val())
+	    end_time=parseDate($("input[name='end_time']").val())
+	}
+	catch(err){
+	    return true;
+	}
 
 	if(start_time<end_time) return true;
 	else return false;
@@ -17,8 +22,13 @@ $(function() {
     },'End time should be after start time')
 
     jQuery.validator.addMethod('check_total_time_consistent',function(value,element){
-	start_time=parseDate($("input[name='start_time']").val())
-	end_time=parseDate($("input[name='end_time']").val())
+	try{
+	    start_time=parseDate($("input[name='start_time']").val())
+	    end_time=parseDate($("input[name='end_time']").val())
+	}
+	catch(err){
+	    return true;
+	}
 
 	interval_s=(end_time-start_time)/1000
 
