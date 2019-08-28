@@ -201,7 +201,12 @@ $(function() {
 	    distance:{
 		min:0,
 		number:true,
-		checkOdometerDistance:true
+		checkOdometerDistance:true,
+		avspeed_consistent:true
+	    },
+	    rolling_time:{
+		avspeed_consistent:true,
+		check_total_time_gte_rolling_time:true
 	    },
 	    odometer:{
 		min:0,
