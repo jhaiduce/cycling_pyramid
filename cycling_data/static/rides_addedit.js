@@ -144,6 +144,10 @@ $(function() {
 	catch(TypeError){
 	    return true;
 	}
+
+	if(isNaN(maxspeed)) return true;
+	if(isNaN(avspeed)) return true;
+	
 	if(maxspeed>avspeed) return true;
 	else return false;
     },'Max speed should be greater than average speed.');
