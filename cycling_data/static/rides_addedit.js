@@ -97,6 +97,12 @@ $(function() {
     
     jQuery.validator.addMethod('avspeed_consistent',function(value,element){
 	try{
+	    avspeed=parseFloat($("input[name='avspeed']").val())
+	}
+	catch(TypeError){
+	    return true;
+	}
+	try{
 	    distance=parseFloat($("input[name='distance']").val())
 	}
 	catch(TypeError){
@@ -109,8 +115,10 @@ $(function() {
 	    return true;
 	}
 
+	if(isNaN(avspeed) || isNaN(distance)) return true
+
 	calcspeed=distance/hours
-	ratio=value/calcspeed
+	ratio=avspeed/calcspeed
 	if(ratio<0.99 || ratio>1.02) return false;
 	else return true;
     },'Average speed is inconsistent with the time and distance entered');
