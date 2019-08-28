@@ -121,7 +121,15 @@ $(function() {
 	ratio=avspeed/calcspeed
 	if(ratio<0.99 || ratio>1.02) return false;
 	else return true;
-    },'Average speed is inconsistent with the time and distance entered');
+    },function(params,element){
+	distance=parseFloat($("input[name='distance']").val())
+	hours=time_string_to_seconds($("input[name='rolling_time']").val())/3600.0
+	calcspeed=distance/hours
+	min=calcspeed*0.99
+	max=calcspeed*1.02
+	return jQuery.validator.format(
+	    'Average speed should be between '+min.toFixed(2).toString()+' and '+max.toFixed(2).toString())
+    });
     
     jQuery.validator.addMethod('checkMaxspeedGteAvspeed',function(value,element){
 	try{
