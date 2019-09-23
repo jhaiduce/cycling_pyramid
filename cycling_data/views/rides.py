@@ -291,7 +291,8 @@ class RideViews(object):
             trailer=ride.trailer,
             equipment_id=ride.equipment_id,
             surface_id=ride.surface_id,
-            remarks=ride.remarks if ride.remarks else ''
+            remarks=ride.remarks if ride.remarks else '',
+            ridergroup_id=ride.ridergroup_id
         ))
         
         return dict(form=form)
