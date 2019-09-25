@@ -289,10 +289,10 @@ class RideViews(object):
             avspeed=ride.avspeed,
             maxspeed=ride.maxspeed,
             trailer=ride.trailer,
-            equipment_id=ride.equipment_id,
-            surface_id=ride.surface_id,
+            equipment=ride.equipment_id,
+            surface=ride.surface_id,
             remarks=ride.remarks if ride.remarks else '',
-            ridergroup_id=ride.ridergroup_id
+            ridergroup=ride.ridergroup_id
         ))
         
         return dict(form=form)
