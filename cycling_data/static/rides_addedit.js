@@ -62,6 +62,7 @@ $(function() {
 	catch(err){
 	    return true
 	}
+	if(isNaN(total_time_s) || isNaN(interval_s)) return true;
 
 	delta=Math.abs(interval_s-total_time_s)
 
@@ -89,6 +90,7 @@ $(function() {
 	catch(err){
 	    return true
 	}
+	if(isNaN(total_time_s) || isNaN(rolling_time_s)) return true;
 
 	if(rolling_time_s<total_time_s) return true;
 	else return false;
