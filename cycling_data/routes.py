@@ -12,6 +12,8 @@ def includeme(config):
     config.add_route('rides_edit', '/rides/{ride_id}/edit')
     config.add_route('rides_scatter', '/rides/scatter')
     config.add_route('last_odo', '/rides/last_odo')
+    config.add_route('validate_ride_distance', '/rides/validation/distance')
+    config.add_route('validate_ride_odometer', '/rides/validation/odometer')
     config.add_route('locations_autocomplete', '/locations/autocomplete')
     config.add_route('location_add', '/locations/add')
     config.add_route('location_edit','/locations/{location_id}/edit')

@@ -154,35 +154,6 @@ $(function() {
 	else return false;
     },'Max speed should be greater than average speed.');
     
-    jQuery.validator.addMethod('checkOdometerDistance',function(value,element){
-	try{
-	    distance=parseFloat($("input[name='distance']").val())
-	}
-	catch(TypeError){
-	    return true;
-	}
-	try{
-	    odometer=parseFloat($("input[name='odometer']").val())
-	}
-	catch(TypeError){
-	    return true;
-	}
-	equipment_id=parseInt($("select[name='equipment'] option:selected").val())
-	start_time=$("input[name='start_time']").val()
-
-	$.ajax({
-	    url:'/rides/last_odo?equipment_id='+equipment_id+'&start_time='+start_time,
-	    async:false,
-	    dataType: 'json',
-	    success:function(result){
-		odometer_last=result.odometer
-	    }});
-	if(Math.abs(odometer_last+distance-odometer)>0.1){
-	    return false;
-	}
-	else return true;
-    },'Odometer value and ride distance do not match');
-
   // Initialize form validation on the registration form.
   // It has the name attribute "registration"
     $("form[id='deform']").validate({
@@ -203,7 +174,24 @@ $(function() {
 	    distance:{
 		min:0,
 		number:true,
-		checkOdometerDistance:true,
+		remote:{
+		    url:'/rides/validation/distance',
+		    type:'post',
+		    data:{
+			distance:function(){
+			    return $("input[name='distance']").val()
+			},
+			odometer:function(){
+			    return $("input[name='odometer']").val()
+			},
+			equipment_id:function(){
+			    return $("select[name='equipment'] option:selected").val()
+			},
+			start_time:function(){
+			    return $("input[name='start_time']").val()
+			}
+		    }
+		},
 		avspeed_consistent:true
 	    },
 	    rolling_time:{
@@ -213,7 +201,24 @@ $(function() {
 	    odometer:{
 		min:0,
 		number:true,
-		checkOdometerDistance:true
+		remote:{
+		    url:'/rides/validation/odometer',
+		    type:'post',
+		    data:{
+			distance:function(){
+			    return $("input[name='distance']").val()
+			},
+			odometer:function(){
+			    return $("input[name='odometer']").val()
+			},
+			equipment_id:function(){
+			    return $("select[name='equipment'] option:selected").val()
+			},
+			start_time:function(){
+			    return $("input[name='start_time']").val()
+			}
+		    }
+		},
 	    },
 	    maxspeed:{
 		min:0,

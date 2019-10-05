@@ -311,3 +311,86 @@ class RideViews(object):
 
         return dict(odometer=ride.odometer)
 
+    def get_last_ride(self,equipment_id,start_time=None):
+        
+        last_ride_query=self.request.dbsession.query(Ride).filter(
+            Ride.equipment_id==equipment_id
+        )
+
+        if start_time is not None:
+            
+            # Filter by start_time
+            last_ride_query=last_ride_query.filter(
+                Ride.end_time<=start_time
+            )
+        
+        last_ride=last_ride_query.order_by(Ride.start_time.desc()).first()
+        
+        return last_ride
+
+    @view_config(route_name='validate_ride_distance', renderer='json')
+    def check_distance(self):
+        from datetime import datetime
+
+        equipment_id=int(self.request.POST['equipment_id'])
+        
+        try:
+            start_time=datetime.strptime(self.request.POST['start_time'],'%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            start_time=None
+
+        try:
+            odometer=float(self.request.POST['odometer'])
+        except ValueError:
+            return 'true'
+
+        try:
+            distance=float(self.request.POST['distance'])
+        except ValueError:
+            return 'true'
+
+        last_ride=self.get_last_ride(equipment_id,start_time)
+
+        if(abs(last_ride.odometer+distance-odometer)>0.1):
+            return "Ride distance should be between {:0.1f} and {:0.1f} based on odometer entry".format(
+                odometer-last_ride.odometer-0.1,
+                odometer-last_ride.odometer+0.1
+            )
+
+        return 'true'
+
+    
+    @view_config(route_name='validate_ride_odometer', renderer='json')
+    def check_odometer(self):
+        from datetime import datetime
+        try:
+            equipment_id=int(self.request.POST['equipment_id'])
+        except:
+            return 'true'
+        
+        try:
+            start_time=datetime.strptime(self.request.POST['start_time'],'%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            start_time=None
+
+        try:
+            odometer=float(self.request.POST['odometer'])
+        except:
+            return 'true'
+
+        try:
+            distance=float(self.request.POST['distance'])
+        except:
+            return 'true'
+            
+        last_ride=self.get_last_ride(equipment_id,start_time)
+
+        if(abs(last_ride.odometer+distance-odometer)>0.1):
+            return "Odometer should be between {:0.1f} and {:0.1f}".format(
+                last_ride.odometer+distance-0.1,
+                last_ride.odometer+distance+0.1
+            )
+
+        return 'true'
+
+    
