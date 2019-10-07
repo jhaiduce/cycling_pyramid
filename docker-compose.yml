@@ -29,7 +29,7 @@ services:
     ports:
       - "80:80"
     secrets:
-      - source: production.ini.3
+      - source: production.ini.6
         target: /run/secrets/production.ini
     logging:
       driver: journald
@@ -44,7 +44,7 @@ secrets:
     file: ./pyramid_auth_secret
   cycling_admin_password.1:
     file: ./cycling_admin_password
-  production.ini.3:
+  production.ini.6:
     file: ./production.ini
   mysql_ca:
     file: ./ca.pem

@@ -17,6 +17,8 @@ retry.attempts = 3
 filter-with = proxy-prefix
 
 sqlalchemy.url = mysql://cycling:{mysql_production_password}@cycling_stack_db:3306/cycling
+sqlalchemy.pool_recycle=3600
+sqlalchemy.pool_pre_ping = true
 
 auth.secret={pyramid_auth_secret}
 
