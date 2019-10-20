@@ -33,12 +33,23 @@
   </div>
   
   <script>
+
               var map;
           function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-              center: {lat: 39.8333333, lng: -98.585522},
-              zoom: 3
+	    latEntered = parseFloat(document.getElementById('${field.children[0].oid}').value)
+	    lngEntered = parseFloat(document.getElementById('${field.children[1].oid}').value)
+            latCenter = latEntered || 39.8333333
+            lngCenter = lngEntered || -98.585522
 
+	    if(latEntered && lngEntered){
+	      zoom = 16
+	    }
+	    else{
+	      zoom = 4
+	    }
+            map = new google.maps.Map(document.getElementById('map'), {
+              center: {lat: latCenter, lng: lngCenter},
+              zoom: zoom
             });
             
             // Create the search box and link it to the UI element.
