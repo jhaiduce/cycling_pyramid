@@ -37,6 +37,8 @@
           var map;
           var marker;
           function initMap() {
+	    searchString=document.getElementById('deformField1').value
+
 	    latEntered = parseFloat(document.getElementById('${field.children[0].oid}').value)
 	    lngEntered = parseFloat(document.getElementById('${field.children[1].oid}').value)
             latCenter = latEntered || 39.8333333
@@ -48,20 +50,47 @@
 	    else{
 	      zoom = 4
 	    }
+
             map = new google.maps.Map(document.getElementById('map'), {
               center: {lat: latCenter, lng: lngCenter},
-              zoom: zoom
+              zoom: zoom,
+              mapTypeId: 'satellite'
             });
             
+	    if(!(latEntered && lngEntered) && searchString){
+	      var service=new google.maps.places.AutocompleteService();
+	      var sessionToken = new google.maps.places.AutocompleteSessionToken();
+
+	      service.getPlacePredictions(
+		{
+		  input:searchString,
+		  sessionToken: sessionToken
+		},function(prediction,serviceStatus){
+		  if(serviceStatus==google.maps.places.PlacesServiceStatus.OK)
+		  {
+		    var service=new google.maps.places.PlacesService(map);
+		    service.getDetails({placeId:prediction[0].place_id},function(result,serviceStatus){
+		      if(serviceStatus==google.maps.places.PlacesServiceStatus.OK){
+		        map.setCenter(result.geometry.location)
+		        map.setZoom(16)
+		        
+		      }
+		    })
+		  }
+		}
+	      )
+	    }
+
 	    if(latEntered && lngEntered){
               marker = new google.maps.Marker({
 		position: new google.maps.LatLng(latEntered,lngEntered),
 		});
 	      marker.setMap(map);
 	    }
-	    
+
             // Create the search box and link it to the UI element.
             var input = document.getElementById('pac-input');
+	    input.value=searchString
             var searchBox = new google.maps.places.SearchBox(input);
 
             $(input).keypress(
