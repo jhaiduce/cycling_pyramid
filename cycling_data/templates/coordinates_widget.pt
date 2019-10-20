@@ -54,8 +54,12 @@
             map = new google.maps.Map(document.getElementById('map'), {
               center: {lat: latCenter, lng: lngCenter},
               zoom: zoom,
-              mapTypeId: 'satellite'
+              mapTypeId: 'hybrid'
             });
+	    
+	    var bikeLayer = new google.maps.BicyclingLayer();
+  	    bikeLayer.setMap(map);
+
             
 	    if(!(latEntered && lngEntered) && searchString){
 	      var service=new google.maps.places.AutocompleteService();
