@@ -34,7 +34,8 @@
   
   <script>
 
-              var map;
+          var map;
+          var marker;
           function initMap() {
 	    latEntered = parseFloat(document.getElementById('${field.children[0].oid}').value)
 	    lngEntered = parseFloat(document.getElementById('${field.children[1].oid}').value)
@@ -52,6 +53,13 @@
               zoom: zoom
             });
             
+	    if(latEntered && lngEntered){
+              marker = new google.maps.Marker({
+		position: new google.maps.LatLng(latEntered,lngEntered),
+		});
+	      marker.setMap(map);
+	    }
+	    
             // Create the search box and link it to the UI element.
             var input = document.getElementById('pac-input');
             var searchBox = new google.maps.places.SearchBox(input);
@@ -127,6 +135,17 @@
                 lng=position.lng()
                 document.getElementById('${field.children[0].oid}').value = lat
                 document.getElementById('${field.children[1].oid}').value = lng
+		if(marker){
+		  marker.setPosition(new google.maps.LatLng(lat,lng))
+		}
+		else{
+
+              	  marker = new google.maps.Marker({
+		    position: new google.maps.LatLng(lat,lng),
+		  });
+		  marker.setMap(map);
+		}
+
                 
                 elevator.getElevationForLocations(
                     {'locations':[position]},
