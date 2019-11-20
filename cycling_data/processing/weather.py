@@ -2,6 +2,8 @@ from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideW
 from metar import Metar
 from datetime import datetime, timedelta
 
+from ..celery import celery
+
 import requests
 
 def download_metars(station,dtstart,dtend):
@@ -118,3 +120,8 @@ def fetch_metars_for_ride(session,ride):
             return metars
         
     return []
+
+@celery.task
+def update_ride_weather_task(ride_id):
+
+    
