@@ -17,7 +17,7 @@ COPY setup.py /app
 COPY pytest.ini /app
 COPY MANIFEST.in /app
 COPY CHANGES.txt /app
-COPY README.txt /app
+COPY README.md /app
 RUN pip3 install --trusted-host pypi.python.org -e .
 COPY pyramid_start.sh /app
 
