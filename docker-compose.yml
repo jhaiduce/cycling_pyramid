@@ -33,6 +33,10 @@ services:
         target: /run/secrets/production.ini
     logging:
       driver: journald
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - 5462:5462
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
