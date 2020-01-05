@@ -4,15 +4,19 @@ from datetime import datetime, timedelta
 
 from ..celery import celery
 
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
 import requests
 
 def download_metars(station,dtstart,dtend):
     
+    logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
+
     url="https://www.ogimet.com/cgi-bin/getmetar?lang=en&icao={station}&begin={yearstart}{monthstart:02d}{daystart:02d}{hourstart:02d}00&end={yearend}{monthend:02d}{dayend:02d}{hourend:02d}59".format(station=station,yearstart=dtstart.year,monthstart=dtstart.month,daystart=dtstart.day,hourstart=dtstart.hour,yearend=dtend.year,monthend=dtend.month,dayend=dtend.day,hourend=dtend.hour)
 
     r=requests.get(url)
-
-    print(r.text)
 
     lines=r.text.splitlines()
 
@@ -83,6 +87,8 @@ def metar_to_StationWeatherData(session,metar):
 
 def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4)):
 
+    logger.info('Getting METARS from range {} - {}'.format(dtstart,dtend))
+
     stored_metars=session.query(StationWeatherData).filter(
         StationWeatherData.station==station
     ).filter(
@@ -91,6 +97,8 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         StationWeatherData.report_time>dtstart+window_expansion
     ).order_by(StationWeatherData.report_time).all()
 
+    logger.info('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
+    
     if len(stored_metars)>0:
         data_spans_interval=stored_metars[0]<dtstart and stored_metars[-1]>dtend
     else:
@@ -123,6 +131,6 @@ def fetch_metars_for_ride(session,ride):
 
 @celery.task
 def update_ride_weather(ride_id):
-    print('Received update weather task for ride {}'.format(ride_id))
+    logger.info('Received update weather task for ride {}'.format(ride_id))
     raise NotImplementedError('Task update_ride_weather not yet implemented')
     return ride_id
