@@ -185,11 +185,19 @@ class StationWeatherData(WeatherData):
     def __init__(self,session=None,obs=None,*args,**kwargs):
 
         super(StationWeatherData,self).__init__(*args,**kwargs)
+        from metar import Metar
 
         if obs!=None:
             assert(isinstance(obs,Metar.Metar))
-            self.station=session.query(Location).filter(and_(Location.name==obs.station_id,Location.loctype==1)).one()
-            self.report_time=obs.time
+            from sqlalchemy import and_
+            
+            try:
+                self.station=session.query(Location).filter(and_(Location.name==obs.station_id,Location.loctype_id==2)).one()
+                self.report_time=obs.time
+            except NoResultFound:
+                location=Location(name=metar.station_id,loctype_id=2)
+                session.add(location)
+
             try:
                 vapres=6.1121*math.exp((18.678-obs.temp.value(units='C')/234.5)*obs.temp.value(units='C')/(obs.temp.value(units='C')+257.14))
                 vapres_dew=6.1121*math.exp((18.678-obs.dewpt.value(units='C')/234.5)*obs.dewpt.value(units='C')/(obs.dewpt.value(units='C')+257.14))
