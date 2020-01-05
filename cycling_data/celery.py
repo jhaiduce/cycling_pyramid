@@ -1,11 +1,50 @@
 from celery import Celery
-from celery.signals import worker_init
+from celery.signals import worker_process_init, worker_process_shutdown
+from celery.utils.log import get_task_logger
+from . import models
 
-@worker_init.connect
+logger = get_task_logger(__name__)
+
+session_factory=None
+
+@worker_process_init.connect
 def bootstrap_pyramid(signal, sender, **kwargs):
+
+    global session_factory
+    
     import os
     from pyramid.paster import bootstrap
-    sender.app.settings = bootstrap(os.environ['YOUR_CONFIG'])['registry'].settings
+
+    settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+
+    engine=models.get_engine(settings,prefix='sqlalchemy.')
+    
+    while True:
+
+        # Here we try to connect to database server until connection succeeds.
+        # This is needed because the database server may take longer
+        # to start than the application
+        
+        import sqlalchemy.exc
+
+        try:
+            print("Checking database connection")
+            conn=engine.connect()
+            conn.execute("select 'OK'")
+
+        except sqlalchemy.exc.OperationalError:
+            import time
+            print("Connection failed. Sleeping.")
+            conn.close()
+            time.sleep(2)
+            continue
+        
+        # If we get to this line, connection has succeeded so we break
+        # out of the loop
+        conn.close()
+        break
+    
+    session_factory=models.get_session_factory(engine)
 
 celery=Celery(backend='rpc://cycling_stack_rabbitmq', broker='pyamqp://guest@cycling_stack_rabbitmq')
 celery.config_from_object('cycling_data.celeryconfig')
