@@ -217,8 +217,6 @@ class StationWeatherData(WeatherData):
             except AttributeError: self.pressure=None
             self.relative_humidity=rh
             self.metar=obs.code
-        
-    
 
 class Ride(Base):
     __tablename__ = 'ride'
