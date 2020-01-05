@@ -55,13 +55,13 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
     ).filter(
         StationWeatherData.report_time>dtstart-window_expansion
     ).filter(
-        StationWeatherData.report_time>dtstart+window_expansion
+        StationWeatherData.report_time<dtend+window_expansion
     ).order_by(StationWeatherData.report_time).all()
 
     logger.info('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
     
     if len(stored_metars)>0:
-        data_spans_interval=stored_metars[0]<dtstart and stored_metars[-1]>dtend
+        data_spans_interval=stored_metars[0].report_time<dtstart and stored_metars[-1].report_time>dtend
     else:
         data_spans_interval=False
 
