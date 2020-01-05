@@ -8,6 +8,9 @@ from .showtable import SqlalchemyOrmPage
 
 from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
 
+import logging
+log = logging.getLogger(__name__)
+
 def time_to_timedelta(time):
     from datetime import datetime, date
     if time is None:
@@ -271,6 +274,11 @@ class RideViews(object):
 
             ride=appstruct_to_ride(dbsession,appstruct,ride)
             dbsession.add(ride)
+
+            from ..processing.weather import update_ride_weather
+            log.debug('Submitting task to update weather for ride {}'.format(ride.id))
+            wx_result=update_ride_weather.delay(ride.id)
+            log.debug('WX result ready: {}'.format(wx_result.ready()))
 
             url = self.request.route_url('rides')
             return HTTPFound(url)

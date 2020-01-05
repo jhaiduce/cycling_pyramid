@@ -122,6 +122,7 @@ def fetch_metars_for_ride(session,ride):
     return []
 
 @celery.task
-def update_ride_weather_task(ride_id):
-
-    
+def update_ride_weather(ride_id):
+    print('Received update weather task for ride {}'.format(ride_id))
+    raise NotImplementedError('Task update_ride_weather not yet implemented')
+    return ride_id

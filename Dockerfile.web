@@ -1,0 +1,11 @@
+FROM jhaiduce/cycling-pyramid-base
+
+COPY pyramid_start.sh /app
+
+VOLUME ["/var/db"]
+
+EXPOSE 80
+
+ENV NAME World
+
+CMD ["/app/pyramid_start.sh"]

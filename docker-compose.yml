@@ -25,9 +25,16 @@ services:
     ports:
       - '3306:3306'
   cycling_web:
-    image: jhaiduce/cycling-pyramid
+    image: jhaiduce/cycling-pyramid-web
     ports:
       - "80:80"
+    secrets:
+      - source: production.ini.6
+        target: /run/secrets/production.ini
+    logging:
+      driver: journald
+  worker:
+    image: jhaiduce/cycling-pyramid-worker
     secrets:
       - source: production.ini.6
         target: /run/secrets/production.ini
@@ -36,7 +43,9 @@ services:
   rabbitmq:
     image: rabbitmq
     ports:
-      - 5462:5462
+      - 5672:5672
+    logging:
+      driver: journald
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
