@@ -46,47 +46,6 @@ def download_metars(station,dtstart,dtend):
     
     return metars
 
-def metar_to_StationWeatherData(session,metar):
-    wxdata=StationWeatherData()
-    try:
-        vapres=6.1121*exp((18.678-metar.temp.value(units='C')/234.5)*metar.temp.value(units='C')/(metar.temp.value(units='C')+257.14))
-        vapres_dew=6.1121*exp((18.678-metar.dewpt.value(units='C')/234.5)*metar.dewpt.value(units='C')/(metar.dewpt.value(units='C')+257.14))
-        rh=vapres_dew/vapres
-    except:
-        rh=None
-
-    from sqlalchemy.orm.exc import NoResultFound
-    try:
-        location=session.query(Location).filter(
-            Location.name==metar.station_id).one()
-    except NoResultFound:
-        location=Location(name=metar.station_id)
-        session.add(location)
-    
-    wxdata.station=location
-    wxdata.wx_report_time=metar.time
-    
-    try: wxdata.windspeed=metar.wind_speed.value(units='mph')
-    except AttributeError: pass
-    try: wxdata.winddir=metar.wind_dir.value()
-    except AttributeError: pass
-    try: wxdata.gust=metar.wind_gust.value(units='mph')
-    except AttributeError: pass
-    try: wxdata.temperature=metar.temp.value(units='C')
-    except AttributeError: pass
-    try: wxdata.dewpt=metar.dewpt.value(units='C')
-    except AttributeError: pass
-    try: wxdata.pressure=metar.press.value('hpa')
-    except AttributeError: pass
-    wxdata.rh=rh
-    if len(metar.weather)>0:
-        wxdata.weather=''.join([attr for attr in metar.weather[0] if attr!=None])
-    wxdata.metar=metar.code
-
-    session.merge(wxdata)
-    
-    return wxdata
-
 def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4)):
 
     logger.info('Getting METARS from range {} - {}'.format(dtstart,dtend))
@@ -112,7 +71,8 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         stored_metars=[]
 
         for metar in fetched_metars:
-            stored_metars.append(metar_to_StationWeatherData(session,metar))
+            wxdata=StationWeatherData(session,metar)
+            stored_metars.append(wxdata)
 
     return stored_metars
 
