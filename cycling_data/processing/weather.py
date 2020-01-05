@@ -8,6 +8,8 @@ from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
+import transaction
+
 import requests
 
 def download_metars(station,dtstart,dtend):
@@ -131,6 +133,19 @@ def fetch_metars_for_ride(session,ride):
 
 @celery.task
 def update_ride_weather(ride_id):
+
+    from ..celery import session_factory
+    from ..models import get_tm_session
+    
+    dbsession=get_tm_session(session_factory,transaction.manager)
+    
     logger.info('Received update weather task for ride {}'.format(ride_id))
+
+    ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+
+    metars=fetch_metars_for_ride(dbsession,ride)
+
+    transaction.commit()
+    
     raise NotImplementedError('Task update_ride_weather not yet implemented')
     return ride_id
