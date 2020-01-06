@@ -216,8 +216,8 @@ class StationWeatherData(WeatherData):
             except AttributeError: self.gust=None
             try: self.temperature=obs.temp.value(units='C')
             except AttributeError: self.temperature=None
-            try: self.dewpt=obs.dewpt.value(units='C')
-            except AttributeError: self.dewpt=None
+            try: self.dewpoint=obs.dewpt.value(units='C')
+            except AttributeError: self.dewpoint=None
             try: self.pressure=obs.press.value('hpa')
             except AttributeError: self.pressure=None
             self.relative_humidity=rh
