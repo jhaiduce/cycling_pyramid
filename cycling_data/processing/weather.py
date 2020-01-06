@@ -82,6 +82,16 @@ def fetch_metars_for_ride(session,ride):
     lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
     nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
 
+    from pytz import timezone,utc
+
+    dtstart=ride.start_time.replace(
+        tzinfo=timezone(ride.start_timezone)
+    ).astimezone(utc)
+    
+    dtend=ride.end_time.replace(
+        tzinfo=timezone(ride.end_timezone)
+    ).astimezone(utc)
+
     for station in nearby_stations:
         
         metars=get_metars(session,station,ride.start_time,ride.end_time)
