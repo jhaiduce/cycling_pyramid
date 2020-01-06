@@ -74,6 +74,11 @@ class Location(Base):
                          * sqlalchemy.func.sin(other.lat*math.pi/180)
                          ) * 6371
 
+    def get_timezone(self):
+        from tzwhere import tzwhere
+        tz=tzwhere.tzwhere()
+        return tz.tzNameAt(self.lat,self.lon)
+
     def __repr__(self):
         return self.name
 
@@ -227,8 +232,8 @@ class Ride(Base):
     # Date and time fields
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    start_timezone = Column(String(255))
-    end_timezone = Column(String(255))
+    start_timezone_ = Column('start_timezone',String(255))
+    end_timezone_ = Column('end_timezone',String(255))
 
     # Location fields
     startloc_id = Column(
@@ -282,3 +287,26 @@ class Ride(Base):
         ForeignKey('weatherdata.id',name='fk_weatherdata_ride_id'))
     wxdata=relationship('RideWeatherData')
 
+    @property
+    def start_timezone(self):
+
+        if not self.start_timezone_:
+            self.start_timezone_=self.startloc.get_timezone()
+            
+        return self.start_timezone_
+
+    @start_timezone.setter
+    def start_timezone(self,value):
+        self.start_timezone_=value
+
+    @property
+    def end_timezone(self):
+
+        if not self.end_timezone_:
+            self.end_timezone_=self.endloc.get_timezone()
+            
+        return self.end_timezone_
+
+    @end_timezone.setter
+    def end_timezone(self,value):
+        self.end_timezone_=value
