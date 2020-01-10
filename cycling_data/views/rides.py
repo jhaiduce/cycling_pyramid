@@ -278,7 +278,6 @@ class RideViews(object):
             from ..processing.weather import update_ride_weather
             log.debug('Submitting task to update weather for ride {}'.format(ride.id))
             wx_result=update_ride_weather.delay(ride.id)
-            log.debug('WX result ready: {}'.format(wx_result.ready()))
 
             url = self.request.route_url('rides')
             return HTTPFound(url)
