@@ -282,7 +282,7 @@ def ride_times_utc(ride):
 
     return dtstart,dtend
 
-@celery.task
+@celery.task(ignore_result=True)
 def update_ride_weather(ride_id):
 
     from ..celery import session_factory
