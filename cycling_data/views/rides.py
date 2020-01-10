@@ -251,6 +251,11 @@ class RideViews(object):
             ride=appstruct_to_ride(dbsession,appstruct)
             dbsession.add(ride)
 
+            # Manually commit the transaction to ensure ride object exists before
+            # submitting update_ride_weather task
+            request.tm.commit()
+            wx_result=update_ride_weather.delay(ride.id)
+
             url = self.request.route_url('rides')
             return HTTPFound(url)
 
@@ -273,7 +278,13 @@ class RideViews(object):
                 return dict(form=e.render())
 
             ride=appstruct_to_ride(dbsession,appstruct,ride)
+            
             dbsession.add(ride)
+            
+            # Manually commit the transaction to ensure ride object exists before
+            # submitting update_ride_weather task
+            request.tm.commit()
+            wx_result=update_ride_weather.delay(ride.id)
 
             from ..processing.weather import update_ride_weather
             log.debug('Submitting task to update weather for ride {}'.format(ride.id))
