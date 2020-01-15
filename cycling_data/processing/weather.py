@@ -27,6 +27,9 @@ def download_metars(station,dtstart,dtend):
         try:
             tokens=line.split(',')
             if len(tokens)==0: continue
+            if len(tokens)<7:
+                logger.warning('Unexpected line format: {}'.format(line))
+                continue
             metar_code=tokens[6]
             year=int(tokens[1])
             month=int(tokens[2])
