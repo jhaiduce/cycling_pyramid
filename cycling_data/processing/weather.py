@@ -78,7 +78,19 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
         for metar in fetched_metars:
             wxdata=StationWeatherData(session,metar)
-            session.add(wxdata)
+
+            q=session.query(StationWeatherData).filter(
+                StationWeatherData.station==wxdata.station
+            ).filter(
+                StationWeatherData.report_time==wxdata.report_time
+            ).filter(
+                StationWeatherData.metar==wxdata.metar
+            )
+
+            if q.count()>=1:
+                wxdata=q.first()
+            else:
+                session.add(wxdata)
             stored_metars.append(wxdata)
 
     return stored_metars
