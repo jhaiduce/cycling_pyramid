@@ -11,6 +11,11 @@ from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Lo
 import logging
 log = logging.getLogger(__name__)
 
+def submit_update_ride_weather_task(success,ride_id):
+
+    from ..processing.weather import update_ride_weather
+    update_ride_weather.delay(ride_id)
+
 def time_to_timedelta(time):
     from datetime import datetime, date
     if time is None:
@@ -251,10 +256,12 @@ class RideViews(object):
             ride=appstruct_to_ride(dbsession,appstruct)
             dbsession.add(ride)
 
-            # Manually commit the transaction to ensure ride object exists before
-            # submitting update_ride_weather task
-            request.tm.commit()
-            wx_result=update_ride_weather.delay(ride.id)
+            # Flush dbsession so ride gets an id assignment
+            dbsession.flush()
+
+            # Add an after-commit hook to update the ride's weather data
+            self.request.tm.get().addAfterCommitHook(
+                submit_update_ride_weather_task,args=[ride.id])
 
             url = self.request.route_url('rides')
             return HTTPFound(url)
@@ -281,14 +288,10 @@ class RideViews(object):
             
             dbsession.add(ride)
             
-            # Manually commit the transaction to ensure ride object exists before
             # submitting update_ride_weather task
-            request.tm.commit()
-            wx_result=update_ride_weather.delay(ride.id)
-
-            from ..processing.weather import update_ride_weather
-            log.debug('Submitting task to update weather for ride {}'.format(ride.id))
-            wx_result=update_ride_weather.delay(ride.id)
+            ride_id=ride.id
+            self.request.tm.get().addAfterCommitHook(
+                submit_update_ride_weather_task,args=[ride.id])
 
             url = self.request.route_url('rides')
             return HTTPFound(url)
