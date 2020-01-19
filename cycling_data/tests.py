@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from pyramid import testing
 
@@ -173,6 +174,45 @@ class SerializeTests(BaseTest):
 
 class MetarTests(BaseTest):
 
+    ogimet_text_dca = """##########################################################
+# Query made at 01/19/2020 16:18:32 UTC
+# Time interval: from 01/01/2005 10:00  to 01/01/2005 19:11  UTC
+##########################################################
+
+##########################################################
+# KDCA, Washington DC, Reagan National Airport (United States)
+# WMO index: 72405
+# Latitude 38-50-54N. Longitude 077-02-03W. Altitude 4 m.
+##########################################################
+
+###################################
+#  METAR/SPECI from KDCA
+###################################
+200501011051 METAR KDCA 011051Z 20007KT 5SM BR SCT250 04/03 A3031 RMK
+                        AO2 SLP261 T00390028=
+200501011151 METAR KDCA 011151Z 22003KT 6SM BR BKN250 04/03 A3034 RMK
+                        AO2 SLP273 T00440033 10094 20033
+                        53013=
+200501011251 METAR KDCA 011251Z 00000KT 6SM BR BKN150 BKN250 03/02 A3035
+                        RMK AO2 SLP277 T00330022=
+200501011351 METAR KDCA 011351Z 20006KT 7SM BKN150 BKN250 06/04 A3037
+                        RMK AO2 SLP284 T00610044=
+200501011451 METAR KDCA 011451Z 19010KT 7SM FEW150 BKN250 08/05 A3039
+                        RMK AO2 SLP292 T00830050 53019=
+200501011551 METAR KDCA 011551Z 19009KT 7SM SCT150 BKN250 11/06 A3039
+                        RMK AO2 SLP291 T01060061=
+200501011651 METAR KDCA 011651Z 18009KT 10SM FEW020 BKN250 13/07 A3037
+                        RMK AO2 SLP283 T01280067=
+200501011751 METAR KDCA 011751Z 33008KT 10SM FEW030 SCT250 20/08 A3035
+                        RMK AO2 SLP276 T02000083 10200 20033
+                        58016=
+200501011851 METAR KDCA 011851Z 31012G18KT 10SM FEW040 BKN250 20/08 A3035
+                        RMK AO2 SLP276 T02000078=
+
+"""
+    
+    ogimet_text_quota_exceeded="""#Sorry, Your quota limit for slow queries rate has been reached"""
+
     def setUp(self):
         super(MetarTests, self).setUp()
 
@@ -183,12 +223,13 @@ class MetarTests(BaseTest):
         
         self.init_database()
 
-    def test_fetch_metars_for_ride(self):
+    @patch('cycling_data.processing.weather.fetch_metars',return_value=ogimet_text_dca)
+    def test_fetch_metars_for_ride(self,fetch_metars):
 
         from .processing.weather import fetch_metars_for_ride
         from .models import Ride, Location
 
-        from datetime import datetime
+        from datetime import datetime, timedelta
 
         washington_monument=Location(
                 name='Washington Monument',
@@ -229,6 +270,16 @@ class MetarTests(BaseTest):
         self.session.add(bwi)
         
         locations=self.session.query(Location)
+
+        window_expansion=timedelta(seconds=3600*4)
+
+        from cycling_data.processing.weather import ride_times_utc
+        dtstart,dtend=ride_times_utc(ride)
         
         metars=fetch_metars_for_ride(self.session,ride)
+        fetch_metars.assert_called_with(
+            'KDCA',
+            dtstart-window_expansion,
+            dtend+window_expansion
+        )
         self.assertEqual(metars[0].station.name,'KDCA')
