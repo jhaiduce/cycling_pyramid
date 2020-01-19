@@ -12,15 +12,28 @@ import transaction
 
 import requests
 
+def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/cgi-bin/getmetar'):
+    
+    params={
+        'lang':'en',
+        'icao':station,
+        'begin':dtstart.strftime('%Y%m%d%H%M%S'),
+        'end':dtend.strftime('%Y%m%d%H%M%S'),
+    }
+
+    r=requests.get(url,params=params)
+
+    r.raise_for_status()
+
+    return r.text
+
 def download_metars(station,dtstart,dtend):
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
-    url="https://www.ogimet.com/cgi-bin/getmetar?lang=en&icao={station}&begin={yearstart}{monthstart:02d}{daystart:02d}{hourstart:02d}00&end={yearend}{monthend:02d}{dayend:02d}{hourend:02d}59".format(station=station,yearstart=dtstart.year,monthstart=dtstart.month,daystart=dtstart.day,hourstart=dtstart.hour,yearend=dtend.year,monthend=dtend.month,dayend=dtend.day,hourend=dtend.hour)
+    metar_text=fetch_metars(station,dtstart,dtend)
 
-    r=requests.get(url)
-
-    lines=r.text.splitlines()
+    lines=metar_text.splitlines()
 
     metars=[]
     for line in lines:
