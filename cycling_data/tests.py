@@ -213,6 +213,8 @@ class MetarTests(BaseTest):
     
     ogimet_text_quota_exceeded="""#Sorry, Your quota limit for slow queries rate has been reached"""
 
+    ride_average_weather={'windspeed': 11.404188732967256, 'winddir': 190.0, 'temperature': 8.50909090909091, 'gust': None, 'dewpoint': 5.1000000000000005, 'relative_humidity': 0.7913959913675993, 'rain': 0.0, 'snow': 0.0, 'pressure': 1027.7054318855933}
+
     def setUp(self):
         super(MetarTests, self).setUp()
 
@@ -289,6 +291,8 @@ class MetarTests(BaseTest):
             dtend+window_expansion
         )
 
+        self.session.expire_on_commit=False
+
         update_ride_weather(ride.id)
         
         fetch_metars.assert_called_with(
@@ -296,3 +300,7 @@ class MetarTests(BaseTest):
             dtstart-window_expansion,
             dtend+window_expansion
         )
+
+        for key in MetarTests.ride_average_weather.keys():
+            self.assertEqual(getattr(ride.wxdata,key),
+                             MetarTests.ride_average_weather[key])
