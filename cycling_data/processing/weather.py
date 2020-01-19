@@ -12,13 +12,25 @@ import transaction
 
 import requests
 
-def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/cgi-bin/getmetar'):
+def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metars2.php'):
     
     params={
         'lang':'en',
-        'icao':station,
-        'begin':dtstart.strftime('%Y%m%d%H%M%S'),
-        'end':dtend.strftime('%Y%m%d%H%M%S'),
+        'lugar':station,
+        'tipo':'SA',
+        'ord':'DIR',
+        'nil':'NO',
+        'fmt':'txt',
+        'ano':dtstart.year,
+        'mes':'{:02d}'.format(dtstart.month),
+        'day':'{:02d}'.format(dtstart.day),
+        'hora':'{:02d}'.format(dtstart.hour),
+        'anof':dtend.year,
+        'mesf':'{:02d}'.format(dtend.month),
+        'dayf':'{:02d}'.format(dtend.day),
+        'horaf':'{:02d}'.format(dtend.hour),
+        'minf':'{:02d}'.format(dtend.minute),
+        'send':'send'
     }
 
     r=requests.get(url,params=params)
@@ -27,37 +39,52 @@ def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/cgi-bin/getme
 
     return r.text
 
+def extract_metars_from_ogimet(text):
+
+    dates=[]
+    metars=[]
+
+    while True:
+
+        # Find next METAR
+        head,sep,text=text.partition('=\n')
+
+        # Check whether we reached the end of the string
+        if len(head)==0: break
+
+        # Skip comments and empty lines
+        if head.startswith('#') or head.startswith('\n'):
+            head,sep,text=text.partition('\n')
+
+        # Parse METAR
+        if head[:12].isdigit():
+            date=datetime.strptime(head[:12],'%Y%m%d%H%M%S')
+            dates.append(date)
+            metar=head[13:]
+            if(metar.endswith('$')): metar=metar[:-1]
+            metars.append(metar)
+
+    return dates,metars
+
 def download_metars(station,dtstart,dtend):
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
-    metar_text=fetch_metars(station,dtstart,dtend)
+    # Download METARs
+    ogimet_text=fetch_metars(station,dtstart,dtend)
 
-    lines=metar_text.splitlines()
+    if(ogimet_text.startswith('#Sorry')):
+        raise ValueError('OGIMET quota limit reached')
 
-    metars=[]
-    for line in lines:
-        try:
-            tokens=line.split(',')
-            if len(tokens)==0: continue
-            if len(tokens)<7:
-                logger.warning('Unexpected line format: {}'.format(line))
-                continue
-            metar_code=tokens[6]
-            year=int(tokens[1])
-            month=int(tokens[2])
-            metar=Metar.Metar(metar_code,
-                              year=year,
-                              month=month,utcdelta=0)
-            if metar.time is None:
-                print('METAR time invalid')
-                print(match)
-                continue
-            metars.append(metar)
-        except Metar.ParserError as e:
-            print(line)
-            print(e)
+    # Get dates and METAR codes from returned text
+    dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
 
+    # Parse metar codes
+    metars=[
+        Metar.Metar(metar_code,year=date.year,month=date.month,utcdelta=0)
+        for date,metar_code in zip(dates,metar_codes)]
+
+    # Sort in chronological order
     metars=sorted(metars,key=lambda m: m.time)
     
     return metars
