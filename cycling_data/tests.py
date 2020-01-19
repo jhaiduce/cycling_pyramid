@@ -223,13 +223,16 @@ class MetarTests(BaseTest):
         
         self.init_database()
 
+    @patch('cycling_data.models.get_tm_session')
     @patch('cycling_data.processing.weather.fetch_metars',return_value=ogimet_text_dca)
-    def test_fetch_metars_for_ride(self,fetch_metars):
+    def test_fetch_metars_for_ride(self,fetch_metars,get_tm_session):
 
-        from .processing.weather import fetch_metars_for_ride
+        from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
 
         from datetime import datetime, timedelta
+
+        get_tm_session.return_value=self.session
 
         washington_monument=Location(
                 name='Washington Monument',
@@ -268,6 +271,7 @@ class MetarTests(BaseTest):
         self.session.add(ride)
         self.session.add(dca)
         self.session.add(bwi)
+        self.session.flush()
         
         locations=self.session.query(Location)
 
@@ -277,9 +281,18 @@ class MetarTests(BaseTest):
         dtstart,dtend=ride_times_utc(ride)
         
         metars=fetch_metars_for_ride(self.session,ride)
+        
+        self.assertEqual(metars[0].station.name,'KDCA')
         fetch_metars.assert_called_with(
             'KDCA',
             dtstart-window_expansion,
             dtend+window_expansion
         )
-        self.assertEqual(metars[0].station.name,'KDCA')
+
+        update_ride_weather(ride.id)
+        
+        fetch_metars.assert_called_with(
+            'KDCA',
+            dtstart-window_expansion,
+            dtend+window_expansion
+        )
