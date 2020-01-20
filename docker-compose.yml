@@ -2,10 +2,14 @@ version: '3.7'
 services:
   db:
     image: mariadb
+    container_name: cycling_stack_db
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     volumes:
       - mysql-data:/var/lib/mysql
+      - type: bind
+        source: ./mysql-config-cycling.cnf
+        target: /etc/mysql/conf.d/mysql-config-cycling.cnf
     configs:
       - source: mysql-config-cycling.4
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
@@ -25,7 +29,11 @@ services:
     ports:
       - '3306:3306'
   cycling_web:
-    image: jhaiduce/cycling-pyramid-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jhaiduce/cycling-pyramid
+    container_name: cycling_stack_cycling_web
     ports:
       - "80:80"
     secrets:
@@ -34,7 +42,12 @@ services:
     logging:
       driver: journald
   worker:
-    image: jhaiduce/cycling-pyramid-worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jhaiduce/cycling-pyramid
+    command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]
+    container_name: cycling_stack_worker
     secrets:
       - source: production.ini.6
         target: /run/secrets/production.ini
@@ -42,6 +55,7 @@ services:
       driver: journald
   rabbitmq:
     image: rabbitmq
+    container_name: cycling_stack_rabbitmq
     ports:
       - 5672:5672
     logging:
