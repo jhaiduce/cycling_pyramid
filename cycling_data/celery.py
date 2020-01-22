@@ -2,10 +2,14 @@ from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
 from celery.utils.log import get_task_logger
 from . import models
+import configparser
 
 logger = get_task_logger(__name__)
 
 session_factory=None
+
+config=configparser.ConfigParser()
+config.read('/run/secrets/production.ini')
 
 @worker_process_init.connect
 def bootstrap_pyramid(signal, sender, **kwargs):
@@ -46,5 +50,5 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     
     session_factory=models.get_session_factory(engine)
 
-celery=Celery(backend='rpc://cycling_stack_rabbitmq', broker='pyamqp://guest@cycling_stack_rabbitmq')
+celery=Celery(backend=config['celery']['backend_url'], broker=config['celery']['broker_url'])
 celery.config_from_object('cycling_data.celeryconfig')

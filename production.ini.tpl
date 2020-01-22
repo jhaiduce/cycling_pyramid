@@ -88,3 +88,7 @@ format = %(asctime)s %(levelname)-5.5s [%(name)s:%(lineno)s][%(threadName)s] %(m
 [filter:proxy-prefix]
 use = egg:PasteDeploy#prefix
 scheme=https
+
+[celery]
+backend_url = rpc://cycling_stack_rabbitmq
+broker_url = pyamqp://guest@cycling_stack_rabbitmq
