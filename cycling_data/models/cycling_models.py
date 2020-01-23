@@ -86,8 +86,8 @@ class Location(Base):
 
         return self.timezone_
 
-    def __repr__(self):
-        return self.name.__repr__()
+    def __str__(self):
+        return self.name.__str__()
 
 class Equipment(Base):
     __tablename__ = 'equipment'
