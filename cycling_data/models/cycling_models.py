@@ -80,7 +80,7 @@ class Location(Base):
         return tz.tzNameAt(self.lat,self.lon)
 
     def __repr__(self):
-        return self.name
+        return self.name.__repr__()
 
 class Equipment(Base):
     __tablename__ = 'equipment'
