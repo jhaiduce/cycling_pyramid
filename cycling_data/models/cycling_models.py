@@ -16,6 +16,9 @@ from sqlalchemy.orm import relationship
 
 from .meta import Base
 
+from tzwhere import tzwhere
+tz=tzwhere.tzwhere()
+
 def register_function(raw_con, conn_record):
 
     if isinstance(raw_con ,pysqlite2.dbapi2.Connection):
@@ -43,6 +46,7 @@ class Location(Base):
     elevation = Column(Float)
     description = Column(Text)
     remarks = Column(Text)
+    timezone_ = None
     loctype_id = Column(Integer, ForeignKey('locationtype.id',name='fk_location_type_id'))
     loctype = relationship(LocationType,foreign_keys=loctype_id)
 
@@ -74,10 +78,13 @@ class Location(Base):
                          * sqlalchemy.func.sin(other.lat*math.pi/180)
                          ) * 6371
 
-    def get_timezone(self):
-        from tzwhere import tzwhere
-        tz=tzwhere.tzwhere()
-        return tz.tzNameAt(self.lat,self.lon)
+    @property
+    def timezone(self):
+
+        if self.timezone_ is None:
+            self.timezone_ = tz.tzNameAt(self.lat,self.lon)
+
+        return self.timezone_
 
     def __repr__(self):
         return self.name.__repr__()
@@ -291,7 +298,7 @@ class Ride(Base):
     def start_timezone(self):
 
         if not self.start_timezone_:
-            self.start_timezone_=self.startloc.get_timezone()
+            self.start_timezone_=self.startloc.timezone
             
         return self.start_timezone_
 
@@ -303,7 +310,7 @@ class Ride(Base):
     def end_timezone(self):
 
         if not self.end_timezone_:
-            self.end_timezone_=self.endloc.get_timezone()
+            self.end_timezone_=self.endloc.timezone
             
         return self.end_timezone_
 
