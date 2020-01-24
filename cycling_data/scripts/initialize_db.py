@@ -80,8 +80,9 @@ def main(argv=sys.argv):
         # out of the loop
         break
     try:
-        
-        create_database(engine_admin,settings)
+
+        if engine_admin.dialect.name!='sqlite':
+            create_database(engine_admin,settings)
             
         import transaction
         with transaction.manager:
