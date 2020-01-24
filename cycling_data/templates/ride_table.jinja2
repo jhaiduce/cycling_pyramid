@@ -2,7 +2,14 @@
 
 {% block content %}
 
-<p>{{rides.count()}} total rides</p>
+  <div class="row">
+    <div class="col-8 col-sm-6">
+      {{rides.count()}} total rides
+    </div>
+    <div class="col-4 col-sm-6">
+      <p style="text-align:right"><a href="/rides/add">Add new</a></p>
+    </div>
+  </div>
 
 {{page.pager(url="/rides?page=$page")|safe}}
 

@@ -36,7 +36,7 @@ class BaseTest(unittest.TestCase):
     def test_ride_add(self):
         import re
         resp=self.session.get('http://cycling_test_cycling_web/rides')
-        ride_count=int(re.search(r'<p>(\d+) total rides</p>',resp.text).group(1))
+        ride_count=int(re.search(r'(\d+) total rides',resp.text).group(1))
 
         resp=self.session.post(
             'http://cycling_test_cycling_web/rides/add',
