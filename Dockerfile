@@ -41,4 +41,13 @@ EXPOSE 80
 
 ENV NAME World
 
+RUN addgroup --system appuser && \
+    adduser --system -s /bin/sh --no-create-home appuser appuser
+
+RUN apk add libcap
+
+RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/python3.6
+
+USER appuser
+
 CMD ["/app/pyramid_start.sh"]
