@@ -14,4 +14,9 @@ COPY integration_tests.py /test
 
 ENV NAME World
 
+RUN addgroup --system testuser && \
+    adduser --system -s /bin/sh --no-create-home testuser testuser
+
+USER testuser
+
 CMD ["pytest","/test/integration_tests.py","-s"]
