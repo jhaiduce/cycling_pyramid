@@ -17,12 +17,11 @@ RUN curl -so geos-3.6.0.tar.bz2 \
     http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
 RUN tar xjf geos-3.6.0.tar.bz2
 RUN cd geos-3.6.0 && \
-    ./configure --prefix=/opt/geos-3.6.0 \
+    ./configure --prefix=/usr \
       --disable-swig \
       --disable-static \
     && make install-strip
 RUN cd .. && rm -rf geos-3.6.0*
-ENV LD_LIBRARY_PATH=/opt/geos-3.6.0/lib:$LD_LIBRARY_PATH
 
 COPY requirements.txt /app
 RUN pip3 install -r /app/requirements.txt
