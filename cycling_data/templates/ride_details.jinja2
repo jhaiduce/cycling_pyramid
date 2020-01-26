@@ -1,0 +1,60 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+
+<h3>Basic data</h3>
+<table class="data_table">
+<tr><th>Start time</th><td>{{ride.start_time}}</td></tr>
+<tr><th>End time</th><td>{{ride.end_time}}</td></tr>
+<tr><th>Start location</th><td>{{ride.startloc}}</td></tr>
+<tr><th>End location</th><td>{{ride.endloc}}</td></tr>
+<tr><th>Route details</th><td>{{ride.route}}</td></tr>
+<tr><th>Distance</th><td>{{ride.distance}}</td></tr>
+<tr><th>Rolling time</th><td>{{ride.rolling_time}}</td></tr>
+<tr><th>Total time</th><td>{{ride.total_time}}</td></tr>
+<tr><th>Average speed</th><td>{{ride.avspeed}}</td></tr>
+<tr><th>Max speed</th><td>{{ride.maxspeed}}</td></tr>
+<tr><th>Equipment</th><td>{{ride.equipment.name}}</td></tr>
+<tr><th>Trailer</th><td>{{ride.trailer}}</td></tr>
+<tr><th>Surface type</th><td>{{ride.surface.name}}</td></tr>
+<tr><th>Rider group</th><td>{{ride.ridergroup.name}}</td></tr>
+<tr><th>Remarks</th><td>{{ride.remarks}}</td></tr>
+</table>
+
+<h3>Weather</h3>
+<table class="data_table">
+<tr>
+  <th>Station</th>
+  <td>{{ wxdata.station }}</td>
+</tr>
+<tr>
+  <th>Wind</th>
+  <td>{{'{:0.0f}'.format(wxdata.winddir) }}&deg;
+  {{'{:0.1f}'.format(wxdata.windspeed) }}
+  {% if wxdata.gust %} - {{ '{:0.1f}'.format(wxdata.gust) }}{% endif %}
+  mph
+  </td>
+</tr>
+<tr>
+  <th>Temperature</th>
+  <td>{{'{:0.0f}'.format(wxdata.temperature) }}&deg;C</td>
+</tr>
+<tr>
+  <th>Pressure</th>
+  <td>{{'{:0.0f}'.format(wxdata.pressure) }} Pa</td>
+</tr>
+<tr>
+  <th>Relative humidity</th>
+  <td>{{'{:0.0f}'.format(wxdata.relative_humidity*100) }}%</td>
+</tr>
+<tr>
+  <th>Rain intensity</th>
+  <td>{{'{:0.2f}'.format(wxdata.rain) }}</td>
+</tr>
+<tr>
+  <th>Snow intensity</th>
+  <td>{{'{:0.2f}'.format(wxdata.snow) }}</td>
+</tr>
+</table>
+
+{% endblock content %}

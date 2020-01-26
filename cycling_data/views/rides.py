@@ -268,6 +268,17 @@ class RideViews(object):
 
         return dict(form=form)
 
+    @view_config(route_name='ride_details', renderer='../templates/ride_details.jinja2')
+    def ride_details(self):
+
+        ride_id=int(self.request.matchdict['ride_id'])
+
+        dbsession=self.request.dbsession
+
+        ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+
+        return dict(ride=ride,wxdata=ride.wxdata)
+
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
         form=self.ride_form.render()
