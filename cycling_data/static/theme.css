@@ -152,3 +152,6 @@ p {
     margin-top: 20px;
   }
 }
+table.data_table th, td {
+    padding: 6px;
+}
