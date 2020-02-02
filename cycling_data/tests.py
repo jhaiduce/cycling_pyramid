@@ -3,8 +3,9 @@ from unittest.mock import patch
 
 from pyramid import testing
 
-import transaction
+import pytest
 
+import transaction
 
 def dummy_request(dbsession):
     return testing.DummyRequest(dbsession=dbsession)
@@ -304,3 +305,89 @@ class MetarTests(BaseTest):
         for key in MetarTests.ride_average_weather.keys():
             self.assertEqual(getattr(ride.wxdata,key),
                              MetarTests.ride_average_weather[key])
+
+import webtest
+
+class FunctionalTests(unittest.TestCase):
+    admin_login = dict(login='admin', password='admin')
+
+    def setUp(self):
+        """
+        Add some dummy data to the database.
+        Note that this is a session fixture that commits data to the database.
+        Think about it similarly to running the ``initialize_db`` script at the
+        start of the test suite.
+        This data should not conflict with any other data added throughout the
+        test suite or there will be issues - so be careful with this pattern!
+        """
+
+        from . import main
+
+        from .models import (
+            get_engine,
+            get_session_factory,
+            get_tm_session,
+            )
+
+        self.config={
+            'admin_password':self.admin_login['password'],
+            'sqlalchemy.url':'sqlite://',
+            'auth.secret':'secret'
+            }
+
+        app = main({}, **self.config)
+        session_factory = app.registry['dbsession_factory']
+        self.session=get_tm_session(session_factory,transaction.manager)
+        self.init_database()
+        self.testapp=webtest.TestApp(app)
+
+    def init_database(self):
+
+        from . import models
+
+        models.Base.metadata.create_all(self.session.bind)
+
+        user=models.User(
+            name='admin'
+        )
+
+        user.set_password(self.config['admin_password'])
+        self.session.add(user)
+
+        from datetime import datetime,timedelta
+        ride = models.Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=timedelta(minutes=15),
+            rolling_time=timedelta(minutes=12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(ride)
+        self.ride=ride
+
+        self.ride_null_total_time=models.Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=None,
+            rolling_time=timedelta(minutes=12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(self.ride_null_total_time)
+        self.session.flush()
+
+    def test_successful_login(self):
+        res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
+        self.assertEqual(res.status_code,302)
+        self.assertEqual(res.location,'http://localhost/rides')
