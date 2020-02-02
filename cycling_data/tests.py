@@ -425,3 +425,9 @@ class FunctionalTests(unittest.TestCase):
         res=self.testapp.get('http://localhost/rides')
         self.assertEqual(res.status_code,302)
         self.assertEqual(res.location,'http://localhost/login?next=http%3A%2F%2Flocalhost%2Frides')
+
+    def test_rides_table(self):
+        self.login()
+        res=self.testapp.get('http://localhost/rides')
+        ride_count=int(re.search(r'(\d+) total rides',res.text).group(1))
+        self.assertEqual(ride_count,2)
