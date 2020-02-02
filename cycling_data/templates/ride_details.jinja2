@@ -29,31 +29,32 @@
 </tr>
 <tr>
   <th>Wind</th>
-  <td>{{'{:0.0f}'.format(wxdata.winddir) }}&deg;
-  {{'{:0.1f}'.format(wxdata.windspeed) }}
+  <td>{% if wxdata.winddir is not none%}{{'{:0.0f}'.format(wxdata.winddir) }}&deg; {% elif wxdata.windspeed is not none %} var {% endif %}
+  {% if wxdata.windspeed is not none %} {{'{:0.1f}'.format(wxdata.windspeed) }}
   {% if wxdata.gust %} - {{ '{:0.1f}'.format(wxdata.gust) }}{% endif %}
+  {% endif %}
   mph
   </td>
 </tr>
 <tr>
   <th>Temperature</th>
-  <td>{{'{:0.0f}'.format(wxdata.temperature) }}&deg;C</td>
+  <td>{% if wxdata.temperature is not none %}{{'{:0.0f}'.format(wxdata.temperature)}}&deg;C{% endif %}</td>
 </tr>
 <tr>
   <th>Pressure</th>
-  <td>{{'{:0.0f}'.format(wxdata.pressure) }} Pa</td>
+  <td>{{'{:0.0f}'.format(wxdata.pressure) if wxdata.pressure is not none else none }} Pa</td>
 </tr>
 <tr>
   <th>Relative humidity</th>
-  <td>{{'{:0.0f}'.format(wxdata.relative_humidity*100) }}%</td>
+  <td>{{'{:0.0f}'.format(wxdata.relative_humidity*100) if wxdata.relative_humidity is not none else none}}%</td>
 </tr>
 <tr>
   <th>Rain intensity</th>
-  <td>{{'{:0.2f}'.format(wxdata.rain) }}</td>
+  <td>{{'{:0.2f}'.format(wxdata.rain) if wxdata.rain is not none else none}}</td>
 </tr>
 <tr>
   <th>Snow intensity</th>
-  <td>{{'{:0.2f}'.format(wxdata.snow) }}</td>
+  <td>{{'{:0.2f}'.format(wxdata.snow) if wxdata.snow is not none else none}}</td>
 </tr>
 </table>
 
