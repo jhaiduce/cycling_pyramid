@@ -414,5 +414,4 @@ class FunctionalTests(unittest.TestCase):
         # in the GET data
         res=self.testapp.get('http://localhost/rides')
         self.assertEqual(res.status_code,302)
-        print(res.location)
         self.assertEqual(res.location,'http://localhost/login?next=http%3A%2F%2Flocalhost%2Frides')

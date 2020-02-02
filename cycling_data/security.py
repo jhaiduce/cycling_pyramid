@@ -17,7 +17,6 @@ def get_user(request):
 
 def includeme(config):
     settings = config.get_settings()
-    print(settings.keys())
     authn_policy = AuthenticationPolicy(
         settings['auth.secret'],
         hashalg='sha512',
