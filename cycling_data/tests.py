@@ -337,24 +337,30 @@ class FunctionalTests(unittest.TestCase):
             'auth.secret':'secret'
             }
 
-        app = main({}, **self.config)
-        session_factory = app.registry['dbsession_factory']
-        self.session=get_tm_session(session_factory,transaction.manager)
+        self.app = main({}, **self.config)
         self.init_database()
-        self.testapp=webtest.TestApp(app)
+        self.testapp=webtest.TestApp(self.app)
+
+    def get_session(self):
+        from .models import get_session_factory,get_tm_session
+        session_factory = self.app.registry['dbsession_factory']
+        session=get_tm_session(session_factory,transaction.manager)
+        return session
 
     def init_database(self):
 
+        session=self.get_session()
+
         from . import models
 
-        models.Base.metadata.create_all(self.session.bind)
+        models.Base.metadata.create_all(session.bind)
 
         user=models.User(
             name='admin'
         )
 
         user.set_password(self.config['admin_password'])
-        self.session.add(user)
+        session.add(user)
 
         from datetime import datetime,timedelta
         ride = models.Ride(
@@ -370,7 +376,7 @@ class FunctionalTests(unittest.TestCase):
             ridergroup_id=0,
             surface_id=0
         )
-        self.session.add(ride)
+        session.add(ride)
         self.ride=ride
 
         self.ride_null_total_time=models.Ride(
@@ -386,8 +392,9 @@ class FunctionalTests(unittest.TestCase):
             ridergroup_id=0,
             surface_id=0
         )
-        self.session.add(self.ride_null_total_time)
-        self.session.flush()
+        session.add(self.ride_null_total_time)
+        session.flush()
+        transaction.commit()
 
     def test_successful_login(self):
         res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
