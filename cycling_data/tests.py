@@ -396,6 +396,9 @@ class FunctionalTests(unittest.TestCase):
         session.flush()
         transaction.commit()
 
+    def login(self):
+        res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
+
     def test_successful_login(self):
         res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
 
