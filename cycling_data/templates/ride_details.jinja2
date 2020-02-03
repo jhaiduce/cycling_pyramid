@@ -38,7 +38,7 @@
 </tr>
 <tr>
   <th>Temperature</th>
-  <td>{{'{:0.0f}&deg;C'.format(wxdata.temperature) if wxdata.temperature is not none else none}}</td>
+  <td>{{'{:0.0f}&deg;C'.format(wxdata.temperature)|safe if wxdata.temperature is not none else none }}</td>
 </tr>
 <tr>
   <th>Pressure</th>
