@@ -67,13 +67,31 @@ class RideViewTests(BaseTest):
             surface_id=0
         )
         self.session.add(ride)
+        self.ride=ride
+
+        self.ride_null_total_time=Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=None,
+            rolling_time=timedelta(minutes=12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(self.ride_null_total_time)
+        self.session.flush()
+
 
     def test_ride_table(self):
         from .views.rides import RideViews
 
         views=RideViews(dummy_request(self.session))
         info = views.ride_table()
-        self.assertEqual(info['rides'].count(),1)
+        self.assertEqual(info['rides'].count(),2)
         self.assertEqual(info['page'].items_per_page,30)
         self.assertEqual(info['page'].page,1)
 
