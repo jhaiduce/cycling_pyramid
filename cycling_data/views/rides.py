@@ -6,7 +6,7 @@ from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
 
-from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
+from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, RideWeatherData
 
 import logging
 log = logging.getLogger(__name__)
@@ -277,7 +277,9 @@ class RideViews(object):
 
         ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
-        return dict(ride=ride,wxdata=ride.wxdata)
+        wxdata=ride.wxdata or RideWeatherData()
+
+        return dict(ride=ride,wxdata=wxdata)
 
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
