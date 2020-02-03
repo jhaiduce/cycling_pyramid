@@ -85,6 +85,15 @@ class RideViewTests(BaseTest):
         self.session.add(self.ride_null_total_time)
         self.session.flush()
 
+    def test_ride_details(self):
+        from .views.rides import RideViews
+
+        request=dummy_request(self.session)
+        request.matchdict['ride_id']=self.ride_null_total_time.id
+
+        views=RideViews(request)
+
+        response=views.ride_table()
 
     def test_ride_table(self):
         from .views.rides import RideViews
