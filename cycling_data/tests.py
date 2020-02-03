@@ -404,9 +404,8 @@ class FunctionalTests(unittest.TestCase):
             surface_id=0
         )
         session.add(ride)
-        self.ride=ride
-
-        self.ride_null_total_time=models.Ride(
+        
+        ride_null_total_time=models.Ride(
             start_time=datetime(2005,1,1,10),
             end_time=datetime(2005,1,1,10,15),
             total_time=None,
@@ -419,8 +418,10 @@ class FunctionalTests(unittest.TestCase):
             ridergroup_id=0,
             surface_id=0
         )
-        session.add(self.ride_null_total_time)
+        session.add(ride_null_total_time)
         session.flush()
+        self.ride_id=ride.id
+        self.ride_null_total_time_id=ride_null_total_time.id
         transaction.commit()
 
     def login(self):
