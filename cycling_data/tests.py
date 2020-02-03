@@ -460,3 +460,12 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,200)
         ride_count=int(re.search(r'(\d+) total rides',res.text).group(1))
         self.assertEqual(ride_count,2)
+
+    def test_ride_details(self):
+        self.login()
+        from .models import Ride
+        session=self.get_session()
+        url='http://localhost/rides/{}/details'.format(self.ride_id)
+        ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
+        res=self.testapp.get(url)
+        self.assertEqual(res.status_code,200)
