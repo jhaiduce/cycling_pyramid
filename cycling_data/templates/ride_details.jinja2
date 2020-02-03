@@ -38,15 +38,15 @@
 </tr>
 <tr>
   <th>Temperature</th>
-  <td>{% if wxdata.temperature is not none %}{{'{:0.0f}'.format(wxdata.temperature)}}&deg;C{% endif %}</td>
+  <td>{{'{:0.0f}&deg;C'.format(wxdata.temperature) if wxdata.temperature is not none else none}}</td>
 </tr>
 <tr>
   <th>Pressure</th>
-  <td>{{'{:0.0f}'.format(wxdata.pressure) if wxdata.pressure is not none else none }} Pa</td>
+  <td>{{'{:0.0f} Pa'.format(wxdata.pressure) if wxdata.pressure is not none else none}}</td>
 </tr>
 <tr>
   <th>Relative humidity</th>
-  <td>{{'{:0.0f}'.format(wxdata.relative_humidity*100) if wxdata.relative_humidity is not none else none}}%</td>
+  <td>{{'{:0.0f}%'.format(wxdata.relative_humidity*100) if wxdata.relative_humidity is not none else none}}</td>
 </tr>
 <tr>
   <th>Rain intensity</th>
