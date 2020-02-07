@@ -469,3 +469,12 @@ class FunctionalTests(unittest.TestCase):
         ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
         res=self.testapp.get(url)
         self.assertEqual(res.status_code,200)
+
+    def test_ride_add(self):
+        self.login()
+        from .models import Ride
+        session=self.get_session()
+        url='http://localhost/rides/{}/details'.format(self.ride_id)
+        ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
+        res=self.testapp.get(url)
+        self.assertEqual(res.status_code,200)
