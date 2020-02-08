@@ -36,6 +36,7 @@ COPY README.md /app
 RUN pip3 install --trusted-host pypi.python.org -e .
 
 COPY pyramid_start.sh /app
+COPY pyramid_cold_start.sh /app
 
 EXPOSE 80
 

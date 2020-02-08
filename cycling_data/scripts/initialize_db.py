@@ -45,6 +45,11 @@ def parse_args(argv):
         'config_uri',
         help='Configuration file, e.g., development.ini',
     )
+    parser.add_argument(
+        '--delete-existing',
+        help='Delete existing database',
+        action='store_true'
+    )
     return parser.parse_args(argv[1:])
 
 def main(argv=sys.argv):
@@ -82,6 +87,9 @@ def main(argv=sys.argv):
     try:
 
         if engine_admin.dialect.name!='sqlite':
+            if args.delete_existing:
+                conn=engine_admin.connect()
+                conn.execute('drop database cycling')
             create_database(engine_admin,settings)
             
         import transaction
