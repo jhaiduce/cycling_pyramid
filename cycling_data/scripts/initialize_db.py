@@ -39,6 +39,18 @@ def create_admin_user(dbsession,settings):
     user.set_password(settings['admin_password'])
     dbsession.add(user)
 
+def add_loctype_if_not_exists(dbsession,loctype_id,name):
+    from ..models.cycling_models import LocationType
+
+    loctype=dbsession.query(
+        LocationType
+    ).filter(LocationType.id==loctype_id
+    ).filter(LocationType.name==name
+    ).first()
+
+    if loctype is None:
+        dbsession.add(LocationType(id=loctype_id,name=name))
+
 def parse_args(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -106,6 +118,10 @@ def main(argv=sys.argv):
                 models.User.name=='admin').count()
             if not admin_exists:
                 create_admin_user(dbsession,settings)
+
+
+            add_loctype_if_not_exists(dbsession,1,'')
+            add_loctype_if_not_exists(dbsession,2,'weather station')
 
     except OperationalError:
         raise
