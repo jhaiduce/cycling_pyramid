@@ -49,6 +49,7 @@ services:
     links:
       - db
       - rabbitmq
+      - redis
   worker:
     build:
       context: .
@@ -63,9 +64,15 @@ services:
       driver: journald
     links:
       - rabbitmq
+      - redis
   rabbitmq:
     image: rabbitmq
     container_name: cycling_test_rabbitmq
+    logging:
+      driver: journald
+  redis:
+    image: redis
+    container_name: cycling_test_redis
     logging:
       driver: journald
 secrets:

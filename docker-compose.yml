@@ -60,6 +60,11 @@ services:
       - 5672:5672
     logging:
       driver: journald
+  redis:
+    image: redis
+    container_name: cycling_stack_redis
+    logging:
+      driver: journald
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
