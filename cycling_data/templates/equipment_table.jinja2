@@ -2,7 +2,15 @@
 
 {% block content %}
 
-<p>{{equipment.count()}} total</p>
+
+  <div class="row">
+    <div class="col-8 col-sm-6">
+      {{equipment.count()}} total
+    </div>
+    <div class="col-4 col-sm-6">
+      <p style="text-align:right"><a href="/equipment/add">Add new</a></p>
+    </div>
+  </div>
 
 {{page.pager(url="/equipment/list?page=$page")|safe}}
 

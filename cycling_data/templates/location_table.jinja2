@@ -2,7 +2,14 @@
 
 {% block content %}
 
-<p>{{locations.count()}} total locations</p>
+  <div class="row">
+    <div class="col-8 col-sm-6">
+      {{locations.count()}} total locations</p>
+    </div>
+    <div class="col-4 col-sm-6">
+      <p style="text-align:right"><a href="/locations/add">Add new</a></p>
+    </div>
+  </div>
 
 {{page.pager(url="/locations/list?page=$page")|safe}}
 
