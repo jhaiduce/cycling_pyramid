@@ -2,11 +2,18 @@
 
 {% block content %}
 
-<p>{{rides.count()}} total rides</p>
+  <div class="row">
+    <div class="col-8 col-sm-6">
+      {{rides.count()}} total rides
+    </div>
+    <div class="col-4 col-sm-6">
+      <p style="text-align:right"><a href="/rides/add">Add new</a></p>
+    </div>
+  </div>
 
 {{page.pager(url="/rides?page=$page")|safe}}
 
-<table>
+<table class="data_table">
 <tr>
 <th></th>
 <th>Start time</th>
@@ -22,7 +29,7 @@
 </tr>
 {% for ride in page.items %}
 <tr>
-<td><a href="/rides/{{ride.id}}/edit">edit</a></td>
+<td><a href="/rides/{{ride.id}}/details">details</a> <a href="/rides/{{ride.id}}/edit">edit</a></td>
 <td>{{ride.start_time}}</td>
 <td>{{ride.end_time}}</td>
 <td>{{ride.startloc}}</td>

@@ -2,11 +2,20 @@ from pyramid.view import view_config
 import colander
 import deform.widget
 from pyramid.httpexceptions import HTTPFound
+import json
 from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
 
-from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location
+from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, RideWeatherData
+
+import logging
+log = logging.getLogger(__name__)
+
+def submit_update_ride_weather_task(success,ride_id):
+
+    from ..processing.weather import update_ride_weather
+    update_ride_weather.delay(ride_id)
 
 def time_to_timedelta(time):
     from datetime import datetime, date
@@ -248,10 +257,36 @@ class RideViews(object):
             ride=appstruct_to_ride(dbsession,appstruct)
             dbsession.add(ride)
 
+            # Flush dbsession so ride gets an id assignment
+            dbsession.flush()
+
+            # Add an after-commit hook to update the ride's weather data
+            from ..processing.weather import update_ride_weather
+            update_weather_task=update_ride_weather.delay(ride.id)
+
             url = self.request.route_url('rides')
-            return HTTPFound(url)
+            return HTTPFound(
+                url,
+                content_type='application/json',
+                charset='',
+                text=json.dumps(
+                    {'ride_id':ride.id,
+                     'update_weather_task_id':update_weather_task.task_id}))
 
         return dict(form=form)
+
+    @view_config(route_name='ride_details', renderer='../templates/ride_details.jinja2')
+    def ride_details(self):
+
+        ride_id=int(self.request.matchdict['ride_id'])
+
+        dbsession=self.request.dbsession
+
+        ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+
+        wxdata=ride.wxdata or RideWeatherData()
+
+        return dict(ride=ride,wxdata=wxdata)
 
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
@@ -270,7 +305,13 @@ class RideViews(object):
                 return dict(form=e.render())
 
             ride=appstruct_to_ride(dbsession,appstruct,ride)
+            
             dbsession.add(ride)
+            
+            # submitting update_ride_weather task
+            ride_id=ride.id
+            self.request.tm.get().addAfterCommitHook(
+                submit_update_ride_weather_task,args=[ride.id])
 
             url = self.request.route_url('rides')
             return HTTPFound(url)

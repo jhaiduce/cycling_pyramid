@@ -32,6 +32,9 @@ requires = [
     'metar',
     'requests',
     'mysqlclient',
+    'celery',
+    'tzwhere',
+    'redis'
 ]
 
 import subprocess

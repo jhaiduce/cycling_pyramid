@@ -16,6 +16,9 @@ from sqlalchemy.orm import relationship
 
 from .meta import Base
 
+from tzwhere import tzwhere
+tz=tzwhere.tzwhere()
+
 def register_function(raw_con, conn_record):
 
     if isinstance(raw_con ,pysqlite2.dbapi2.Connection):
@@ -43,6 +46,7 @@ class Location(Base):
     elevation = Column(Float)
     description = Column(Text)
     remarks = Column(Text)
+    timezone_ = None
     loctype_id = Column(Integer, ForeignKey('locationtype.id',name='fk_location_type_id'))
     loctype = relationship(LocationType,foreign_keys=loctype_id)
 
@@ -74,8 +78,16 @@ class Location(Base):
                          * sqlalchemy.func.sin(other.lat*math.pi/180)
                          ) * 6371
 
-    def __repr__(self):
-        return self.name
+    @property
+    def timezone(self):
+
+        if self.timezone_ is None:
+            self.timezone_ = tz.tzNameAt(self.lat,self.lon)
+
+        return self.timezone_
+
+    def __str__(self):
+        return self.name.__str__()
 
 class Equipment(Base):
     __tablename__ = 'equipment'
@@ -185,11 +197,19 @@ class StationWeatherData(WeatherData):
     def __init__(self,session=None,obs=None,*args,**kwargs):
 
         super(StationWeatherData,self).__init__(*args,**kwargs)
+        from metar import Metar
 
         if obs!=None:
             assert(isinstance(obs,Metar.Metar))
-            self.station=session.query(Location).filter(and_(Location.name==obs.station_id,Location.loctype==1)).one()
-            self.report_time=obs.time
+            from sqlalchemy import and_
+            
+            try:
+                self.station=session.query(Location).filter(and_(Location.name==obs.station_id,Location.loctype_id==2)).one()
+                self.report_time=obs.time
+            except NoResultFound:
+                location=Location(name=metar.station_id,loctype_id=2)
+                session.add(location)
+
             try:
                 vapres=6.1121*math.exp((18.678-obs.temp.value(units='C')/234.5)*obs.temp.value(units='C')/(obs.temp.value(units='C')+257.14))
                 vapres_dew=6.1121*math.exp((18.678-obs.dewpt.value(units='C')/234.5)*obs.dewpt.value(units='C')/(obs.dewpt.value(units='C')+257.14))
@@ -203,14 +223,12 @@ class StationWeatherData(WeatherData):
             except AttributeError: self.gust=None
             try: self.temperature=obs.temp.value(units='C')
             except AttributeError: self.temperature=None
-            try: self.dewpt=obs.dewpt.value(units='C')
-            except AttributeError: self.dewpt=None
+            try: self.dewpoint=obs.dewpt.value(units='C')
+            except AttributeError: self.dewpoint=None
             try: self.pressure=obs.press.value('hpa')
             except AttributeError: self.pressure=None
             self.relative_humidity=rh
             self.metar=obs.code
-        
-    
 
 class Ride(Base):
     __tablename__ = 'ride'
@@ -221,8 +239,8 @@ class Ride(Base):
     # Date and time fields
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    start_timezone = Column(String(255))
-    end_timezone = Column(String(255))
+    start_timezone_ = Column('start_timezone',String(255))
+    end_timezone_ = Column('end_timezone',String(255))
 
     # Location fields
     startloc_id = Column(
@@ -276,3 +294,26 @@ class Ride(Base):
         ForeignKey('weatherdata.id',name='fk_weatherdata_ride_id'))
     wxdata=relationship('RideWeatherData')
 
+    @property
+    def start_timezone(self):
+
+        if not self.start_timezone_:
+            self.start_timezone_=self.startloc.timezone
+            
+        return self.start_timezone_
+
+    @start_timezone.setter
+    def start_timezone(self,value):
+        self.start_timezone_=value
+
+    @property
+    def end_timezone(self):
+
+        if not self.end_timezone_:
+            self.end_timezone_=self.endloc.timezone
+            
+        return self.end_timezone_
+
+    @end_timezone.setter
+    def end_timezone(self,value):
+        self.end_timezone_=value

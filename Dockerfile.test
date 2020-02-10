@@ -1,0 +1,25 @@
+#FROM python:3.7.2-alpine
+#FROM node:8-alpine
+FROM jhaiduce/cycling-pyramid
+
+USER root
+
+WORKDIR /test
+
+RUN apk add --update python3 py3-pip python3-dev build-base
+RUN apk add libffi-dev mariadb-dev
+RUN apk add curl
+
+COPY requirements.test.txt /test
+RUN pip3 install -r /test/requirements.test.txt
+
+COPY integration_tests.py /test
+
+ENV NAME World
+
+RUN addgroup --system testuser && \
+    adduser --system -s /bin/sh --no-create-home testuser testuser
+
+USER testuser
+
+CMD ["pytest","/test/integration_tests.py","-s"]

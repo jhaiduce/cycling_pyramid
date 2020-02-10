@@ -1,0 +1,5 @@
+FROM jhaiduce/cycling-pyramid-base
+
+ENV NAME World
+
+CMD ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]

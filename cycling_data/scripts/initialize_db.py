@@ -39,11 +39,28 @@ def create_admin_user(dbsession,settings):
     user.set_password(settings['admin_password'])
     dbsession.add(user)
 
+def add_loctype_if_not_exists(dbsession,loctype_id,name):
+    from ..models.cycling_models import LocationType
+
+    loctype=dbsession.query(
+        LocationType
+    ).filter(LocationType.id==loctype_id
+    ).filter(LocationType.name==name
+    ).first()
+
+    if loctype is None:
+        dbsession.add(LocationType(id=loctype_id,name=name))
+
 def parse_args(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'config_uri',
         help='Configuration file, e.g., development.ini',
+    )
+    parser.add_argument(
+        '--delete-existing',
+        help='Delete existing database',
+        action='store_true'
     )
     return parser.parse_args(argv[1:])
 
@@ -80,8 +97,15 @@ def main(argv=sys.argv):
         # out of the loop
         break
     try:
-        
-        create_database(engine_admin,settings)
+
+        if engine_admin.dialect.name!='sqlite':
+            if args.delete_existing:
+                conn=engine_admin.connect()
+                try:
+                    conn.execute('drop database cycling')
+                except OperationalError:
+                    pass
+            create_database(engine_admin,settings)
             
         import transaction
         with transaction.manager:
@@ -97,6 +121,10 @@ def main(argv=sys.argv):
                 models.User.name=='admin').count()
             if not admin_exists:
                 create_admin_user(dbsession,settings)
+
+
+            add_loctype_if_not_exists(dbsession,1,'')
+            add_loctype_if_not_exists(dbsession,2,'weather station')
 
     except OperationalError:
         raise
