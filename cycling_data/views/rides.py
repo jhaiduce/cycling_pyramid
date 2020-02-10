@@ -261,11 +261,17 @@ class RideViews(object):
             dbsession.flush()
 
             # Add an after-commit hook to update the ride's weather data
-            self.request.tm.get().addAfterCommitHook(
-                submit_update_ride_weather_task,args=[ride.id])
+            from ..processing.weather import update_ride_weather
+            update_weather_task=update_ride_weather.delay(ride.id)
 
             url = self.request.route_url('rides')
-            return HTTPFound(url)
+            return HTTPFound(
+                url,
+                content_type='application/json',
+                charset='',
+                text=json.dumps(
+                    {'ride_id':ride.id,
+                     'update_weather_task_id':update_weather_task.task_id}))
 
         return dict(form=form)
 
