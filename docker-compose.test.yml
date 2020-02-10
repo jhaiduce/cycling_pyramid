@@ -94,9 +94,6 @@ secrets:
     file: ./server-cert.pem
   mysql_key:
     file: ./server-key.pem
-volumes:
-  cycling-data:
-  mysql-data:
 configs:
   mysql-config-cycling.4:
     file: ./mysql-config-cycling.cnf
