@@ -478,3 +478,17 @@ class FunctionalTests(unittest.TestCase):
         ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
         res=self.testapp.get(url)
         self.assertEqual(res.status_code,200)
+
+    def test_equipment_table(self):
+        self.login()
+        res=self.testapp.get('http://localhost/equipment/list')
+        self.assertEqual(res.status_code,200)
+        count=int(re.search(r'(\d+) total',res.text).group(1))
+        self.assertGreaterEqual(count,0)
+
+    def test_locations_table(self):
+        self.login()
+        res=self.testapp.get('http://localhost/locations/list')
+        self.assertEqual(res.status_code,200)
+        count=int(re.search(r'(\d+) total locations',res.text).group(1))
+        self.assertGreaterEqual(count,0)
