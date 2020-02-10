@@ -40,6 +40,7 @@ services:
       dockerfile: Dockerfile
     image: jhaiduce/cycling-pyramid
     container_name: cycling_test_cycling_web
+    command: ["/app/pyramid_cold_start.sh"]
     secrets:
       - source: integration_test.ini
         target: /run/secrets/production.ini
