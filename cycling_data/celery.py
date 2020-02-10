@@ -39,7 +39,6 @@ def bootstrap_pyramid(signal, sender, **kwargs):
         except sqlalchemy.exc.OperationalError:
             import time
             print("Connection failed. Sleeping.")
-            conn.close()
             time.sleep(2)
             continue
         
