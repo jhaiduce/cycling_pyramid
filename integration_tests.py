@@ -2,6 +2,9 @@ import unittest
 from unittest.mock import patch
 import requests
 import configparser
+import json
+from cycling_data.celery import celery
+from celery import Celery
 
 class BaseTest(unittest.TestCase):
 
@@ -38,6 +41,79 @@ class BaseTest(unittest.TestCase):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         ride_count=int(re.search(r'(\d+) total rides',resp.text).group(1))
 
+        # Add locations for ride
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
+                name='Home',
+                __start__='coordinates:mapping',
+                lat='42.397',
+                lon='-83.095',
+                elevation='198',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='1',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
+                name='Work',
+                __start__='coordinates:mapping',
+                lat='42.509',
+                lon='-83.233',
+                elevation='198',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='1',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
+                name='KDTW',
+                __start__='coordinates:mapping',
+                lat='42.231',
+                lon='-83.331',
+                elevation='192.3',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='2',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
+                name='KONZ',
+                __start__='coordinates:mapping',
+                lat='42.1',
+                lon='-83.167',
+                elevation='180.0',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='2',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
         resp=self.session.post(
             'http://cycling_test_cycling_web/rides/add',
             data=dict(
@@ -58,8 +134,34 @@ class BaseTest(unittest.TestCase):
             )
         )
 
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        # Parse metadata sent with redirect response
+        submission_metadata=json.loads(resp.history[0].text)
+        ride_id=submission_metadata['ride_id']
+        update_weather_task_id=submission_metadata['update_weather_task_id']
+
+        # Check redirect URL
+        self.assertEqual(
+            resp.history[0].headers['Location'],
+            'http://cycling_test_cycling_web/rides')
+
+        # Check that the ride shows up in the rides table
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         ride_count_after=int(re.search(r'(\d+) total rides',resp.text).group(1))
+
+        # Wait for update_ride_weather task to complete
+        from celery.result import AsyncResult
+        task_result=AsyncResult(update_weather_task_id,app=celery)
+        task_result.wait(10)
+
+        # Check ride details page
+        resp=self.session.get('http://cycling_test_cycling_web/rides/{:d}/details'.format(ride_id))
+        self.assertEqual(resp.status_code,200)
+        print(resp.text)
+        p=int(re.search(r'<td>(\d+) Pa</td>',resp.text).group(1))
+        self.assertEqual(p,1009)
 
         self.assertEqual(ride_count_after,ride_count+1)
 
