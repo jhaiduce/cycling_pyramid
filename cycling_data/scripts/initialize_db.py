@@ -101,7 +101,10 @@ def main(argv=sys.argv):
         if engine_admin.dialect.name!='sqlite':
             if args.delete_existing:
                 conn=engine_admin.connect()
-                conn.execute('drop database cycling')
+                try:
+                    conn.execute('drop database cycling')
+                except OperationalError:
+                    pass
             create_database(engine_admin,settings)
             
         import transaction
