@@ -2,6 +2,7 @@ from pyramid.view import view_config
 import colander
 import deform.widget
 from pyramid.httpexceptions import HTTPFound
+import json
 from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
