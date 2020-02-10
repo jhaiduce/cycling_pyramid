@@ -5,6 +5,7 @@ import configparser
 import json
 from cycling_data.celery import celery
 from celery import Celery
+import re
 
 class BaseTest(unittest.TestCase):
 
@@ -37,7 +38,6 @@ class BaseTest(unittest.TestCase):
         self.assertGreater(resp.text.find('total rides'),0)
 
     def test_ride_add(self):
-        import re
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         ride_count=int(re.search(r'(\d+) total rides',resp.text).group(1))
 
@@ -174,3 +174,27 @@ class BaseTest(unittest.TestCase):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/login?next=http%3A%2F%2Fcycling_test_cycling_web%2Frides')
+
+    def test_equipment_list(self):
+        resp=self.session.get('http://cycling_test_cycling_web/rides')
+        equipment_count=int(re.search(r'(\d+) total',resp.text).group(1))
+        self.assertGreaterEqual(equipment_count,0)
+
+    def test_equipment_add(self):
+        resp=self.session.get('http://cycling_test_cycling_web/rides')
+        equipment_count=int(re.search(r'(\d+) total rides',resp.text).group(1))
+
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/rides/add',
+            data=dict(
+                name='Shiny new bike',
+                submit='submit'
+            )
+        )
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        # Check that equipment was added to the list
+        resp=self.session.get('http://cycling_test_cycling_web/rides')
+        equipment_count=int(re.search(r'(\d+) total',resp.text).group(1))
