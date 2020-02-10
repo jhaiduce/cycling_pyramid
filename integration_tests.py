@@ -161,7 +161,8 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(resp.status_code,200)
         print(resp.text)
         p=int(re.search(r'<td>(\d+) Pa</td>',resp.text).group(1))
-        self.assertEqual(p,1009)
+        self.assertGreater(p,1007)
+        self.assertLess(p,1011)
 
         self.assertEqual(ride_count_after,ride_count+1)
 
