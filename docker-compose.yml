@@ -49,17 +49,21 @@ services:
     command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]
     container_name: cycling_stack_worker
     secrets:
-      - source: production.ini.6
+      - source: production.ini.12
         target: /run/secrets/production.ini
     logging:
       driver: journald
   rabbitmq:
     image: rabbitmq
     container_name: cycling_stack_rabbitmq
-    ports:
-      - 5672:5672
+    environment:
+      RABBITMQ_DEFAULT_USER: cycling
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/cycling_rabbitmq_password
     logging:
       driver: journald
+    secrets:
+      - source: cycling_rabbitmq_password.2
+        target: cycling_rabbitmq_password
   redis:
     image: redis
     container_name: cycling_stack_redis
@@ -84,6 +88,8 @@ secrets:
     file: ./server-cert.pem
   mysql_key:
     file: ./server-key.pem
+  cycling_rabbitmq_password.2:
+    file: ./cycling_rabbitmq_password
 volumes:
   cycling-data:
   mysql-data:
