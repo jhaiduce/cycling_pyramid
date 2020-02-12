@@ -123,7 +123,7 @@ def main(argv=sys.argv):
                 create_admin_user(dbsession,settings)
 
 
-            add_loctype_if_not_exists(dbsession,1,'')
+            add_loctype_if_not_exists(dbsession,1,None)
             add_loctype_if_not_exists(dbsession,2,'weather station')
 
     except OperationalError:
