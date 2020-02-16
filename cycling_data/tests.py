@@ -318,7 +318,8 @@ class MetarTests(BaseTest):
         fetch_metars.assert_called_with(
             'KDCA',
             dtstart-window_expansion,
-            dtend+window_expansion
+            dtend+window_expansion,
+            url='https://www.ogimet.com/display_metars2.php'
         )
 
         self.session.expire_on_commit=False
@@ -328,7 +329,8 @@ class MetarTests(BaseTest):
         fetch_metars.assert_called_with(
             'KDCA',
             dtstart-window_expansion,
-            dtend+window_expansion
+            dtend+window_expansion,
+            url='https://www.ogimet.com/display_metars2.php'
         )
 
         for key in MetarTests.ride_average_weather.keys():

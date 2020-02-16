@@ -70,8 +70,15 @@ def download_metars(station,dtstart,dtend):
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
+    from pyramid.paster import bootstrap
+    try:
+        settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+        ogimet_url=settings['ogimet_url']
+    except:
+        ogimet_url='https://www.ogimet.com/display_metars2.php'
+
     # Download METARs
-    ogimet_text=fetch_metars(station,dtstart,dtend)
+    ogimet_text=fetch_metars(station,dtstart,dtend,url=ogimet_url)
 
     if(ogimet_text.startswith('#Sorry')):
         raise ValueError('OGIMET quota limit reached')
