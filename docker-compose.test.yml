@@ -18,6 +18,10 @@ services:
       driver: journald
     ports:
       - 8082:80
+    volumes:
+      - type: bind
+        source: ./ogimet-cache
+        target: /app/ogimet-cache
   db:
     image: mariadb
     container_name: cycling_test_db
