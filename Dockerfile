@@ -37,6 +37,7 @@ RUN pip3 install --trusted-host pypi.python.org -e .
 
 COPY pyramid_start.sh /app
 COPY pyramid_cold_start.sh /app
+COPY celery_healthcheck.py /app
 
 EXPOSE 80
 
@@ -50,5 +51,7 @@ RUN apk add libcap
 RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/python3.6
 
 USER appuser
+
+HEALTHCHECK CMD curl --fail http://localhost/ || exit 1
 
 CMD ["/app/pyramid_start.sh"]
