@@ -9,6 +9,15 @@ services:
         target: /run/secrets/production.ini
     links:
       - cycling_web
+  fake_ogimet:
+    build:
+      context: .
+      dockerfile: Dockerfile.fake_ogimet
+    container_name: fake_ogimet
+    logging:
+      driver: journald
+    ports:
+      - 8082:80
   db:
     image: mariadb
     container_name: cycling_test_db
@@ -65,6 +74,7 @@ services:
     links:
       - rabbitmq
       - redis
+      - fake_ogimet
   rabbitmq:
     image: rabbitmq
     container_name: cycling_test_rabbitmq

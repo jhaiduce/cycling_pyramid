@@ -1,0 +1,4 @@
+pyramid==1.10.2
+waitress==1.4.3
+WebOb==1.8.5
+requests==2.21.0
