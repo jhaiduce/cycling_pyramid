@@ -37,7 +37,11 @@
 <td>{{ride.distance}}</td>
 <td>{{ride.rolling_time}}</td>
 <td>{{ride.total_time}}</td>
-<td>{{ride.avspeed}}</td>
+<td>{% if ride.avspeed is not none %}
+       {{'{:0.2f}'.format(ride.avspeed)}}
+    {% elif ride.average_speed is not none %}
+       {{'({:0.2f})'.format(ride.average_speed)}}
+    {% else %} - {% endif %}</td>
 <td>{{ride.equipment.name}}</td>
 <td>{{ride.ridergroup.name}}</td>
 </tr>

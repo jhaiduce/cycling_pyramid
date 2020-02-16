@@ -295,6 +295,13 @@ class Ride(Base):
     wxdata=relationship('RideWeatherData')
 
     @property
+    def average_speed(self):
+        if self.avspeed:
+            return self.avspeed
+        elif self.distance and self.rolling_time:
+            return self.distance/self.rolling_time.total_seconds()*3600
+
+    @property
     def start_timezone(self):
 
         if not self.start_timezone_:
