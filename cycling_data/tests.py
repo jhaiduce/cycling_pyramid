@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from pyramid import testing
 
@@ -8,6 +8,13 @@ import pytest
 import transaction
 
 import re
+
+import json
+
+from datetime import datetime, timedelta
+
+update_ride_weather_mock_result=Mock()
+update_ride_weather_mock_result.task_id=''
 
 def dummy_request(dbsession):
     return testing.DummyRequest(dbsession=dbsession)
@@ -472,13 +479,85 @@ class FunctionalTests(unittest.TestCase):
         res=self.testapp.get(url)
         self.assertEqual(res.status_code,200)
 
-    def test_ride_add(self):
+    @patch('cycling_data.processing.weather.update_ride_weather.delay',return_value=update_ride_weather_mock_result)
+    def test_ride_addedit(self,update_ride_weather):
         self.login()
         from .models import Ride
         session=self.get_session()
-        url='http://localhost/rides/{}/details'.format(self.ride_id)
-        ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
-        res=self.testapp.get(url)
+        add_url='http://localhost/rides/add'
+        edit_url='http://localhost/rides/{}/edit'
+        res=self.testapp.post(
+            add_url,
+            params=dict(
+                start_time='2005-01-01 10:00:00',
+                end_time='2005-01-01 10:15:00',
+                total_time='00:15:00',
+                rolling_time='00:12:00',
+                distance='7',
+                odometer='357',
+                avspeed='28',
+                maxspeed='40',
+                equipment='0',
+                ridergroup='0',
+                surface='0',
+                submit='submit',
+                startloc='Home',
+                endloc='Work'
+            )
+        )
+        self.assertEqual(res.status_code,302)
+        created_ride_id=json.loads(res.text)['ride_id']
+        created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
+        self.assertEqual(created_ride.equipment_id,0)
+        self.assertEqual(created_ride.surface_id,0)
+        self.assertEqual(created_ride.startloc.name,'Home')
+        self.assertEqual(created_ride.endloc.name,'Work')
+        self.assertEqual(created_ride.total_time,timedelta(minutes=15))
+        self.assertEqual(created_ride.rolling_time,timedelta(minutes=12))
+        self.assertEqual(created_ride.start_time,datetime(2005,1,1,10))
+        self.assertEqual(created_ride.end_time,datetime(2005,1,1,10,15))
+
+        res=self.testapp.get(
+            edit_url.format(created_ride.id)
+            )
+
+        self.assertEqual(res.status_code,200)
+
+        res=self.testapp.post(
+            add_url,
+            params=dict(
+                start_time='2005-01-01 10:00:00',
+                end_time='2005-01-01 10:15:00',
+                total_time='',
+                rolling_time='00:12:00',
+                distance='7',
+                odometer='357',
+                avspeed='28',
+                maxspeed='40',
+                equipment='0',
+                ridergroup='0',
+                surface='0',
+                submit='submit',
+                startloc='Home',
+                endloc='Work'
+            )
+        )
+        self.assertEqual(res.status_code,302)
+        created_ride_id=json.loads(res.text)['ride_id']
+        created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
+        self.assertEqual(created_ride.equipment_id,0)
+        self.assertEqual(created_ride.surface_id,0)
+        self.assertEqual(created_ride.startloc.name,'Home')
+        self.assertEqual(created_ride.endloc.name,'Work')
+        self.assertEqual(created_ride.total_time,None)
+        self.assertEqual(created_ride.rolling_time,timedelta(minutes=12))
+        self.assertEqual(created_ride.start_time,datetime(2005,1,1,10))
+        self.assertEqual(created_ride.end_time,datetime(2005,1,1,10,15))
+
+        res=self.testapp.get(
+            edit_url.format(created_ride.id)
+            )
+
         self.assertEqual(res.status_code,200)
 
     def test_equipment_table(self):
