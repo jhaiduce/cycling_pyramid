@@ -197,4 +197,6 @@ class BaseTest(unittest.TestCase):
 
         # Check that equipment was added to the list
         resp=self.session.get('http://cycling_test_cycling_web/rides')
-        equipment_count=int(re.search(r'(\d+) total',resp.text).group(1))
+        new_equipment_count=int(re.search(r'(\d+) total',resp.text).group(1))
+
+        self.assertEqual(new_equipment_count,equipment_count+1)
