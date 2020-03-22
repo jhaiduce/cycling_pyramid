@@ -63,7 +63,7 @@ services:
       resources:
         reservations:
           memory: 600M
-    command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]
+    command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--concurrency","1","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/bin/python3","/app/celery_healthcheck.py"]
     container_name: cycling_stack_worker
