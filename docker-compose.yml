@@ -36,8 +36,6 @@ services:
     deploy:
       replicas: 2
     container_name: cycling_stack_cycling_web
-    ports:
-      - "80:80"
     secrets:
       - source: production.ini.6
         target: /run/secrets/production.ini
@@ -75,6 +73,31 @@ services:
     container_name: cycling_stack_redis
     logging:
       driver: journald
+    deploy:
+      resources:
+        reservations:
+          memory: 100M
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    configs:
+      - source: nginx-conf-cycling
+        target: /etc/nginx/conf.d/cycling.conf
+      - source: nginx-conf-common
+        target: /etc/nginx/common.conf
+      - source: nginx-conf-common-location
+        target: /etc/nginx/conf.d/common-location.conf
+      - source: nginx-conf-ssl
+        target: /etc/nginx/ssl.conf
+    secrets:
+      - source: ssl_certificate
+        target: /etc/ssl/private/fullchain.pem
+      - source: ssl_certificate_key
+        target: /etc/ssl/private/privkey.pem
+      - source: dhparams
+        target: /etc/nginx/dhparams.pem
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
@@ -96,9 +119,23 @@ secrets:
     file: ./server-key.pem
   cycling_rabbitmq_password.2:
     file: ./cycling_rabbitmq_password
+  dhparams:
+    file: nginx/dhparams.pem
+  ssl_certificate:
+    file: ./nginx/ssl/fullchain.pem
+  ssl_certificate_key:
+    file: ./nginx/ssl/privkey.pem
 volumes:
   cycling-data:
   mysql-data:
 configs:
   mysql-config-cycling.4:
     file: ./mysql-config-cycling.cnf
+  nginx-conf-cycling:
+    file: ./nginx/cycling.conf
+  nginx-conf-common:
+    file: ./nginx/common.conf
+  nginx-conf-common-location:
+    file: ./nginx/common_location.conf
+  nginx-conf-ssl:
+    file: nginx/ssl.conf
