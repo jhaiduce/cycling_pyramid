@@ -48,7 +48,7 @@ RUN addgroup --system appuser && \
 
 RUN apk add libcap
 
-RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/python3.6
+RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/python3.8
 
 USER appuser
 
