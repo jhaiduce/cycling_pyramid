@@ -1,4 +1,9 @@
 version: '3.7'
+networks:
+  default:
+    driver: overlay
+    driver_opts:
+      encrypted: ""
 services:
   db:
     image: mariadb
