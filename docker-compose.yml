@@ -8,6 +8,10 @@ services:
   db:
     image: mariadb
     container_name: cycling_stack_db
+    deploy:
+      resources:
+        reservations:
+          memory: 200M
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     volumes:
@@ -40,6 +44,9 @@ services:
     image: jhaiduce/cycling-pyramid
     deploy:
       replicas: 2
+      resources:
+        reservations:
+          memory: 600M
     container_name: cycling_stack_cycling_web
     secrets:
       - source: production.ini.6
@@ -53,6 +60,9 @@ services:
     image: jhaiduce/cycling-pyramid
     deploy:
       replicas: 2
+      resources:
+        reservations:
+          memory: 600M
     command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/bin/python3","/app/celery_healthcheck.py"]
@@ -65,6 +75,10 @@ services:
   rabbitmq:
     image: rabbitmq
     container_name: cycling_stack_rabbitmq
+    deploy:
+      resources:
+        reservations:
+          memory: 200M
     environment:
       RABBITMQ_DEFAULT_USER: cycling
       RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/cycling_rabbitmq_password
