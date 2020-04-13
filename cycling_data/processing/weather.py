@@ -359,17 +359,18 @@ def update_ride_weather(ride_id):
 
     metars=fetch_metars_for_ride(dbsession,ride)
 
-    dtstart,dtend=ride_times_utc(ride)
-    altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
-    averages=average_weather(metars,dtstart,dtend,altitude)
-    logger.debug('Ride weather average values: {}'.format(averages))
-    if len(averages)>0:
-        if ride.wxdata is None:
-            ride.wxdata=RideWeatherData()
-        ride.wxdata.station=metars[0].station
-        for key,value in averages.items():
-            setattr(ride.wxdata,key,value)
+    if len(metars)>0:
+        dtstart,dtend=ride_times_utc(ride)
+        altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
+        averages=average_weather(metars,dtstart,dtend,altitude)
+        logger.debug('Ride weather average values: {}'.format(averages))
+        if len(averages)>0:
+            if ride.wxdata is None:
+                ride.wxdata=RideWeatherData()
+                ride.wxdata.station=metars[0].station
+            for key,value in averages.items():
+                setattr(ride.wxdata,key,value)
 
-    transaction.commit()
+        transaction.commit()
 
     return ride_id
