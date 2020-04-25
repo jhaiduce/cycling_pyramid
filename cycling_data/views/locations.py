@@ -137,7 +137,7 @@ class LocationViews(object):
             remarks=location.remarks or '',
             loctype=location.loctype_id,
             coordinates=dict(
-                lat=location.lat,lon=location.lon
+                lat=location.lat,lon=location.lon,elevation=location.elevation
             )
         ))
 
