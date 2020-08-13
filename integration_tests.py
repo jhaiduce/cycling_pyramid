@@ -159,7 +159,6 @@ class BaseTest(unittest.TestCase):
         # Check ride details page
         resp=self.session.get('http://cycling_test_cycling_web/rides/{:d}/details'.format(ride_id))
         self.assertEqual(resp.status_code,200)
-        print(resp.text)
         p=int(re.search(r'<td>(\d+) Pa</td>',resp.text).group(1))
         self.assertGreater(p,1007)
         self.assertLess(p,1011)
