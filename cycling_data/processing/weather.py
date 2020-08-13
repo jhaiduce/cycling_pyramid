@@ -13,7 +13,7 @@ import transaction
 import requests
 
 def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metars2.php'):
-    
+
     params={
         'lang':'en',
         'lugar':station,

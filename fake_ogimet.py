@@ -15,7 +15,7 @@ class ogimet_proxy(object):
         if os.path.isfile('ogimet-cache.json'):
             with open(self.cache_file,'r') as fh:
                 stored_cache=json.load(fh)
-                
+
                 for item in stored_cache:
                     self.cache[frozenset(item['params'].items())]=item.text
 
@@ -24,7 +24,7 @@ class ogimet_proxy(object):
             stored_cache=[{'params':dict(params),'text':text}
                           for params,text in self.cache.items()]
             json.dump(stored_cache,fh,indent=4)
-    
+
     def ogimet_request(self,request):
         import requests
 
