@@ -155,3 +155,6 @@ p {
 table.data_table th, td {
     padding: 6px;
 }
+.bg-dark{
+  background-color: #941a27 !important;
+}
