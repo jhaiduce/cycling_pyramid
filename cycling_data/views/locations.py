@@ -12,6 +12,8 @@ from .showtable import SqlalchemyOrmPage
 # Make Deform widgets aware of our widget template paths
 configure_zpt_renderer(["cycling_data:templates"])
 
+from .header import view_with_header
+
 @colander.deferred
 def get_loctype_widget(node, kw):
 
@@ -143,6 +145,7 @@ class LocationViews(object):
 
         return dict(form=form)
 
+    @view_with_header
     @view_config(route_name='locations_table', renderer='../templates/location_table.jinja2')
     def location_table(self):
 

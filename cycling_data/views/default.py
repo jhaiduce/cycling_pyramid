@@ -5,15 +5,17 @@ from sqlalchemy.exc import DBAPIError
 
 from .. import models
 
+from .header import view_with_header
 
-@view_config(route_name='home', renderer='../templates/mytemplate.jinja2')
-def my_view(request):
-    try:
-        query = request.dbsession.query(models.cycling_models.Location)
-        one = query.filter(models.cycling_models.Location == 'KARB').first()
-    except DBAPIError:
-        return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'one': one, 'project': 'cycling_data'}
+class default_views(object):
+
+    def __init__(self,request):
+        self.request=request
+
+    @view_with_header
+    @view_config(route_name='home', renderer='../templates/mytemplate.jinja2')
+    def my_view(self):
+        return {'project': 'cycling_data'}
 
 
 db_err_msg = """\

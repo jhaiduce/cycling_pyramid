@@ -11,7 +11,7 @@
     <title>Cycling database</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
     <!-- Custom styles for this scaffold -->
     <link href="{{request.static_url('cycling_data:static/theme.css')}}" rel="stylesheet">
@@ -23,16 +23,39 @@
     <![endif]-->
     <!-- Bootstrap core JavaScript
     ================================================== -->
-    <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="//code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     {% block page_includes %}
     {% endblock page_includes %}
     
   </head>
 
   <body>
+	{% if show_header %}
+	<header class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top white double-nav scrolling-navbar">
 
-    <div class="starter-template">
+	  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+	    <span class="navbar-toggler-icon"></span>
+	  </button>
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+
+	    <ul class="navbar-nav mr-auto">
+	      <li class="nav-link">
+		<a class="nav-link active" href="/rides">Rides</a>
+	      </li>
+	      <li class="nav-link">
+		<a class="nav-link active" href="/locations/list">Locations</a>
+	      </li>
+	    </ul>
+	  </div>
+
+	</header>
+
+	{% endif %}
+
+    <div class="starter-template" style="margin:0px; padding-top:80px; width:100vw; height:100vh; overflow:auto;">
       <div class="container">
         <div class="row">
           <div class="col-md-12">

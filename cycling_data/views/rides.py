@@ -12,6 +12,8 @@ from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Lo
 import logging
 log = logging.getLogger(__name__)
 
+from .header import view_with_header
+
 def submit_update_ride_weather_task(success,ride_id):
 
     from ..processing.weather import update_ride_weather
@@ -168,6 +170,7 @@ class RideViews(object):
             )
         return deform.Form(schema,buttons=['submit'])
 
+    @view_with_header
     @view_config(route_name='rides', renderer='../templates/ride_table.jinja2')
     def ride_table(self):
 
@@ -275,6 +278,7 @@ class RideViews(object):
 
         return dict(form=form)
 
+    @view_with_header
     @view_config(route_name='ride_details', renderer='../templates/ride_details.jinja2')
     def ride_details(self):
 
