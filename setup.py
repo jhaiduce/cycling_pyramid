@@ -113,6 +113,7 @@ setup(
         ],
         'console_scripts': [
             'initialize_cycling_data_db=cycling_data.scripts.initialize_db:main',
+            'regression_test=cycling_data.scripts.regression_test:main',
             'import_from_old_db=cycling_data.scripts.import_from_old_db:main',
             'plot_speed_deltas=cycling_data.scripts.plot_speed_deltas:main',
             'plot_odometer_deltas=cycling_data.scripts.plot_odometer_deltas:main',
