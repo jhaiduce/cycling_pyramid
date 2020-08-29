@@ -17,7 +17,7 @@ chardet==3.0.4
 colander==1.7.0
 coverage==4.5.3
 cycler==0.10.0
-git+https://github.com/jhaiduce/cycling_pyramid.git@11d3a729581bdc6cf58ec5bd31bc36338d808d30#egg=cycling_data
+git+https://github.com/jhaiduce/cycling_pyramid.git@777a44ff3f73763265b659606a939989b0b87db0
 deform==2.0.7
 gast==0.3.3
 google-auth==1.21.0
