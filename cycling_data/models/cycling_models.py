@@ -324,3 +324,43 @@ class Ride(Base):
     @end_timezone.setter
     def end_timezone(self,value):
         self.end_timezone_=value
+
+    @property
+    def grade(self):
+        if self.distance is None or \
+           self.startloc is None or self.endloc is None:
+            return None
+        distance_m=self.distance/1000
+        return (self.endloc.elevation-self.startloc.elevation)/distance_m
+
+    @property
+    def azimuth(self):
+        """
+        Azimuth from self.startloc to self.endloc
+        """
+
+        if self.startloc is None or self.endloc is None:
+            return None
+
+        from math import atan2
+
+        return atan2(self.endloc.lon - self.startloc.lon,
+                     self.endloc.lat - self.startloc.lat)
+
+    @property
+    def tailwind(self):
+        from math import cos
+
+        if self.azimuth is None or self.wxdata.winddir is None:
+            return None
+
+        return cos((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
+
+    @property
+    def crosswind(self):
+        from math import sin
+
+        if self.azimuth is None or self.wxdata.winddir is None:
+            return None
+
+        return sin((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
