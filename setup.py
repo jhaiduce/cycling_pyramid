@@ -26,7 +26,7 @@ requires = [
     'zope.sqlalchemy',
     'deform',
     'paginate',
-    'bokeh',
+    'plotly',
     'bcrypt',
     'marshmallow-sqlalchemy',
     'metar',

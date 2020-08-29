@@ -179,15 +179,15 @@ class RideViews(object):
         page=SqlalchemyOrmPage(rides,page=current_page,items_per_page=30)
         return dict(rides=rides,page=page)
 
+    @view_with_header
     @view_config(route_name='rides_scatter', renderer='../templates/rides_scatter.jinja2')
     def rides_scatter(self):
     
-        from bokeh.plotting import figure
-        from bokeh.embed import components
+        import plotly
         
         xvar=self.request.params.get('x','start_time')
         yvar=self.request.params.get('y','avspeed')
-        
+
         computed_vars=['avspeed_est']
         
         # List of valid variable names
@@ -230,19 +230,31 @@ class RideViews(object):
         x=df[xvar]
         y=df[yvar]
 
-        bokeh_kwargs={}
-        if xvar in ('start_time','end_time'):
-            bokeh_kwargs['x_axis_type']='datetime'
-        if yvar in ('start_time','end_time'):
-            bokeh_kwargs['y_axis_type']='datetime'
-            
-        plot=figure(**bokeh_kwargs)
+        graphs=[
+            {
+                'data':[{
+                    'x':x,
+                    'y':y,
+                    'type':'scatter',
+                    'mode':'markers',
+                    'marker':{
+                        'size':4
+                    }
+                }],
+                'config':{'responsive':True}
+            }
+        ]
         
-        plot.circle(x,y)
-        
-        bokeh_script,bokeh_div=components(plot)
-        
-        return dict(bokeh_script=bokeh_script,bokeh_div=bokeh_div)
+        # Add "ids" to each of the graphs to pass up to the client
+        # for templating
+        ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
+
+        # Convert the figures to JSON
+        # PlotlyJSONEncoder appropriately converts pandas, datetime, etc
+        # objects to their JSON equivalents
+        graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+
+        return {'graphJSON':graphJSON, 'ids':ids}
             
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
