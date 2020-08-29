@@ -26,6 +26,7 @@ RUN cd .. && rm -rf geos-3.6.0*
 RUN GEOS_CONFIG=/usr/bin/geos-config pip3 install shapely
 
 COPY requirements.txt /app
+RUN apk add git
 RUN pip3 install -r /app/requirements.txt
 COPY cycling_data /app/cycling_data
 COPY setup.py /app
