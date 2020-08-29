@@ -34,7 +34,10 @@ requires = [
     'mysqlclient',
     'celery',
     'tzwhere',
-    'redis'
+    'redis',
+    'tensorflow',
+    'keras',
+    'tensorflow-docs'
 ]
 
 import subprocess
