@@ -367,6 +367,9 @@ class Ride(Base):
     @property
     def start_timezone(self):
 
+        if self.startloc is None:
+            return None
+
         if not self.start_timezone_:
             self.start_timezone_=self.startloc.timezone
             
@@ -378,6 +381,9 @@ class Ride(Base):
 
     @property
     def end_timezone(self):
+
+        if self.endloc is None:
+            return None
 
         if not self.end_timezone_:
             self.end_timezone_=self.endloc.timezone
