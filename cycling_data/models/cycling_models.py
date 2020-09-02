@@ -81,7 +81,8 @@ class Location(Base):
     @property
     def timezone(self):
 
-        if self.timezone_ is None:
+        if self.timezone_ is None \
+           and self.lat is not None and self.lon is not None:
             self.timezone_ = tz.tzNameAt(self.lat,self.lon)
 
         return self.timezone_
