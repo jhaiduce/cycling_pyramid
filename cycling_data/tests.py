@@ -344,7 +344,8 @@ class MetarTests(BaseTest):
 
         for key in MetarTests.ride_average_weather.keys():
             self.assertEqual(getattr(ride.wxdata,key),
-                             MetarTests.ride_average_weather[key])
+                             MetarTests.ride_average_weather[key],
+                             'Discrepancy for key {}'.format(key))
 
 import webtest
 
