@@ -184,10 +184,17 @@ class StationWeatherData(WeatherData):
         }
 
     def weather_at_altitude(self,loc):
-        assert(isinstance(loc,Location))
+
+        from math import exp
+
+        if isinstance(loc,Location):
+            altitude=loc.elevation
+        else:
+            altitude=loc
+
         wx=self.copy()
-        wx.pressure=wx.pressure*math.exp(-loc.elevation/(wx.temperature*29.263))
-        wx.temperature=wx.temperature-(loc.elevation-wx.station.elevation)*6.4/1000
+        wx.pressure=wx.pressure*exp(-altitude/((wx.temperature+273.15)*29.263))
+        wx.temperature=wx.temperature-(altitude-wx.station.elevation)*6.4/1000
         return wx
 
     def copy(self):
