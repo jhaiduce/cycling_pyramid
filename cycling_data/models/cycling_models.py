@@ -160,8 +160,10 @@ class RideWeatherData(WeatherData):
             Integer, 
             ForeignKey('weatherdata.id',name='fk_weatherdata_rideweatherdata_id'),  
             primary_key=True)
+
     rain = Column(Float)
     snow = Column(Float)
+
     __mapper_args__ = {
         'polymorphic_identity':'rideweatherdata'
         }
