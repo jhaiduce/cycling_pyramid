@@ -11,7 +11,7 @@ from sqlalchemy import (
     Boolean,
     Interval
 )
-from sqlalchemy.ext.hybrid import hybrid_method
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
 
 from .meta import Base
@@ -247,8 +247,8 @@ class Ride(Base):
     id = Column(Integer, Sequence('ride_seq'), primary_key=True)
 
     # Date and time fields
-    start_time = Column(DateTime)
-    end_time = Column(DateTime)
+    start_time_ = Column('start_time',DateTime)
+    end_time_ = Column('end_time',DateTime)
     start_timezone_ = Column('start_timezone',String(255))
     end_timezone_ = Column('end_timezone',String(255))
 
@@ -303,6 +303,59 @@ class Ride(Base):
     wxdata_id = Column(Integer,
         ForeignKey('weatherdata.id',name='fk_weatherdata_ride_id'))
     wxdata=relationship('RideWeatherData')
+
+    @hybrid_property
+    def start_time(self):
+        import pytz
+
+        if self.start_time_ is None:
+            return None
+
+        if self.start_timezone:
+            return self.start_time_.replace(
+                tzinfo=pytz.timezone(self.start_timezone))
+        else:
+            return self.start_time_.replace(
+                tzinfo=pytz.timezone('UTC')
+            )
+
+    @start_time.setter
+    def start_time(self,new_start_time):
+        self.start_time_=new_start_time
+
+    @start_time.expression
+    def start_time(cls):
+        return cls.start_time_
+
+    @start_time.update_expression
+    def start_time(cls,new_start_time):
+        return [
+            (cls.start_time_, new_start_time)
+        ]
+
+    @hybrid_property
+    def end_time(self):
+        import pytz
+        if self.end_timezone:
+            return self.end_time_.replace(
+                tzinfo=pytz.timezone(self.end_timezone))
+        else:
+            return self.end_time_.replace(
+                tzinfo=pytz.timezone('UTC'))
+
+    @end_time.setter
+    def end_time(self,new_end_time):
+        self.end_time_=new_end_time
+
+    @end_time.update_expression
+    def end_time(cls,new_end_time):
+        return [
+            (cls.end_time_, new_end_time)
+        ]
+
+    @end_time.expression
+    def end_time(cls):
+        return cls.end_time_
 
     @property
     def average_speed(self):
