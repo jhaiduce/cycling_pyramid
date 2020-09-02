@@ -266,10 +266,12 @@ def average_weather(metars,dtstart,dtend,altitude):
             total_weights['gust']+=weights[1]
 
         if metars[i].temperature!=None:
-            values['temperature']+=metars[i].temperature*weights[0]
+            values['temperature']+=metars[i].weather_at_altitude(
+                altitude).temperature*weights[0]
             total_weights['temperature']+=weights[0]
         if metars[i+1].temperature!=None:
-            values['temperature']+=metars[i+1].temperature*weights[1]
+            values['temperature']+=metars[i+1].weather_at_altitude(
+                altitude).temperature*weights[1]
             total_weights['temperature']+=weights[1]
 
         if metars[i].dewpoint!=None:
@@ -281,17 +283,17 @@ def average_weather(metars,dtstart,dtend,altitude):
 
         if metars[i].pressure!=None and metars[i].temperature!=None:
             obs=metars[i]
-            pressure=obs.pressure*exp(-altitude/((obs.temperature+273.15)*29.263))
+            pressure=obs.weather_at_altitude(altitude).pressure
             values['pressure']+=pressure*weights[0]
             total_weights['pressure']+=weights[0]
         if metars[i+1].pressure!=None and metars[i+1].temperature!=None:
             obs=metars[i+1]
-            pressure=obs.pressure*exp(-altitude/((obs.temperature+273.15)*29.263))
+            pressure=obs.weather_at_altitude(altitude).pressure
             values['pressure']+=pressure*weights[1]
             total_weights['pressure']+=weights[1]
 
         if metars[i].temperature!=None and metars[i].dewpoint!=None:
-            temperature=metars[i].temperature
+            temperature=metars[i].weather_at_altitude(altitude).temperature
             vapres=6.1121*exp((18.678-temperature/234.5)*temperature/(temperature+257.14))
             dewpt=metars[i].dewpoint
             vapres_dew=6.1121*exp((18.678-dewpt/234.5)*dewpt/(dewpt+257.14))
@@ -299,7 +301,7 @@ def average_weather(metars,dtstart,dtend,altitude):
             values['relative_humidity']+=rh*weights[0]
             total_weights['relative_humidity']+=weights[0]
         if metars[i+1].temperature!=None and metars[i+1].dewpoint!=None:
-            temperature=metars[i+1].temperature
+            temperature=metars[i+1].weather_at_altitude(altitude).temperature
             vapres=6.1121*exp((18.678-temperature/234.5)*temperature/(temperature+257.14))
             dewpt=metars[i+1].dewpoint
             vapres_dew=6.1121*exp((18.678-dewpt/234.5)*dewpt/(dewpt+257.14))
