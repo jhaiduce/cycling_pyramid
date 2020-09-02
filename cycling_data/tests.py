@@ -13,6 +13,8 @@ import json
 
 from datetime import datetime, timedelta
 
+from pytz import timezone, UTC
+
 update_ride_weather_mock_result=Mock()
 update_ride_weather_mock_result.task_id=''
 
@@ -514,9 +516,13 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(created_ride.endloc.name,'Work')
         self.assertEqual(created_ride.total_time,timedelta(minutes=15))
         self.assertEqual(created_ride.rolling_time,timedelta(minutes=12))
-        self.assertEqual(created_ride.start_time,datetime(2005,1,1,10))
-        self.assertEqual(created_ride.end_time,datetime(2005,1,1,10,15))
-
+        self.assertEqual(created_ride.start_time,
+                         datetime(2005,1,1,10,
+                                  tzinfo=created_ride.start_time.tzinfo))
+        self.assertEqual(created_ride.end_time,
+                         datetime(
+                             2005,1,1,10,15,
+                             tzinfo=created_ride.end_time.tzinfo))
         res=self.testapp.get(
             edit_url.format(created_ride.id)
             )
@@ -551,8 +557,14 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(created_ride.endloc.name,'Work')
         self.assertEqual(created_ride.total_time,None)
         self.assertEqual(created_ride.rolling_time,timedelta(minutes=12))
-        self.assertEqual(created_ride.start_time,datetime(2005,1,1,10))
-        self.assertEqual(created_ride.end_time,datetime(2005,1,1,10,15))
+        self.assertEqual(created_ride.start_time,
+                         datetime(
+                             2005,1,1,10,
+                             tzinfo=created_ride.start_time.tzinfo))
+        self.assertEqual(created_ride.end_time,
+                         datetime(
+                             2005,1,1,10,15,
+                             tzinfo=created_ride.end_time.tzinfo))
 
         res=self.testapp.get(
             edit_url.format(created_ride.id)
