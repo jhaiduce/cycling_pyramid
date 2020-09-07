@@ -439,3 +439,81 @@ class Ride(Base):
             return None
 
         return sin((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
+
+    @property
+    def fraction_day(self):
+        from astral import LocationInfo
+        from astral.sun import sun
+        from datetime import timedelta, time, datetime
+
+        def location_to_locationinfo(loc):
+            return LocationInfo(
+                name=loc.name,
+                timezone=loc.timezone,
+                latitude=loc.lat,
+                longitude=loc.lon)
+
+        if self.startloc is not None:
+            loc=location_to_locationinfo(self.startloc)
+        elif self.endloc is not None:
+            loc=location_to_locationinfo(self.endloc)
+        else:
+            return None
+
+        if self.start_time is None or self.end_time is None:
+            return None
+
+        if self.end_time < self.start_time:
+            return None
+
+        numdays=(self.end_time.date()-self.start_time.date()).days+1
+
+        time_day=timedelta(0)
+        time_night=timedelta(0)
+
+        for i in range(numdays):
+
+            day=self.start_time.date()+timedelta(i)
+            daystart=datetime.combine(day,time(tzinfo=self.start_time.tzinfo))
+
+            s=sun(loc.observer,date=day)
+
+            # Portion of ride before sunrise
+            predawn_segment = (
+                min(max(s['sunrise'], self.start_time), self.end_time)
+                - max(self.start_time, daystart)
+            )
+
+            # Daytime part of ride
+            day_segment = (
+                max(min(s['sunset'], self.end_time),self.start_time) -
+                min(max(s['sunrise'], self.start_time), self.end_time)
+            )
+
+            # Part of ride after sunset
+            postdusk_segment = (
+                min(self.end_time, daystart + timedelta(1) ) -
+                max(min(s['sunset'], self.end_time), self.start_time)
+            )
+
+            if i>0 and i<numdays-1:
+                if abs((
+                        predawn_segment+day_segment+postdusk_segment
+                        -timedelta(1)
+                ).total_seconds()) > 5:
+                    raise ValueError('Segments do not fill day')
+
+            time_day+=day_segment
+            time_night+=predawn_segment+postdusk_segment
+
+        total_time = self.end_time - self.start_time
+        accounted_time = time_night + time_day
+
+        if abs((total_time - accounted_time).total_seconds()) > 5:
+            raise ValueError(
+                'Day/night times do not cover duration of ride.')
+
+        if total_time==timedelta(0):
+           return None
+
+        return time_day.total_seconds()/total_time.total_seconds()

@@ -52,6 +52,72 @@ class BaseTest(unittest.TestCase):
         transaction.abort()
         Base.metadata.drop_all(self.engine)
 
+class RideTests(unittest.TestCase):
+
+    def test_fraction_day(self):
+
+        from .models import Ride, Location
+        from datetime import datetime, timedelta
+        from pytz import timezone
+
+        melbourne=Location(
+            name='Melbourne',
+            lat=28.084,
+            lon=-80.608)
+
+        satellite_beach=Location(
+            name='Satellite Beach',
+            lat=28.176,
+            lon=-80.5901)
+
+        self.assertAlmostEqual(
+            Ride(start_time=datetime(
+                2016,8,20,10,15,
+                tzinfo=timezone('America/Detroit')),
+                 end_time=datetime(
+                     2016,8,20,10,45,
+                     tzinfo=timezone('America/Detroit')),
+                 startloc=melbourne,
+                 endloc=satellite_beach).fraction_day
+            ,
+            1
+        )
+
+        self.assertAlmostEqual(
+            Ride(start_time=datetime(
+                2016,8,20,10,15,
+                tzinfo=timezone('America/Detroit')),
+                 end_time=datetime(
+                     2016,8,22,10,45,
+                     tzinfo=timezone('America/Detroit')),
+                 startloc=melbourne,
+                 endloc=satellite_beach).fraction_day
+            ,
+            0.5454636626
+        )
+
+        self.assertAlmostEqual(
+            Ride(start_time=datetime(
+                2016,8,20,2,30,
+                tzinfo=timezone('America/Detroit')),
+                 end_time=datetime(
+                     2016,8,20,3,30,
+                     tzinfo=timezone('America/Detroit')),
+                 startloc=melbourne,
+                 endloc=satellite_beach).fraction_day,
+            0
+        )
+
+        self.assertIsNone(
+            Ride(start_time=datetime(
+                2016,8,20,2,30,
+                tzinfo=timezone('America/Detroit')),
+                 end_time=datetime(
+                     2016,8,19,3,30,
+                     tzinfo=timezone('America/Detroit')),
+                 startloc=melbourne,
+                 endloc=satellite_beach).fraction_day
+        )
 
 class RideViewTests(BaseTest):
 

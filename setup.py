@@ -37,7 +37,8 @@ requires = [
     'redis',
     'tensorflow',
     'keras',
-    'tensorflow-docs'
+    'tensorflow-docs',
+    'astral'
 ]
 
 import subprocess
