@@ -368,7 +368,10 @@ class Ride(Base):
     def start_timezone(self):
 
         if self.startloc is None:
-            return None
+            if self.endloc is not None:
+                return self.end_timezone
+            else:
+                return None
 
         if not self.start_timezone_:
             self.start_timezone_=self.startloc.timezone
@@ -383,7 +386,10 @@ class Ride(Base):
     def end_timezone(self):
 
         if self.endloc is None:
-            return None
+            if self.start_timezone is not None:
+                return self.start_timezone
+            else:
+                return None
 
         if not self.end_timezone_:
             self.end_timezone_=self.endloc.timezone
