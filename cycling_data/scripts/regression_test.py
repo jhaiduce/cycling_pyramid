@@ -19,10 +19,13 @@ def regress(dbsession):
     import tensorflow_docs as tfdocs
     import tensorflow_docs.plots
     import tensorflow_docs.modeling
+    import numpy as np
 
     # Fetch the data
     rides=dbsession.query(Ride)
     dataset=pd.read_sql_query(rides.statement,rides.session.bind)
+
+    dataset['fraction_day']=[ride.fraction_day for ride in rides]
 
     dataset['grade']=[ride.grade for ride in rides]
 
@@ -32,11 +35,20 @@ def regress(dbsession):
 
     dataset['temperature']=[ride.wxdata.temperature for ride in rides]
 
-    print(dataset.tail())
+    dataset['pressure']=[ride.wxdata.pressure for ride in rides]
 
-    print(dataset.columns)
+    dataset['rain']=[ride.wxdata.rain for ride in rides]
 
-    print(dataset.ridergroup_id.tail())
+    dataset['snow']=[ride.wxdata.snow for ride in rides]
+
+    dataset['startlat']=[ride.startloc.lat if ride.startloc else None
+                         for ride in rides]
+    dataset['endlat']=[ride.endloc.lat if ride.endloc else None
+                       for ride in rides]
+    dataset['startlon']=[ride.startloc.lon if ride.startloc else None
+                         for ride in rides]
+    dataset['endlon']=[ride.endloc.lon if ride.endloc else None
+                       for ride in rides]
 
     ridergroups=dbsession.query(RiderGroup)
     surfacetypes=dbsession.query(SurfaceType)
@@ -61,7 +73,7 @@ def regress(dbsession):
 
     predict_columns=['avspeed']
 
-    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature']]
+    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon']]
 
     dataset=pd.get_dummies(dataset, prefix='', prefix_sep='')
 
