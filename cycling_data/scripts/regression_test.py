@@ -125,7 +125,8 @@ def regress(dbsession):
     EPOCHS=1000
 
     # The patience parameter is the amount of epochs to check for improvement
-    early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
+    early_stop = keras.callbacks.EarlyStopping(
+        monitor='val_loss', min_delta=1e-7, patience=200)
 
     history=model.fit(normed_train_data, train_labels,
                       epochs=EPOCHS, validation_split = 0.2, verbose = 0,
