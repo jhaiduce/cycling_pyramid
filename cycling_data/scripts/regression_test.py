@@ -153,9 +153,23 @@ def regress(dbsession):
 
     test_predictions = model.predict(normed_test_data).flatten()
 
+    yhat=model(normed_test_data.to_numpy())
+
+    test_predictions=yhat.mean().numpy().flatten()
+
+    test_errors=yhat.stddev().numpy().flatten()
+
+    plt.figure()
+    ax=plt.axes(aspect='equal')
+    plt.errorbar(test_labels['avspeed']-test_predictions,test_errors,linestyle='',marker='.',markersize=4,capsize=2)
+    lims=[-50,50]
+    plt.xlim(lims)
+    plt.ylim([0,lims[1]])
+    plt.plot([lims[0],0,lims[1]],[abs(lims[0]),0,abs(lims[1])])
+
     plt.figure()
     ax = plt.axes(aspect='equal')
-    plt.plot(test_labels, test_predictions,linestyle='',marker='.',markersize=1)
+    plt.errorbar(test_labels['avspeed'], test_predictions,yerr=test_errors,linestyle='',marker='.',markersize=4,capsize=2)
     plt.xlabel('True Values [km/h]')
     plt.ylabel('Predictions [km/h]')
     lims = [0, 50]
