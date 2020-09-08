@@ -104,6 +104,7 @@ def regress(dbsession):
         model = keras.Sequential([
             layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
             layers.Dense(64, activation='relu'),
+            layers.LeakyReLU(alpha=0.3),
             layers.Dense(1)
         ])
 
