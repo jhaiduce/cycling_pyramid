@@ -11,6 +11,8 @@ from ..models.cycling_models import Ride, RiderGroup, SurfaceType, Equipment
 def regress(dbsession):
 
     import tensorflow as tf
+    import tensorflow_probability as tfp
+    tfd = tfp.distributions
     from tensorflow import keras
     from tensorflow.keras import layers
     import pandas as pd
@@ -105,12 +107,17 @@ def regress(dbsession):
             layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
             layers.Dense(64, activation='relu'),
             layers.LeakyReLU(alpha=0.3),
-            layers.Dense(1)
+            layers.Dense(1 + 1),
+            tfp.layers.DistributionLambda(lambda t: tfd.Normal(
+                loc=t[..., :1],
+                scale=1e-3+tf.math.softplus(0.05 * t[...,1:]))),
         ])
 
-        optimizer = tf.keras.optimizers.RMSprop(0.001)
+        optimizer = tf.optimizers.Adam(learning_rate=0.05)
 
-        model.compile(loss='mse',
+        negloglik = lambda y, p_y: -p_y.log_prob(y)
+
+        model.compile(loss=negloglik,
                       optimizer=optimizer,
                       metrics=['mae', 'mse'])
         return model
@@ -118,7 +125,8 @@ def regress(dbsession):
     model=build_model()
 
     example_batch = normed_train_data[:10]
-    example_result = model.predict(example_batch)
+    example_result = model(example_batch.to_numpy())
+    assert isinstance(example_result, tfd.Distribution)
     print(example_result)
 
     print(model.summary())

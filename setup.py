@@ -38,7 +38,8 @@ requires = [
     'tensorflow',
     'keras',
     'tensorflow-docs',
-    'astral'
+    'astral',
+    'tensorflow-probability',
 ]
 
 import subprocess
