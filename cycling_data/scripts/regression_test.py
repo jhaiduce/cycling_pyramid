@@ -81,16 +81,16 @@ def regress(dbsession):
     test_dataset = dataset.drop(train_dataset.index)
 
     train_stats = train_dataset.describe()
-    train_stats.drop(columns=predict_columns)
+    train_stats = train_stats.drop(columns=predict_columns)
     train_stats = train_stats.transpose()
     print(train_stats)
 
     print(train_dataset.keys())
 
     train_labels=train_dataset[predict_columns]
-    train_dataset.drop(columns=predict_columns)
+    train_dataset = train_dataset.drop(columns=predict_columns)
     test_labels=test_dataset[predict_columns]
-    test_labels.drop(columns=predict_columns)
+    test_dataset=test_dataset.drop(columns=predict_columns)
 
     def norm(x):
         return (x - train_stats['mean']) / train_stats['std']
