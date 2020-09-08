@@ -61,8 +61,6 @@ def regress(dbsession):
     dataset['equipment']=dataset['equipment_id'].map({equipment.id:equipment.name for equipment in equipments})
 
     computed_avspeed=dataset.distance/dataset.rolling_time.dt.total_seconds()*3600
-    print('Max avspeed:',dataset.avspeed.max())
-
     pd.options.mode.use_inf_as_na = True
 
     dataset.avspeed.fillna(computed_avspeed,inplace=True)
@@ -79,8 +77,6 @@ def regress(dbsession):
 
     dataset.dropna(inplace=True)
 
-    print('Max avspeed:',dataset.avspeed.max())
-
     train_dataset = dataset.sample(frac=0.8,random_state=0)
     test_dataset = dataset.drop(train_dataset.index)
 
@@ -88,8 +84,6 @@ def regress(dbsession):
     train_stats.drop(columns=predict_columns)
     train_stats = train_stats.transpose()
     print(train_stats)
-
-    print(train_dataset.tail())
 
     print(train_dataset.keys())
 
