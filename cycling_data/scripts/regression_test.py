@@ -144,19 +144,27 @@ def regress(dbsession):
 
     test_predictions = model.predict(normed_test_data).flatten()
 
-    a = plt.axes(aspect='equal')
-    plt.scatter(test_labels, test_predictions)
+    plt.figure()
+    ax = plt.axes(aspect='equal')
+    plt.plot(test_labels, test_predictions,linestyle='',marker='.',markersize=1)
     plt.xlabel('True Values [km/h]')
     plt.ylabel('Predictions [km/h]')
     lims = [0, 50]
     plt.xlim(lims)
     plt.ylim(lims)
+    rsquared=np.corrcoef(test_labels.avspeed,test_predictions)[0,1]**2
+    plt.text(0.1,0.9,'$R^2$={:0.3f}'.format(rsquared), transform=ax.transAxes)
     _ = plt.plot(lims, lims)
+
+    m=keras.metrics.RootMeanSquaredError()
+    m.update_state(test_predictions,test_labels.avspeed)
+    mae=m.result().numpy()
 
     plt.figure()
     error = test_predictions - test_labels.avspeed
     plt.hist(error, bins = 200)
     plt.xlabel("Prediction Error [km/h]")
+    plt.text(0.1,0.9,'MAE={:0.3f}'.format(mae), transform=ax.transAxes)
     _ = plt.ylabel("Count")
 
     plt.show()
