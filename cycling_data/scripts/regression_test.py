@@ -196,7 +196,7 @@ def regress(dbsession):
     plt.figure()
     ax=plt.axes(aspect='equal')
     plt.errorbar(test_labels['avspeed']-test_predictions,test_errors,linestyle='',marker='.',markersize=4,capsize=2)
-    lims=[-50,50]
+    lims=[-30,30]
     plt.xlim(lims)
     plt.ylim([0,lims[1]])
     plt.plot([lims[0],0,lims[1]],[abs(lims[0]),0,abs(lims[1])])
