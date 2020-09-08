@@ -102,15 +102,44 @@ def regress(dbsession):
 
     print(normed_train_data.tail())
 
+    # Specify the surrogate posterior over `keras.layers.Dense` `kernel` and `bias`.
+    def posterior_mean_field(kernel_size, bias_size=0, dtype=None):
+        n = kernel_size + bias_size
+        c = np.log(np.expm1(1.))
+        return tf.keras.Sequential([
+            tfp.layers.VariableLayer(2 * n, dtype=dtype),
+            tfp.layers.DistributionLambda(lambda t: tfd.Independent(
+                tfd.Normal(loc=t[..., :n],
+                           scale=1e-5 + tf.nn.softplus(c + t[..., n:])),
+                reinterpreted_batch_ndims=1)),
+        ])
+
+    # Specify the prior over `keras.layers.Dense` `kernel` and `bias`.
+    def prior_trainable(kernel_size, bias_size=0, dtype=None):
+        n = kernel_size + bias_size
+        return tf.keras.Sequential([
+            tfp.layers.VariableLayer(n, dtype=dtype),
+            tfp.layers.DistributionLambda(lambda t: tfd.Independent(
+                tfd.Normal(loc=t, scale=1),
+                reinterpreted_batch_ndims=1)),
+        ])
+
     def build_model():
+        c=np.log(np.expm1(1.))
         model = keras.Sequential([
-            layers.Dense(64, activation='relu', input_shape=[len(train_dataset.keys())]),
-            layers.Dense(64, activation='relu'),
-            layers.LeakyReLU(alpha=0.3),
-            layers.Dense(1 + 1),
+            tfp.layers.DenseVariational(16,
+                                        posterior_mean_field, prior_trainable,
+                                        kl_weight=1/train_dataset.shape[0],
+                                        activation='relu'),
+            tfp.layers.DenseVariational(16,
+                                        posterior_mean_field,prior_trainable,
+                                        kl_weight=1/train_dataset.shape[0],
+                                        activation='relu'),
+            tfp.layers.DenseVariational(1+1, posterior_mean_field,prior_trainable,
+                                    kl_weight=1/train_dataset.shape[0]),
             tfp.layers.DistributionLambda(lambda t: tfd.Normal(
                 loc=t[..., :1],
-                scale=1e-3+tf.math.softplus(0.05 * t[...,1:]))),
+                scale=1e-5+tf.math.softplus(c * t[...,1:]))),
         ])
 
         optimizer = tf.optimizers.Adam(learning_rate=0.05)
@@ -153,11 +182,16 @@ def regress(dbsession):
 
     test_predictions = model.predict(normed_test_data).flatten()
 
-    yhat=model(normed_test_data.to_numpy())
+    yhats=[model(normed_test_data.to_numpy()) for _ in range(100)]
 
-    test_predictions=yhat.mean().numpy().flatten()
+    test_predictions=np.mean([yhat.mean().numpy().flatten() for yhat in yhats],axis=0)
 
-    test_errors=yhat.stddev().numpy().flatten()
+    test_errors=np.linalg.norm(
+        [
+            np.mean([yhat.stddev().numpy().flatten() for yhat in yhats],axis=0),
+            np.std([yhat.mean().numpy().flatten() for yhat in yhats],axis=0)
+        ],
+        axis=0)
 
     plt.figure()
     ax=plt.axes(aspect='equal')
