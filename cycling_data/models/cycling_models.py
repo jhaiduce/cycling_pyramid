@@ -517,3 +517,20 @@ class Ride(Base):
            return None
 
         return time_day.total_seconds()/total_time.total_seconds()
+
+    @property
+    def crowdist(self):
+        if self.endloc is None or self.startloc is None \
+           or self.endloc.lat is None or self.startloc.lat is None \
+           or self.endloc.lon is None or self.startloc.lon is None:
+            return None
+
+        if self.endloc.elevation is None or self.startloc.elevation is None:
+            dalt=0
+        else:
+            dalt=self.endloc.elevation-self.startloc.elevation
+
+        from math import sqrt
+        return sqrt(1.2391e4 * ((self.endloc.lat - self.startloc.lat)**2
+                                + (self.endloc.lon - self.startloc.lon)**2)
+                    + dalt**2)

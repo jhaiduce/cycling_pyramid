@@ -52,6 +52,8 @@ def regress(dbsession):
     dataset['endlon']=[ride.endloc.lon if ride.endloc else None
                        for ride in rides]
 
+    dataset['crowdist']=[ride.crowdist for ride in rides]
+
     ridergroups=dbsession.query(RiderGroup)
     surfacetypes=dbsession.query(SurfaceType)
     equipments=dbsession.query(Equipment)
@@ -73,7 +75,7 @@ def regress(dbsession):
 
     predict_columns=['avspeed']
 
-    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon']]
+    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']]
 
     dataset=pd.get_dummies(dataset, prefix='', prefix_sep='')
 
