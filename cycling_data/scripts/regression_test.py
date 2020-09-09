@@ -136,7 +136,8 @@ def regress(dbsession):
                                         kl_weight=1/train_dataset.shape[0],
                                         activation='relu'),
             layers.LeakyReLU(alpha=0.3),
-            tfp.layers.DenseVariational(1+1, posterior_mean_field,prior_trainable,
+            tfp.layers.DenseVariational(1+1,
+                                        posterior_mean_field, prior_trainable,
                                         kl_weight=1/train_dataset.shape[0]),
             tfp.layers.DistributionLambda(lambda t: tfd.Normal(
                 loc=t[..., :1],
