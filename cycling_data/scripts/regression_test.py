@@ -131,12 +131,8 @@ def regress(dbsession):
     def build_model():
         c=np.log(np.expm1(1.))
         model = keras.Sequential([
-            tfp.layers.DenseVariational(11,
+            tfp.layers.DenseVariational(12,
                                         posterior_mean_field, prior_trainable,
-                                        kl_weight=1/train_dataset.shape[0],
-                                        activation='relu'),
-            tfp.layers.DenseVariational(11,
-                                        posterior_mean_field,prior_trainable,
                                         kl_weight=1/train_dataset.shape[0],
                                         activation='relu'),
             layers.LeakyReLU(alpha=0.3),
