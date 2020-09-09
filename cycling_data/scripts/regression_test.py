@@ -23,6 +23,8 @@ def regress(dbsession):
     import tensorflow_docs.modeling
     import numpy as np
 
+    tf.keras.backend.set_floatx('float64')
+
     # Fetch the data
     rides=dbsession.query(Ride)
     dataset=pd.read_sql_query(rides.statement,rides.session.bind)
@@ -129,22 +131,23 @@ def regress(dbsession):
     def build_model():
         c=np.log(np.expm1(1.))
         model = keras.Sequential([
-            tfp.layers.DenseVariational(16,
+            tfp.layers.DenseVariational(11,
                                         posterior_mean_field, prior_trainable,
                                         kl_weight=1/train_dataset.shape[0],
                                         activation='relu'),
-            tfp.layers.DenseVariational(16,
+            tfp.layers.DenseVariational(11,
                                         posterior_mean_field,prior_trainable,
                                         kl_weight=1/train_dataset.shape[0],
                                         activation='relu'),
+            layers.LeakyReLU(alpha=0.3),
             tfp.layers.DenseVariational(1+1, posterior_mean_field,prior_trainable,
-                                    kl_weight=1/train_dataset.shape[0]),
+                                        kl_weight=1/train_dataset.shape[0]),
             tfp.layers.DistributionLambda(lambda t: tfd.Normal(
                 loc=t[..., :1],
                 scale=1e-5+tf.math.softplus(c * t[...,1:]))),
         ])
 
-        optimizer = tf.optimizers.Adam(learning_rate=0.05)
+        optimizer = tf.optimizers.Adam(learning_rate=0.02,epsilon=0.001)
 
         negloglik = lambda y, p_y: -p_y.log_prob(y)
 
@@ -162,11 +165,11 @@ def regress(dbsession):
 
     print(model.summary())
 
-    EPOCHS=1000
+    EPOCHS=2000
 
     # The patience parameter is the amount of epochs to check for improvement
     early_stop = keras.callbacks.EarlyStopping(
-        monitor='val_loss', min_delta=1e-7, patience=200)
+        monitor='val_loss', min_delta=1e-7, patience=300)
 
     history=model.fit(normed_train_data, train_labels,
                       epochs=EPOCHS, validation_split = 0.2, verbose = 0,
