@@ -27,9 +27,9 @@ class CoordinatesWidget(deform.widget.MappingWidget):
 
 class LocationCoordinatesMapping(colander.MappingSchema):
 
-    lat=colander.SchemaNode(colander.Float())
-    lon=colander.SchemaNode(colander.Float())
-    elevation=colander.SchemaNode(colander.Float())
+    lat=colander.SchemaNode(colander.Float(),missing=None)
+    lon=colander.SchemaNode(colander.Float(),missing=None)
+    elevation=colander.SchemaNode(colander.Float(),missing=None)
 
 class LocationForm(colander.MappingSchema):
 
