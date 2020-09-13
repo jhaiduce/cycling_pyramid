@@ -79,7 +79,7 @@ def compile_extension_functions():
 class ExtensionFunctionsInstall(NPMInstall):
     """Custom handler for the 'install' command."""
     def run(self):
-        compile_and_install_software()
+        compile_extension_functions()
         super().run()
 
 setup(

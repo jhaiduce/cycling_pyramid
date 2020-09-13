@@ -1,32 +1,17 @@
-FROM python:3.7.2-alpine
-FROM node:8-alpine
+FROM python:3.8.5-slim
 
 WORKDIR /app
 
-RUN apk add --update python3 py3-pip python3-dev build-base zlib-dev libjpeg-turbo-dev libpng-dev freetype-dev
-RUN pip3 install --trusted-host pypi.python.org --upgrade pip
-RUN pip3 install --trusted-host pypi.python.org Pillow==6.2.2 numpy
-RUN apk add libffi-dev mariadb-dev
-RUN apk add lapack-dev
-RUN apk add gfortran
+RUN apt-get update
+RUN apt-get -y install python-numpy python-mysqldb python-scipy python-pandas python-shapely npm git libmariadb-dev python-cffi
+RUN apt-get -y install python-matplotlib
+RUN apt-get -y install libffi-dev
 
-RUN apk add build-base curl
-
-# GEOS-3.6.0
-RUN curl -so geos-3.6.0.tar.bz2 \
-    http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
-RUN tar xjf geos-3.6.0.tar.bz2
-RUN cd geos-3.6.0 && \
-    ./configure --prefix=/usr \
-      --disable-swig \
-      --disable-static \
-    && make install-strip
-RUN cd .. && rm -rf geos-3.6.0*
-
-RUN GEOS_CONFIG=/usr/bin/geos-config pip3 install shapely
+RUN dpkg -l python-matplotlib
+RUN dpkg -l python-cffi
 
 COPY requirements.txt /app
-RUN apk add git
+RUN pip3 install --trusted-host pypi.python.org --upgrade pip
 RUN pip3 install -r /app/requirements.txt
 COPY cycling_data /app/cycling_data
 COPY setup.py /app
@@ -44,12 +29,12 @@ EXPOSE 80
 
 ENV NAME World
 
-RUN addgroup --system appuser && \
-    adduser --system -s /bin/sh --no-create-home appuser appuser
+RUN groupadd --system appuser && \
+    useradd --system --no-create-home -s /bin/sh -g appuser appuser
 
-RUN apk add libcap
+RUN apt-get -y install libcap2-bin
 
-RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/bin/python3.8
+RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/python3.8
 
 USER appuser
 
