@@ -345,6 +345,24 @@ def ride_times_utc(ride):
 
     return dtstart,dtend
 
+@celery.task()
+def update_location_rides_weather(location_id):
+    from ..celery import session_factory
+    from ..models import get_tm_session
+
+    dbsession=get_tm_session(session_factory,transaction.manager)
+
+    logger.debug('Received update location rides weather task for location {}'.format(location_id))
+
+    location_rides=dbsession.query(Ride).filter(
+        ( Ride.startloc_id == location_id ) |
+        ( Ride.endloc_id == location_id ) )
+
+    for ride in location_rides:
+        update_ride_weather.delay(ride.id)
+
+    return location_id
+
 @celery.task(ignore_result=False)
 def update_ride_weather(ride_id):
 
