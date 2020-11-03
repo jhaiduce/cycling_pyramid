@@ -548,7 +548,9 @@ class FunctionalTests(unittest.TestCase):
         res=self.testapp.get(url)
         self.assertEqual(res.status_code,200)
 
-    @patch('cycling_data.processing.weather.update_ride_weather.delay',return_value=update_ride_weather_mock_result)
+    @patch(
+        'cycling_data.processing.weather.update_ride_weather.delay',
+        return_value=update_ride_weather_mock_result)
     def test_ride_addedit(self,update_ride_weather):
         self.login()
         from .models import Ride

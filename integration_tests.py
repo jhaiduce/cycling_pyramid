@@ -81,6 +81,24 @@ class BaseTest(unittest.TestCase):
         resp=self.session.post(
             'http://cycling_test_cycling_web/locations/add',
             data=dict(
+                name='Church',
+                __start__='coordinates:mapping',
+                lat='',
+                lon='',
+                elevation='',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='1',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
                 name='KDTW',
                 __start__='coordinates:mapping',
                 lat='42.231',
@@ -114,6 +132,7 @@ class BaseTest(unittest.TestCase):
         # Check that we got redirected
         self.assertEqual(resp.history[0].status_code,302)
 
+        # Post the ride
         resp=self.session.post(
             'http://cycling_test_cycling_web/rides/add',
             data=dict(
@@ -164,6 +183,35 @@ class BaseTest(unittest.TestCase):
         self.assertLess(p,1011)
 
         self.assertEqual(ride_count_after,ride_count+1)
+
+        # Post the ride
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/rides/add',
+            data=dict(
+                start_time='2005-01-01 10:00:00',
+                end_time='2005-01-01 10:15:00',
+                total_time='00:15:00',
+                rolling_time='00:12:00',
+                distance='7',
+                odometer='357',
+                avspeed='28',
+                maxspeed='40',
+                equipment_id='0',
+                ridergroup_id='0',
+                surface_id='0',
+                submit='submit',
+                startloc='Home',
+                endloc='Church'
+            )
+        )
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        # Parse metadata sent with redirect response
+        submission_metadata=json.loads(resp.history[0].text)
+        ride_id=submission_metadata['ride_id']
+        update_weather_task_id=submission_metadata['update_weather_task_id']
 
     def tearDown(self):
         resp=self.session.post('http://cycling_test_cycling_web/logout')

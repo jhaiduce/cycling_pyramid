@@ -14,6 +14,11 @@ configure_zpt_renderer(["cycling_data:templates"])
 
 from .header import view_with_header
 
+def submit_update_location_rides_weather_task(success,location_id):
+
+    from ..processing.weather import update_location_rides_weather
+    update_location_rides_weather.delay(ride_id)
+
 @colander.deferred
 def get_loctype_widget(node, kw):
 
@@ -86,7 +91,7 @@ class LocationViews(object):
             except deform.ValidationFailure as e:
                 return dict(form=e.render())
 
-            dbsession.add(Location(
+            location=Location(
                 name=appstruct['name'],
                 lat=appstruct['coordinates']['lat'],
                 lon=appstruct['coordinates']['lon'],
@@ -94,11 +99,21 @@ class LocationViews(object):
                 description=appstruct['description'],
                 remarks=appstruct['remarks'],
                 loctype_id=appstruct['loctype']
-            ))
+            )
 
+            dbsession.add(location)
+
+            # Flush dbsession so location gets an id assignment
+            dbsession.flush()
+
+            import json
 
             url = self.request.route_url('rides')
-            return HTTPFound(url)
+            return HTTPFound(
+                url,
+                content_type='application/json',
+                charset='',
+                text=json.dumps({'location_id':location.id}))
 
         return dict(form=form)
         
@@ -126,12 +141,21 @@ class LocationViews(object):
             location.description=appstruct['description']
             location.remarks=appstruct['remarks']
             location.loctype_id=appstruct['loctype']
+
+            import transaction
+
+            transaction.commit()
+
+            update_weather_task=update_location_rides_weather.delay(location.id)
+
             url = self.request.route_url('locations_table')
-            return HTTPFound(url)
-
-
-            url = self.request.route_url('rides')
-            return HTTPFound(url)
+            return HTTPFound(
+                url,
+                content_type='application/json',
+                charset='',
+                text=json.dumps({
+                    'location_id':location.id,
+                    'update_weather_task_id':update_weather_task.task_id}))
 
         form=self.location_form.render(dict(
             name=location.name,

@@ -61,3 +61,4 @@ except KeyError:
 
 celery=Celery(backend=backend, broker=broker)
 celery.config_from_object('cycling_data.celeryconfig')
+celery.conf.task_default_queue='task_default'
