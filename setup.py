@@ -89,7 +89,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
     cmdclass={
-        'install':ExtensionFunctionsInstall,
+        'install': NPMInstall,
         'develop': NPMDevelop,
         'egg_info': NPMEggInfo,
     },
