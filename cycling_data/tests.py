@@ -13,6 +13,22 @@ import json
 
 from datetime import datetime, timedelta
 
+def dict_to_postdata(inputdict):
+
+    import collections
+
+    postdata=[]
+
+    for key,value in inputdict.items():
+        if isinstance(value,collections.Mapping):
+            postdata.append(('__start__',key+':mapping'))
+            postdata.extend(dict_to_postdata(value))
+            postdata.append(('__end__',key+':mapping'))
+        else:
+            postdata.append((key,str(value)))
+
+    return postdata
+
 update_ride_weather_mock_result=Mock()
 update_ride_weather_mock_result.task_id=''
 
@@ -488,9 +504,9 @@ class FunctionalTests(unittest.TestCase):
         edit_url='http://localhost/rides/{}/edit'
         res=self.testapp.post(
             add_url,
-            params=dict(
-                start_time='2005-01-01 10:00:00',
-                end_time='2005-01-01 10:15:00',
+            params=dict_to_postdata(dict(
+                start_time={'date':'2005-01-01', 'time':'10:00:00'},
+                end_time={'date':'2005-01-01','time':'10:15:00'},
                 total_time='00:15:00',
                 rolling_time='00:12:00',
                 distance='7',
@@ -503,7 +519,7 @@ class FunctionalTests(unittest.TestCase):
                 submit='submit',
                 startloc='Home',
                 endloc='Work'
-            )
+            ))
         )
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
@@ -525,9 +541,9 @@ class FunctionalTests(unittest.TestCase):
 
         res=self.testapp.post(
             add_url,
-            params=dict(
-                start_time='2005-01-01 10:00:00',
-                end_time='2005-01-01 10:15:00',
+            params=dict_to_postdata(dict(
+                start_time={'date':'2005-01-01','time':'10:00:00'},
+                end_time={'date':'2005-01-01','time':'10:15:00'},
                 total_time='',
                 rolling_time='00:12:00',
                 distance='7',
@@ -540,7 +556,7 @@ class FunctionalTests(unittest.TestCase):
                 submit='submit',
                 startloc='Home',
                 endloc='Work'
-            )
+            ))
         )
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
