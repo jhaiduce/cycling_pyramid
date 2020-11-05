@@ -71,3 +71,4 @@ zope.sqlalchemy==1.1
 celery==4.3.0
 tzwhere==3.0.3
 redis==3.4.1
+vine==1.3.0
