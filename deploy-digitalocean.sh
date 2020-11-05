@@ -83,3 +83,7 @@ for i in $(seq 1 $numworkers); do
 done
 
 docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml $stack_name
+
+# Update images for running services
+docker-machine ssh $host_prefix-master docker service update --image jhaiduce/cycling-pyramid ${stack_name}_worker
+docker-machine ssh $host_prefix-master docker service update --image jhaiduce/cycling-pyramid ${stack_name}_cycling_web
