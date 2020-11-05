@@ -14,6 +14,35 @@ log = logging.getLogger(__name__)
 
 from .header import view_with_header
 
+from datetime import timedelta
+
+import colander.interfaces
+from colander import null
+
+class Duration(colander.interfaces.Type):
+
+    def serialize(self,node,appstruct):
+        if appstruct in (colander.null, None):
+            return colander.null
+
+        if not isinstance(appstruct,timedelta):
+            raise colander.Invalid(
+                node, 'Expected datetime.timedelta, not {val}.'.format(
+                    val=type(appstruct).__name__)
+            )
+        return str(appstruct.total_seconds())
+
+    def deserialize(self, node, cstruct):
+        if cstruct != 0 and not cstruct:
+            return colander.null
+
+        try:
+            return timedelta(seconds=int(cstruct))
+        except Exception:
+            raise colander.Invalid(
+                node, '"{val}" is not a number'.format(val= cstruct)
+            )
+
 def submit_update_ride_weather_task(success,ride_id):
 
     from ..processing.weather import update_ride_weather
@@ -64,11 +93,44 @@ def get_location_widget(node,kw):
         
     )
 
+registry = deform.widget.ResourceRegistry()
+registry.set_js_resources('boostrap-duration-picker', '2.1.3', 'boostrap-duration-picker.js')
+registry.set_css_resources('bootstrap-duration-picker', '2.1.3', 'bootstrap-duration-picker.css')
+
+class DurationWidget(deform.widget.Widget):
+    template="cycling_data:templates/duration.pt"
+    type_name="duration"
+    requirements=(('bootstrap-duration-picker',None),)
+    options=None
+
+    def serialize(self, field, cstruct, **kw):
+        if cstruct in (colander.null, None):
+            cstruct = ""
+        readonly = kw.get("readonly", self.readonly)
+        options = kw.get("options", self.options)
+        if options is None:
+            options = {}
+        options = json.dumps(dict(options))
+        kw["duration_options"] = options
+        values = self.get_template_values(field, cstruct, kw)
+        template = readonly and self.readonly_template or self.template
+        return field.renderer(template, **values)
+
+    def deserialize(self, field, pstruct):
+        if pstruct is colander.null:
+            return colander.null
+        elif not isinstance(pstruct, str):
+            raise Invalid(field.schema, "Pstruct is not a string")
+        pstruct = pstruct.strip()
+        if not pstruct:
+            return colander.null
+        return pstruct
+
 def get_datetime_widget():
     return deform.widget.TextInputWidget(mask='9999-99-99 99:99:99')
 
 def get_timedelta_widget():
-    return deform.widget.TimeInputWidget(attributes=dict(step=1))
+    return DurationWidget(options={'showSeconds':True})
 
 class RideForm(colander.MappingSchema):
     id=colander.SchemaNode(colander.Integer(),
@@ -86,10 +148,10 @@ class RideForm(colander.MappingSchema):
         widget=get_location_widget,missing=None)
     route=colander.SchemaNode(colander.String(),missing=None)
     rolling_time=colander.SchemaNode(
-        colander.Time(),
+        Duration(),
         widget=get_timedelta_widget(),missing=None)
     total_time=colander.SchemaNode(
-        colander.Time(),
+        Duration(),
         widget=get_timedelta_widget(),missing=None)
     distance=colander.SchemaNode(colander.Float(),missing=None)
     odometer=colander.SchemaNode(colander.Float(),missing=None)
@@ -135,8 +197,8 @@ def appstruct_to_ride(dbsession,appstruct,existing_ride=None):
     ride.endloc=endloc
     ride.distance=appstruct['distance']
     ride.odometer=appstruct['odometer']
-    ride.rolling_time=time_to_timedelta(appstruct['rolling_time'])
-    ride.total_time=time_to_timedelta(appstruct['total_time'])
+    ride.rolling_time=appstruct['rolling_time']
+    ride.total_time=appstruct['total_time']
     ride.start_time=appstruct['start_time']
     ride.end_time=appstruct['end_time']
     ride.avspeed=appstruct['avspeed']
@@ -338,8 +400,8 @@ class RideViews(object):
             endloc=ride.endloc.name if ride.endloc else '',
             distance=ride.distance,
             odometer=ride.odometer,
-            rolling_time=timedelta_to_time(ride.rolling_time) if ride.rolling_time is not None else None,
-            total_time=timedelta_to_time(ride.total_time) if ride.total_time is not None else None,
+            rolling_time=ride.rolling_time,
+            total_time=ride.total_time,
             start_time=ride.start_time,
             route=ride.route if ride.route else '',
             end_time=ride.end_time,

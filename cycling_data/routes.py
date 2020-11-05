@@ -2,6 +2,7 @@ def includeme(config):
     config.add_static_view('deform_static', 'deform:static/')
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_static_view(name='jquery-validate',path='cycling_data:node_modules/jquery-validation/dist')
+    config.add_static_view(name='bootstrap-duration-picker',path='cycling_data:node_modules/bootstrap-duration-picker/dist')
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_route('home', '/')

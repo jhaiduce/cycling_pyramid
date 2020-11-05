@@ -135,8 +135,8 @@ class BaseTest(unittest.TestCase):
             data=dict_to_postdata(dict(
                 start_time={'date':'2005-01-01','time':'10:00:00'},
                 end_time={'date':'2005-01-01','time':'10:15:00'},
-                total_time='00:15:00',
-                rolling_time='00:12:00',
+                total_time=str(15*60),
+                rolling_time=str(12*60),
                 distance='7',
                 odometer='357',
                 avspeed='28',

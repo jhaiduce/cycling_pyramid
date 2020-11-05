@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "jquery-validation": "1.19.0"
+    "jquery-validation": "1.19.0",
+    "bootstrap-duration-picker": "2.1.3"
   }
 }
