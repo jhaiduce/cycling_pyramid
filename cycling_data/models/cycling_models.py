@@ -16,8 +16,8 @@ from sqlalchemy.orm import relationship
 
 from .meta import Base
 
-from tzwhere import tzwhere
-tz=tzwhere.tzwhere()
+from timezonefinder import TimezoneFinder
+tz=TimezoneFinder()
 
 def register_function(raw_con, conn_record):
 
@@ -82,7 +82,7 @@ class Location(Base):
     def timezone(self):
 
         if self.timezone_ is None:
-            self.timezone_ = tz.tzNameAt(self.lat,self.lon)
+            self.timezone_ = tz.timezone_at(lat=self.lat,lng=self.lon)
 
         return self.timezone_
 
