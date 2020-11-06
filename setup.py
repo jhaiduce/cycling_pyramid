@@ -46,17 +46,17 @@ import subprocess
 
 class NPMInstall(install):
     def run(self):
-        subprocess.call(['npm','install'],cwd='cycling_data')
+        subprocess.run(['npm','install'],cwd='cycling_data',check=True)
         install.run(self)
 
 class NPMDevelop(develop):
     def run(self):
-        subprocess.call(['npm','install'],cwd='cycling_data')
+        subprocess.run(['npm','install'],cwd='cycling_data',check=True)
         develop.run(self)
 
 class NPMEggInfo(egg_info):
     def run(self):
-        subprocess.call(['npm','install'],cwd='cycling_data')
+        subprocess.run(['npm','install'],cwd='cycling_data',check=True)
         egg_info.run(self)
 
 tests_require = [
@@ -94,7 +94,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
     cmdclass={
-        'install':ExtensionFunctionsInstall,
+        'install': NPMInstall,
         'develop': NPMDevelop,
         'egg_info': NPMEggInfo,
     },

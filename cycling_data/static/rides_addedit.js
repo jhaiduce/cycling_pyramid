@@ -29,7 +29,7 @@ function seconds_to_time_string(t){
     }).join(':')
 }
 
-$(function() {
+$(document).ready(function() {
 
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
 	try{
@@ -154,6 +154,18 @@ $(function() {
 	else return false;
     },'Max speed should be greater than average speed.');
     
+    $('[step]').each(function() {
+	$(this).change(function(){
+	    $(this).rules('remove', 'step');
+	});
+	$(this).blur(function(){
+	    $(this).rules('remove', 'step');
+	});
+	$(this).focus(function(){
+	    $(this).rules('remove', 'step');
+	});
+    });
+
   // Initialize form validation on the registration form.
   // It has the name attribute "registration"
     $("form[id='deform']").validate({

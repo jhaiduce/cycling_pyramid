@@ -7,6 +7,22 @@ from cycling_data.celery import celery
 from celery import Celery
 import re
 
+def dict_to_postdata(inputdict):
+
+    import collections
+
+    postdata=[]
+
+    for key,value in inputdict.items():
+        if isinstance(value,collections.Mapping):
+            postdata.append(('__start__',key+':mapping'))
+            postdata.extend(dict_to_postdata(value))
+            postdata.append(('__end__',key+':mapping'))
+        else:
+            postdata.append((key,str(value)))
+
+    return postdata
+
 class BaseTest(unittest.TestCase):
 
     def setUp(self):
@@ -135,11 +151,11 @@ class BaseTest(unittest.TestCase):
         # Post the ride
         resp=self.session.post(
             'http://cycling_test_cycling_web/rides/add',
-            data=dict(
-                start_time='2005-01-01 10:00:00',
-                end_time='2005-01-01 10:15:00',
-                total_time='00:15:00',
-                rolling_time='00:12:00',
+            data=dict_to_postdata(dict(
+                start_time={'date':'2005-01-01','time':'10:00:00'},
+                end_time={'date':'2005-01-01','time':'10:15:00'},
+                total_time=str(15*60),
+                rolling_time=str(12*60),
                 distance='7',
                 odometer='357',
                 avspeed='28',
@@ -150,7 +166,7 @@ class BaseTest(unittest.TestCase):
                 submit='submit',
                 startloc='Home',
                 endloc='Work'
-            )
+            ))
         )
 
         # Check that we got redirected
