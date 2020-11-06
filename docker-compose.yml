@@ -48,7 +48,7 @@ services:
       replicas: 2
       resources:
         reservations:
-          memory: 600M
+          memory: 300M
     container_name: cycling_stack_cycling_web
     secrets:
       - source: production.ini.6
@@ -64,7 +64,7 @@ services:
       replicas: 2
       resources:
         reservations:
-          memory: 600M
+          memory: 300M
     command: ["/usr/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--concurrency","1","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/bin/python3","/app/celery_healthcheck.py"]
