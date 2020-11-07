@@ -1,6 +1,7 @@
 export VENV=`pwd`/../venv
 
 sudo docker kill cycling_test_cycling_web
+sudo docker kill cycling_test_worker
 sudo docker kill ci_sut_1
 
 $VENV/bin/pytest -q &&\
