@@ -426,6 +426,8 @@ class Ride(Base):
     def tailwind(self):
         from math import cos
 
+        if self.wxdata is None: return None
+
         if self.azimuth is None or self.wxdata.winddir is None:
             return None
 
@@ -434,6 +436,8 @@ class Ride(Base):
     @property
     def crosswind(self):
         from math import sin
+
+        if self.wxdata is None: return None
 
         if self.azimuth is None or self.wxdata.winddir is None:
             return None
