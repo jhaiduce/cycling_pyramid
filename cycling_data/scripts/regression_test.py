@@ -172,6 +172,8 @@ def regress(dbsession):
                       epochs=EPOCHS, validation_split = 0.2, verbose = 0,
                       callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
+    model.save('model.h5')
+
     hist = pd.DataFrame(history.history)
     hist['epoch'] = history.epoch
     hist.tail()
