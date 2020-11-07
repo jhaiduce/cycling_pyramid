@@ -26,7 +26,7 @@ def regress(dbsession):
     tf.keras.backend.set_floatx('float64')
 
     # Fetch the data
-    rides=dbsession.query(Ride)
+    rides=dbsession.query(Ride).filter(Ride.wxdata!=None)
     dataset=pd.read_sql_query(rides.statement,rides.session.bind)
 
     dataset['fraction_day']=[ride.fraction_day for ride in rides]
