@@ -128,8 +128,12 @@ def regress(dbsession):
                 reinterpreted_batch_ndims=1)),
         ])
 
+    def negloglik(y, p_y):
+        return -p_y.log_prob(y)
+
     def build_model():
         c=np.log(np.expm1(1.))
+
         model = keras.Sequential([
             tfp.layers.DenseVariational(12,
                                         posterior_mean_field, prior_trainable,
@@ -145,8 +149,6 @@ def regress(dbsession):
         ])
 
         optimizer = tf.optimizers.Adam(learning_rate=0.02,epsilon=0.001)
-
-        negloglik = lambda y, p_y: -p_y.log_prob(y)
 
         model.compile(loss=negloglik,
                       optimizer=optimizer,
