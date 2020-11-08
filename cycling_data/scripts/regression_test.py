@@ -1,5 +1,8 @@
 import argparse
 import sys
+import os
+import h5py
+import json
 
 from pyramid.paster import bootstrap, setup_logging
 from sqlalchemy.exc import OperationalError
@@ -164,20 +167,45 @@ def regress(dbsession):
 
     print(model.summary())
 
-    EPOCHS=2000
+    if os.path.exists('weights.h5'):
+        with h5py.File('weights.h5','r') as weightfile:
+            weights=[]
+            for key in weightfile.keys():
+                weights.append(weightfile[key])
+            model.set_weights(weights)
+        with open('history.json') as histfile:
+            hist=json.load(histfile)
+        with open('epoch.json') as epochfile:
+            epoch=json.load(epochfile)
+        from keras.callbacks import History
+        history=History()
+        history.history=hist
+        history.epoch=epoch
+    else:
+        EPOCHS=2000
 
-    # The patience parameter is the amount of epochs to check for improvement
-    early_stop = keras.callbacks.EarlyStopping(
-        monitor='val_loss', min_delta=1e-7, patience=300)
+        # The patience parameter is the amount of epochs to check for improvement
+        early_stop = keras.callbacks.EarlyStopping(
+            monitor='val_loss', min_delta=1e-7, patience=300)
 
-    history=model.fit(normed_train_data, train_labels,
-                      epochs=EPOCHS, validation_split = 0.2, verbose = 0,
-                      callbacks=[early_stop, tfdocs.modeling.EpochDots()])
+        history=model.fit(normed_train_data, train_labels,
+                          epochs=EPOCHS, validation_split = 0.2, verbose = 0,
+                          callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
-    model.save('model.h5')
+        with open('history.json','w') as histfile:
+            json.dump(history.history, histfile)
+        with open('epoch.json','w') as epochfile:
+            json.dump(history.epoch, epochfile)
+
+        weights=model.get_weights()
+
+        with h5py.File('weights.h5','w') as weightfile:
+            for i in range(len(weights)):
+                weightfile.create_dataset('weight_{}'.format(i),data=weights[i])
 
     hist = pd.DataFrame(history.history)
     hist['epoch'] = history.epoch
+
     hist.tail()
 
     plotter = tfdocs.plots.HistoryPlotter(smoothing_std=2)
