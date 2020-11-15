@@ -25,7 +25,10 @@ def run_migrations_offline():
     script output.
 
     """
-    context.configure(url=settings['sqlalchemy.url'])
+    context.configure(
+        url=settings['sqlalchemy.url'],
+        render_as_batch=True
+    )
     with context.begin_transaction():
         context.run_migrations()
 
@@ -42,7 +45,8 @@ def run_migrations_online():
     connection = engine.connect()
     context.configure(
         connection=connection,
-        target_metadata=target_metadata
+        target_metadata=target_metadata,
+        render_as_batch=True
     )
 
     try:
