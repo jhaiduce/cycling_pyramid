@@ -9,10 +9,12 @@ from sqlalchemy import (
     Sequence,
     DateTime,
     Boolean,
-    Interval
+    Interval,
+    Binary
 )
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
+from sqlalchemy import func
 
 from .meta import Base
 
@@ -26,6 +28,161 @@ def register_function(raw_con, conn_record):
         raw_con.create_function("sin", 1, math.sin)
         raw_con.create_function("acos", 1, math.acos)
         raw_con.create_function("atan2", 2, math.atan2)
+
+class TimestampedRecord(object):
+    entry_date_ = Column('entry_date', DateTime, server_default=func.now())
+    modified_date_ = Column('modified_date', DateTime,
+                            server_default=func.now(), onupdate=func.now())
+
+    @hybrid_property
+    def entry_date(self):
+        return self.entry_date_
+
+    @entry_date.expression
+    def entry_date(self):
+        return cls.entry_date_
+
+    @hybrid_property
+    def modified_date(self):
+        return self.modified_date_
+
+    @modified_date.expression
+    def modified_date(self):
+        return cls.modified_date_
+
+class PredictionModel(Base,TimestampedRecord):
+
+    __tablename__ = 'predictionmodel'
+    __table_args__={'mysql_encrypted':'yes'}
+
+    id = Column(Integer, Sequence('predictionmodel_seq'), primary_key=True)
+    weights=Column(Binary)
+    statsbuf_=Column('stats',Binary)
+    stats_=None
+    train_dataset_size_=Column('train_dataset_size',Integer)
+    training_in_progress=Column(Boolean,default=False)
+
+    def __init__(self,*args,**kwargs):
+
+        super(StationWeatherData,self).__init__(*args,**kwargs)
+
+        self.model_=None
+
+    def __restore_weights(self):
+
+        if self.model_ is not None and self.weights is not None:
+            bio = io.BytesIO(self.weights)
+
+            with h5py.File(bio,'r') as weightfile:
+
+                weights=[]
+
+                for key in weightfile.keys():
+                    weights.append(weightfile[key])
+
+                self.model_.set_weights(weights)
+
+    def __save_weights(self):
+
+        if self.model_ is not None:
+            weights=self.model_.get_weights()
+
+            bio = io.BytesIO()
+
+            with h5py.File(bio,'w') as weightfile:
+                for i in range(len(weights)):
+                    weightfile.create_dataset('weight_{}'.format(i),data=weights[i])
+
+    @property
+    def model(self):
+        from .prediction import build_model
+
+        if self.model_ is None:
+            self.model_=build_model(self.train_dataset_size)
+
+        if self.weights is not None:
+            self.__restore_weights()
+
+        return self.model_
+
+    @hybrid_property
+    def train_dataset_size(self):
+        return self.train_dataset_size_
+
+    @train_dataset_size.expression
+    def train_dataset_size(cls):
+        return cls.train_dataset_size_
+
+    @train_dataset_size.update_expression
+    def train_dataset_size(cls,new_dataset_size):
+        return [
+            (cls.train_dataset_size_, new_dataset_size)
+        ]
+
+    def __norm(self,x):
+        return (x - self.stats['mean']) / self.stats['std']
+
+    def train(self,dbsession):
+        import pandas as pd
+        from .prediction import get_data
+        import io
+        import h5py
+
+        predict_columns=['avspeed']
+
+        train_dataset=get_data(dbsession,predict_columns)
+
+        train_stats = train_dataset.describe()
+        train_stats = train_stats.drop(columns=predict_columns)
+        train_stats = train_stats.transpose()
+
+        train_labels=train_dataset[predict_columns]
+        train_dataset = train_dataset.drop(columns=predict_columns)
+
+        normed_train_data = self.__norm(train_dataset)
+
+        self.train_dataset_size_=train_dataset.shape[0]
+
+        EPOCHS=2000
+
+        # The patience parameter is the amount of epochs to check for
+        # improvement
+        early_stop = keras.callbacks.EarlyStopping(
+            monitor='val_loss', min_delta=1e-7, patience=300)
+
+        history=self.model.fit(normed_train_data, train_labels,
+                          epochs=EPOCHS, validation_split = 0.2, verbose = 0,
+                          callbacks=[early_stop, tfdocs.modeling.EpochDots()])
+
+        self.stats=train_stats
+
+        self.__save_weights()
+
+    @property
+    def stats(self):
+
+        import pandas as pd
+        import io
+
+        if self.statsbuf_ is None:
+            return None
+
+        if self.stats_ is None:
+            with io.BytesIO(self.statsbuf_) as bio:
+
+                self.stats_=pd.read_hdf(bio)
+
+        return self.stats_
+
+    @stats.setter
+    def stats(self,newstats):
+        import io
+        import pandas as pd
+
+        self.stats_=newstats
+
+        with io.BytesIO(self.statsbuf_) as bio:
+            self.stats_.to_hdf(bio)
 
 class LocationType(Base):
     __tablename__ = 'locationtype'
