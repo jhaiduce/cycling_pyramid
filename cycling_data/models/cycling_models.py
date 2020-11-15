@@ -192,7 +192,7 @@ class LocationType(Base):
     name = Column(String(255),unique=True)
     description = Column(Text)
         
-class Location(Base):
+class Location(Base,TimestampedRecord):
     __tablename__ = 'location'
     __table_args__={'mysql_encrypted':'yes'}
     
@@ -287,7 +287,7 @@ class RiderGroup(Base):
     def __repr__(self):
         return self.name
 
-class WeatherData(Base):
+class WeatherData(Base,TimestampedRecord):
     __tablename__ = 'weatherdata'
     __table_args__={'mysql_encrypted':'yes'}    
 
@@ -397,7 +397,7 @@ class StationWeatherData(WeatherData):
             self.relative_humidity=rh
             self.metar=obs.code
 
-class Ride(Base):
+class Ride(Base,TimestampedRecord):
     __tablename__ = 'ride'
     __table_args__={'mysql_encrypted':'yes'}
     
