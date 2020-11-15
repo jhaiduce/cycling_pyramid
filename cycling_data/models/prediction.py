@@ -53,3 +53,62 @@ def build_model(train_set_size):
                   optimizer=optimizer,
                   metrics=['mae', 'mse'])
     return model
+
+def get_data(dbsession,predict_columns):
+
+    rides=dbsession.query(Ride).filter(Ride.wxdata!=None)
+
+    dataset=pd.read_sql_query(rides.statement,rides.session.bind)
+
+    dataset['fraction_day']=[ride.fraction_day for ride in rides]
+
+    dataset['grade']=[ride.grade for ride in rides]
+
+    dataset['tailwind']=[ride.tailwind for ride in rides]
+
+    dataset['crosswind']=[ride.crosswind for ride in rides]
+
+    dataset['temperature']=[ride.wxdata.temperature for ride in rides]
+
+    dataset['pressure']=[ride.wxdata.pressure for ride in rides]
+
+    dataset['rain']=[ride.wxdata.rain for ride in rides]
+
+    dataset['snow']=[ride.wxdata.snow for ride in rides]
+
+    dataset['startlat']=[ride.startloc.lat if ride.startloc else None
+                         for ride in rides]
+    dataset['endlat']=[ride.endloc.lat if ride.endloc else None
+                       for ride in rides]
+    dataset['startlon']=[ride.startloc.lon if ride.startloc else None
+                         for ride in rides]
+    dataset['endlon']=[ride.endloc.lon if ride.endloc else None
+                       for ride in rides]
+
+    dataset['crowdist']=[ride.crowdist for ride in rides]
+
+    ridergroups=dbsession.query(RiderGroup)
+    surfacetypes=dbsession.query(SurfaceType)
+    equipments=dbsession.query(Equipment)
+
+    dataset['ridergroup']=dataset['ridergroup_id'].map({ridergroup.id:ridergroup.name for ridergroup in ridergroups})
+
+    dataset['surfacetype']=dataset['surface_id'].map({surfacetype.id:surfacetype.name for surfacetype in surfacetypes})
+
+    dataset['equipment']=dataset['equipment_id'].map({equipment.id:equipment.name for equipment in equipments})
+
+    computed_avspeed=dataset.distance/dataset.rolling_time.dt.total_seconds()*3600
+    pd.options.mode.use_inf_as_na = True
+
+    dataset.avspeed.fillna(computed_avspeed,inplace=True)
+
+    dataset.trailer.fillna(False,inplace=True)
+
+    dataset.trailer=dataset.trailer.astype(float)
+
+    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']]
+
+    dataset=pd.get_dummies(dataset, prefix='', prefix_sep='')
+
+    dataset.dropna(inplace=True)
+
