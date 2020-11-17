@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
-from sqlalchemy import func
+from sqlalchemy import func, orm
 
 from .meta import Base
 
@@ -64,8 +64,12 @@ class PredictionModel(Base,TimestampedRecord):
 
     def __init__(self,*args,**kwargs):
 
-        super(StationWeatherData,self).__init__(*args,**kwargs)
+        super(PredictionModel,self).__init__(*args,**kwargs)
 
+        self.model_=None
+
+    @orm.reconstructor
+    def init_on_load(self):
         self.model_=None
 
     def __restore_weights(self):
