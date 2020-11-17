@@ -142,6 +142,8 @@ class PredictionModel(Base,TimestampedRecord):
         train_stats = train_stats.drop(columns=predict_columns)
         train_stats = train_stats.transpose()
 
+        self.stats=train_stats
+
         train_labels=train_dataset[predict_columns]
         train_dataset = train_dataset.drop(columns=predict_columns)
 
@@ -159,8 +161,6 @@ class PredictionModel(Base,TimestampedRecord):
         history=self.model.fit(normed_train_data, train_labels,
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
                           callbacks=[early_stop, tfdocs.modeling.EpochDots()])
-
-        self.stats=train_stats
 
         self.__save_weights()
 
