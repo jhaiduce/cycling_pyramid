@@ -98,6 +98,7 @@ class PredictionModel(Base,TimestampedRecord):
             with h5py.File(bio,'w') as weightfile:
                 for i in range(len(weights)):
                     weightfile.create_dataset('weight_{}'.format(i),data=weights[i])
+            self.weightsbuf=bio.getvalue()
 
     @property
     def model(self):
