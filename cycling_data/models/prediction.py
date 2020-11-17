@@ -56,6 +56,9 @@ def build_model(train_set_size):
 
 def get_data(dbsession,predict_columns):
 
+    from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment
+    import pandas as pd
+
     rides=dbsession.query(Ride).filter(Ride.wxdata!=None)
 
     dataset=pd.read_sql_query(rides.statement,rides.session.bind)
