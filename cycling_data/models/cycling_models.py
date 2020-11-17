@@ -87,6 +87,8 @@ class PredictionModel(Base,TimestampedRecord):
                 self.model_.set_weights(weights)
 
     def __save_weights(self):
+        import io
+        import h5py
 
         if self.model_ is not None:
             weights=self.model_.get_weights()
