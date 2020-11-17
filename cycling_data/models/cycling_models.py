@@ -170,7 +170,7 @@ class PredictionModel(Base,TimestampedRecord):
         import pandas as pd
         import io
 
-        if self.statsbuf_ is None:
+        if self.statsbuf_ and self.stats_ is None:
             return None
 
         if self.stats_ is None:
