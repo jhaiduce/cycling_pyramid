@@ -6,47 +6,74 @@ logger = get_task_logger(__name__)
 
 import transaction
 
+def get_model(dbsession):
+    from ..models.cycling_models import PredictionModel
+
+    from sqlalchemy.orm.exc import NoResultFound
+
+    try:
+        model=dbsession.query(PredictionModel).one()
+    except NoResultFound:
+        model=PredictionModel()
+        dbsession.add(model)
+
+    return model
+
 @celery.task(ignore_result=False)
 def train_model():
 
     from ..celery import session_factory
     from ..models import get_tm_session
-    from ..models.cycling_models import PredictionModel, Ride
-    from sqlalchemy.orm.exc import NoResultFound
+    from ..models.cycling_models import Ride
     from sqlalchemy import func
+
+    logger.debug('Received train model task')
+
+    train_dataset_size=None
 
     with transaction.manager:
         dbsession=get_tm_session(session_factory,transaction.manager)
+        dbsession.expire_on_commit=False
 
-        logger.debug('Received update weather task for ride {}'.format(ride_id))
-
-        try:
-            model=dbsession.query(PredictionModel).one()
-        except NoResultFound:
-            model=PredictionModel()
+        model=get_model(dbsession)
 
         if model.training_in_progress:
             return
 
-        data_modified_date = dbsession.query(func.max(Ride.modified_date).label('last_modified')).last_modified
+        data_modified_date = dbsession.query(func.max(Ride.modified_date).label('last_modified')).one().last_modified
 
-    if (
-            data_modified_date > model.modified_date
+        training_due=(
+            (
+                model.modified_date is None
+                or model.weightsbuf is None
+                or data_modified_date is None
+                or data_modified_date > model.modified_date
+            )
             and not model.training_in_progress
-    ):
-        try:
+        )
 
-            with transaction.manager:
-                dbsession=get_tm_session(session_factory,transaction.manager)
-                model.training_in_progress=True
+    if training_due:
 
-            with transaction.manager:
-                dbsession=get_tm_session(session_factory,transaction.manager)
-                model.train(dbsession)
+        with transaction.manager:
+            dbsession=get_tm_session(session_factory,transaction.manager)
+            dbsession.add(model)
+            model.training_in_progress=True
 
-        finally:
-            with transaction.manager:
-                dbsession=get_tm_session(session_factory,transaction.manager)
+        from ..models.prediction import get_data
+
+        predict_columns=['avspeed']
+        train_dataset=get_data(dbsession,predict_columns)
+
+        with transaction.manager:
+            dbsession=get_tm_session(session_factory,transaction.manager)
+            dbsession.add(model)
+            try:
+
+                model.train(train_dataset,predict_columns)
+
+                train_dataset_size=model.train_dataset_size
+
+            finally:
                 model.training_in_progress=False
 
-    return model.train_dataset_size
+    return train_dataset_size
