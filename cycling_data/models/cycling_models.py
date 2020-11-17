@@ -134,6 +134,9 @@ class PredictionModel(Base,TimestampedRecord):
         from .prediction import get_data
         import io
         import h5py
+        from tensorflow import keras
+        import tensorflow_docs as tfdocs
+        import tensorflow_docs.modeling
 
         predict_columns=['avspeed']
 
