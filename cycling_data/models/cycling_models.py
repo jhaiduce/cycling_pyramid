@@ -56,7 +56,7 @@ class PredictionModel(Base,TimestampedRecord):
     __table_args__={'mysql_encrypted':'yes'}
 
     id = Column(Integer, Sequence('predictionmodel_seq'), primary_key=True)
-    weights=Column(Binary)
+    weightsbuf=Column('weights',Binary)
     statsbuf_=Column('stats',Binary)
     stats_=None
     train_dataset_size_=Column('train_dataset_size',Integer)
@@ -74,8 +74,8 @@ class PredictionModel(Base,TimestampedRecord):
 
     def __restore_weights(self):
 
-        if self.model_ is not None and self.weights is not None:
-            bio = io.BytesIO(self.weights)
+        if self.model_ is not None and self.weightsbuf is not None:
+            bio = io.BytesIO(self.weightsbuf)
 
             with h5py.File(bio,'r') as weightfile:
 
@@ -104,7 +104,7 @@ class PredictionModel(Base,TimestampedRecord):
         if self.model_ is None:
             self.model_=build_model(self.train_dataset_size)
 
-        if self.weights is not None:
+        if self.weightsbuf is not None:
             self.__restore_weights()
 
         return self.model_
