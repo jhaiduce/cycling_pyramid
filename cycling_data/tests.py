@@ -429,6 +429,95 @@ class MetarTests(BaseTest):
                              MetarTests.ride_average_weather[key],
                              'Discrepancy for key {}'.format(key))
 
+class ModelTests(BaseTest):
+
+    rideCount=50
+    locationCount=5
+
+    def setUp(self):
+        super(ModelTests, self).setUp()
+        self.init_database()
+
+        from .models.cycling_models import Ride, Location, RideWeatherData, RiderGroup, SurfaceType, Equipment
+        import random
+
+        random.seed(100)
+
+        locations=[]
+        for i in range(self.locationCount):
+            location=Location(
+                name='Location {}'.format(i),
+                lat=random.gauss(28.084,0.05),
+                lon=random.gauss(-80.5901,0.05))
+            locations.append(location)
+            self.session.add(location)
+
+        self.session.flush()
+
+        self.session.add(RiderGroup(id=1,name='Solo'))
+        self.session.add(SurfaceType(id=1,name='Pavement'))
+        self.session.add(Equipment(id=1,name='Bike'))
+
+        lastloc=random.choice(locations)
+        odo=0
+        for i in range(self.rideCount):
+            start_time=datetime(2005,1,1,tzinfo=timezone('America/Detroit')) \
+                + timedelta(
+                    seconds=random.random()*24*365*3600*20)
+            end_time=start_time+timedelta(
+                seconds=1800*random.lognormvariate(0,1))
+            distance=random.lognormvariate(0,1)*10
+            odo+=distance
+            temperature=random.gauss(25,5)
+            ride = Ride(
+                start_time=start_time,
+                end_time=end_time,
+                total_time=end_time-start_time,
+                rolling_time=(end_time-start_time)*0.9,
+                avspeed=random.gauss(18,8),
+                maxspeed=random.gauss(30,8),
+                distance=distance,
+                odometer=odo,
+                equipment_id=1,
+                ridergroup_id=1,
+                surface_id=1,
+                wxdata=RideWeatherData(
+                    temperature=temperature,
+                    dewpoint=temperature-random.uniform(0,10),
+                    winddir=random.uniform(0,360),
+                    windspeed=5*random.lognormvariate(0,1),
+                    pressure = random.gauss(1000,10),
+                    relative_humidity=random.uniform(0,1),
+                    rain=0,
+                    snow=0
+                )
+            )
+
+            self.session.add(ride)
+
+        transaction.commit()
+
+    def test_train_model(self):
+
+        from .processing.regression import train_model
+        from .models.cycling_models import Ride, PredictionModel
+        from . import models
+        from . import celery
+        from .models import get_session_factory, get_tm_session
+
+        with patch.object(
+                celery,'session_factory',
+                wraps=get_session_factory(self.engine)) as session_factory:
+            train_dataset_size=train_model()
+
+        self.assertEqual(train_dataset_size,self.rideCount)
+
+        with transaction.manager:
+            session=get_tm_session(get_session_factory(self.engine),transaction.manager)
+            model=session.query(PredictionModel).one()
+
+            self.assertIsNotNone(model.weightsbuf)
+
 import webtest
 
 class FunctionalTests(unittest.TestCase):
