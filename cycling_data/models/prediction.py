@@ -119,3 +119,4 @@ def get_data(dbsession,predict_columns):
 
     dataset.dropna(inplace=True)
 
+    return dataset
