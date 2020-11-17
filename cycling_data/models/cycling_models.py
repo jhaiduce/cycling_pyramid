@@ -184,11 +184,16 @@ class PredictionModel(Base,TimestampedRecord):
     def stats(self,newstats):
         import io
         import pandas as pd
+        import tables
 
         self.stats_=newstats
 
-        with io.BytesIO(self.statsbuf_) as bio:
-            self.stats_.to_hdf(bio)
+        with pd.HDFStore('file.h5',
+                        'w',
+                        driver_core_backing_store=0,
+                        driver='H5FD_CORE') as store:
+           self.stats_.to_hdf(store,'stats')
+           self.statsbuf_=store._handle.get_file_image()
 
 class LocationType(Base):
     __tablename__ = 'locationtype'
