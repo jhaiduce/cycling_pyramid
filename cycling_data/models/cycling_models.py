@@ -129,7 +129,7 @@ class PredictionModel(Base,TimestampedRecord):
     def __norm(self,x):
         return (x - self.stats['mean']) / self.stats['std']
 
-    def train(self,dbsession):
+    def train(self,train_dataset,predict_columns):
         import pandas as pd
         from .prediction import get_data
         import io
@@ -137,10 +137,6 @@ class PredictionModel(Base,TimestampedRecord):
         from tensorflow import keras
         import tensorflow_docs as tfdocs
         import tensorflow_docs.modeling
-
-        predict_columns=['avspeed']
-
-        train_dataset=get_data(dbsession,predict_columns)
 
         train_stats = train_dataset.describe()
         train_stats = train_stats.drop(columns=predict_columns)
