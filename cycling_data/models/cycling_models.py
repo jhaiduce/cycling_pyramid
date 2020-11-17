@@ -47,7 +47,7 @@ class TimestampedRecord(object):
         return self.modified_date_
 
     @modified_date.expression
-    def modified_date(self):
+    def modified_date(cls):
         return cls.modified_date_
 
 class PredictionModel(Base,TimestampedRecord):
