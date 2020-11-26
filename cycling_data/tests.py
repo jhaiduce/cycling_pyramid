@@ -526,7 +526,6 @@ class ModelTests(BaseTest):
             self.assertIsNotNone(model.weightsbuf)
 
             predictions=model.predict(dataset)
-            print(predictions)
             self.assertEqual(predictions.shape,(self.rideCount,1))
             self.assertEqual(np.isnan(predictions).sum(),0)
 
