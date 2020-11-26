@@ -505,6 +505,7 @@ class ModelTests(BaseTest):
         from . import celery
         from .models import get_session_factory, get_tm_session
         from .models.prediction import prepare_model_dataset
+        import numpy as np
 
         with patch.object(
                 celery,'session_factory',
@@ -526,6 +527,8 @@ class ModelTests(BaseTest):
 
             predictions=model.predict(dataset)
             print(predictions)
+            self.assertEqual(predictions.shape,(self.rideCount,1))
+            self.assertEqual(np.isnan(predictions).sum(),0)
 
 import webtest
 
