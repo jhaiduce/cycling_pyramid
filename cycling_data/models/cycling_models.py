@@ -146,7 +146,8 @@ class PredictionModel(Base,TimestampedRecord):
         ]
 
     def __norm(self,x):
-        return (x - self.stats['mean']) / self.stats['std']
+        std=self.stats['std'].replace(0,1)
+        return (x - self.stats['mean']) / std
 
     def train(self,train_dataset,predict_columns):
         import pandas as pd
