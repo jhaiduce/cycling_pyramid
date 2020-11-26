@@ -57,9 +57,12 @@ class PredictionModel(Base,TimestampedRecord):
 
     id = Column(Integer, Sequence('predictionmodel_seq'), primary_key=True)
     weightsbuf=Column('weights',Binary)
-    statsbuf_=Column('stats',Binary)
+    statsbuf_=Column('stats',String)
     stats_=None
+    predict_columns_=Column('predict_columns',String)
+    input_columns_=Column('input_columns',String)
     train_dataset_size_=Column('train_dataset_size',Integer)
+    input_size_=Column('input_size',Integer)
     training_in_progress=Column(Boolean,default=False)
 
     def __init__(self,*args,**kwargs):
@@ -73,6 +76,8 @@ class PredictionModel(Base,TimestampedRecord):
         self.model_=None
 
     def __restore_weights(self):
+        import io
+        import h5py
 
         if self.model_ is not None and self.weightsbuf is not None:
             bio = io.BytesIO(self.weightsbuf)
@@ -105,7 +110,7 @@ class PredictionModel(Base,TimestampedRecord):
         from .prediction import build_model
 
         if self.model_ is None:
-            self.model_=build_model(self.train_dataset_size)
+            self.model_=build_model(self.train_dataset_size,self.input_size)
 
         if self.weightsbuf is not None:
             self.__restore_weights()
@@ -124,6 +129,20 @@ class PredictionModel(Base,TimestampedRecord):
     def train_dataset_size(cls,new_dataset_size):
         return [
             (cls.train_dataset_size_, new_dataset_size)
+        ]
+
+    @hybrid_property
+    def input_size(self):
+        return self.input_size_
+
+    @input_size.expression
+    def input_size(cls):
+        return cls.input_size_
+
+    @input_size.update_expression
+    def input_size(cls,new_dataset_size):
+        return [
+            (cls.input_size_, new_dataset_size)
         ]
 
     def __norm(self,x):
@@ -150,6 +169,7 @@ class PredictionModel(Base,TimestampedRecord):
         normed_train_data = self.__norm(train_dataset)
 
         self.train_dataset_size_=train_dataset.shape[0]
+        self.input_size_=train_dataset.shape[1]
 
         EPOCHS=2000
 
@@ -162,7 +182,23 @@ class PredictionModel(Base,TimestampedRecord):
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
                           callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
+        self.predict_columns=predict_columns
+
         self.__save_weights()
+
+    def predict(self,data):
+        data=data.drop(columns=self.predict_columns)
+        return self.model.predict(self.__norm(data))
+
+    @property
+    def predict_columns(self):
+        import json
+        return json.loads(self.predict_columns_)
+
+    @predict_columns.setter
+    def predict_columns(self,new_value):
+        import json
+        self.predict_columns_=json.dumps(new_value)
 
     @property
     def stats(self):
@@ -170,13 +206,12 @@ class PredictionModel(Base,TimestampedRecord):
         import pandas as pd
         import io
 
-        if self.statsbuf_ and self.stats_ is None:
+        if self.statsbuf_ is None and self.stats_ is None:
             return None
 
         if self.stats_ is None:
-            with io.BytesIO(self.statsbuf_) as bio:
-
-                self.stats_=pd.read_hdf(bio)
+            with io.StringIO(self.statsbuf_) as sio:
+                self.stats_=pd.read_json(sio)
 
         return self.stats_
 
@@ -185,15 +220,13 @@ class PredictionModel(Base,TimestampedRecord):
         import io
         import pandas as pd
         import tables
+        import os
 
         self.stats_=newstats
 
-        with pd.HDFStore('file.h5',
-                        'w',
-                        driver_core_backing_store=0,
-                        driver='H5FD_CORE') as store:
-           self.stats_.to_hdf(store,'stats')
-           self.statsbuf_=store._handle.get_file_image()
+        with io.StringIO(self.statsbuf_) as sio:
+           self.stats_.to_json(sio)
+           self.statsbuf_=sio.getvalue()
 
 class LocationType(Base):
     __tablename__ = 'locationtype'

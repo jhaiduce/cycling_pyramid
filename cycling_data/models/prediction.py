@@ -30,7 +30,7 @@ def prior_trainable(kernel_size, bias_size=0, dtype=None):
 def negloglik(y, p_y):
     return -p_y.log_prob(y)
 
-def build_model(train_set_size):
+def build_model(train_set_size,input_size):
     c=np.log(np.expm1(1.))
 
     model = keras.Sequential([
@@ -52,11 +52,12 @@ def build_model(train_set_size):
     model.compile(loss=negloglik,
                   optimizer=optimizer,
                   metrics=['mae', 'mse'])
+    model.build([None,input_size])
     return model
 
 def get_data(dbsession,predict_columns):
 
-    from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment
+    from .cycling_models import Ride
     import pandas as pd
 
     rides=dbsession.query(Ride).filter(
@@ -64,6 +65,12 @@ def get_data(dbsession,predict_columns):
     ).filter(
         Ride.rolling_time is not None
     )
+
+    return prepare_model_dataset(rides,dbsession,predict_columns)
+
+def prepare_model_dataset(rides,dbsession,predict_columns):
+    from .cycling_models import RiderGroup, SurfaceType, Equipment
+    import pandas as pd
 
     dataset=pd.read_sql_query(rides.statement,rides.session.bind)
 

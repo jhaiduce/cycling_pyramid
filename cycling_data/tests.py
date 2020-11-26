@@ -504,6 +504,7 @@ class ModelTests(BaseTest):
         from . import models
         from . import celery
         from .models import get_session_factory, get_tm_session
+        from .models.prediction import prepare_model_dataset
 
         with patch.object(
                 celery,'session_factory',
@@ -514,9 +515,17 @@ class ModelTests(BaseTest):
 
         with transaction.manager:
             session=get_tm_session(get_session_factory(self.engine),transaction.manager)
+            rides=session.query(Ride)
+            dataset=prepare_model_dataset(rides,session,['avspeed'])
+
+        with transaction.manager:
+            session=get_tm_session(get_session_factory(self.engine),transaction.manager)
             model=session.query(PredictionModel).one()
 
             self.assertIsNotNone(model.weightsbuf)
+
+            predictions=model.predict(dataset)
+            print(predictions)
 
 import webtest
 

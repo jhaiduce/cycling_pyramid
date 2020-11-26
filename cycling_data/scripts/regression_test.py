@@ -58,7 +58,7 @@ def regress(dbsession):
 
     print(normed_train_data.tail())
 
-    model=build_model(train_dataset.shape[0])
+    model=build_model(train_dataset.shape[0],tran_dataset.shape[1])
 
     example_batch = normed_train_data[:10]
     example_result = model(example_batch.to_numpy())
