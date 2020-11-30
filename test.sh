@@ -8,6 +8,9 @@ set -e
 # Run unit tests
 $VENV/bin/pytest -q
 
+# Run migration tests
+$VENV/bin/pytest -q cycling_data/migration_tests.py
+
 # Build images
 sudo docker-compose -f docker-compose.test.yml -p ci build
 
