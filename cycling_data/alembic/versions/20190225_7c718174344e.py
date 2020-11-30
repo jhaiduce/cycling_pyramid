@@ -17,7 +17,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('ride', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('timezone', sa.String(), nullable=True))
+        batch_op.add_column(sa.Column('timezone', sa.String(length=255), nullable=True))
 
 def downgrade():
     with op.batch_alter_table('ride', schema=None) as batch_op:

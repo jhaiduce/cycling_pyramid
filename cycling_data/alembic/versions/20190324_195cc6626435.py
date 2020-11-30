@@ -18,7 +18,7 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.add_column(sa.Column('pw_timestamp', sa.DateTime(), nullable=True))
-        batch_op.add_column(sa.Column('pwhash', sa.String(), nullable=True))
+        batch_op.add_column(sa.Column('pwhash', sa.String(length=255), nullable=True))
 
 def downgrade():
     with op.batch_alter_table('user', schema=None) as batch_op:
