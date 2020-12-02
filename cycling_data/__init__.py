@@ -10,7 +10,7 @@ def main(global_config, **settings):
         config.include('pyramid_jinja2')
         config.include('.routes')
         config.include('.security')
-        config.scan()
+        config.scan(ignore=['.tests','.migration_tests'])
         config.set_default_permission('view')
 
     return config.make_wsgi_app()

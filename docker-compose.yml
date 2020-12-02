@@ -27,7 +27,7 @@ services:
     logging:
       driver: journald
     secrets:
-      - source: mysql_root_password.1
+      - source: mysql_root_password
         target: mysql_root_password
       - source: storage_key.1
         target: /etc/mysql/encryption/keyfile
@@ -51,7 +51,7 @@ services:
           memory: 300M
     container_name: cycling_stack_cycling_web
     secrets:
-      - source: production.ini.6
+      - source: pyramid_main_ini
         target: /run/secrets/production.ini
     logging:
       driver: journald
@@ -70,7 +70,7 @@ services:
       test: ["CMD","/usr/bin/python3","/app/celery_healthcheck.py"]
     container_name: cycling_stack_worker
     secrets:
-      - source: production.ini.12
+      - source: pyramid_main_ini
         target: /run/secrets/production.ini
     logging:
       driver: journald
@@ -124,7 +124,8 @@ services:
 secrets:
   storage_key.1:
     file: ./storage_key.keyfile
-  mysql_root_password.1:
+  mysql_root_password:
+    name: mysql_root_password.1
     file: ./mysql_root_password
   mysql_production_password.1:
     file: ./mysql_production_password
@@ -132,7 +133,8 @@ secrets:
     file: ./pyramid_auth_secret
   cycling_admin_password.1:
     file: ./cycling_admin_password
-  production.ini.6:
+  pyramid_main_ini:
+    name: production.ini.6
     file: ./production.ini
   mysql_ca:
     file: ./ca.pem

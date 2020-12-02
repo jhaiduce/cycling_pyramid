@@ -117,3 +117,5 @@ timezonefinder==4.5.0
 redis==3.4.1
 vine==1.3.0
 tables==3.6.1
+sqlalchemy-diff==0.1.3
+alembic-verify==0.1.4

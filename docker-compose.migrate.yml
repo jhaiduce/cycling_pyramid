@@ -1,0 +1,18 @@
+version: '3.7'
+services:
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jhaiduce/cycling-pyramid
+    deploy:
+      restart_policy:
+        condition: none
+    secrets:
+      - source: pyramid_main_ini
+        target: /run/secrets/production.ini
+    logging:
+      driver: journald
+    links:
+      - db
+    command: ['/usr/bin/initialize_cycling_data_db','/run/secrets/production.ini']

@@ -1,15 +1,16 @@
 """Pyramid bootstrap environment. """
 from alembic import context
 from pyramid.paster import get_appsettings, setup_logging
-from sqlalchemy import engine_from_config
+from sqlalchemy import engine_from_config, create_engine
 
 from cycling_data.models.meta import Base
 
 config = context.config
 
-setup_logging(config.config_file_name)
+if config.config_file_name is not None:
+    setup_logging(config.config_file_name)
+    settings = get_appsettings(config.config_file_name)
 
-settings = get_appsettings(config.config_file_name)
 target_metadata = Base.metadata
 
 
@@ -41,7 +42,10 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    engine = engine_from_config(settings, prefix='sqlalchemy.')
+    if config.config_file_name:
+        engine = engine_from_config(settings, prefix='sqlalchemy.')
+    else:
+        engine = create_engine(config.get_main_option('sqlalchemy.url'))
 
     connection = engine.connect()
     context.configure(
