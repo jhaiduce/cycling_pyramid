@@ -1,12 +1,14 @@
+#!/bin/bash
+
 export VENV=`pwd`/../venv
 
 sudo docker kill cycling_test_cycling_web
 sudo docker kill cycling_test_worker
 sudo docker kill ci_sut_1
 
-declare -a secret_files=("integration_test.ini" "mysql_root_password_test" "ca.pem")
+secret_files=("integration_test.ini" "mysql_root_password_test" "ca.pem")
 
-for file in "${arr[@]}"
+for file in "${secret_files[@]}"
 do
     chcon -t svirt_sandbox_file_t "$file"
 done
