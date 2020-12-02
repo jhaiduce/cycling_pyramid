@@ -2,4 +2,4 @@
 
 set -e
 
-/usr/bin/pserve /run/secrets/production.ini
+/usr/local/bin/pserve /run/secrets/production.ini

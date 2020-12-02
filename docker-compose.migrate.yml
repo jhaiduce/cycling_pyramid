@@ -15,4 +15,4 @@ services:
       driver: journald
     links:
       - db
-    command: ['/usr/bin/initialize_cycling_data_db','/run/secrets/production.ini']
+    command: ['/usr/local/bin/initialize_cycling_data_db','/run/secrets/production.ini']
