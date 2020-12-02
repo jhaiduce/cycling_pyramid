@@ -46,7 +46,7 @@ done
 
 join_token=$(docker-machine ssh $host_prefix-master docker swarm join-token -q worker)
 
-for file in docker-compose.yml mysql-config-cycling.cnf mysql_production_password mysql_root_password pyramid_auth_secret cycling_admin_password production.ini storage_key.keyfile ca.pem server-key.pem server-cert.pem cycling_rabbitmq_password; do
+for file in docker-compose.yml docker-compose.migrate.yml mysql-config-cycling.cnf mysql_production_password mysql_root_password pyramid_auth_secret cycling_admin_password production.ini storage_key.keyfile ca.pem server-key.pem server-cert.pem cycling_rabbitmq_password; do
     docker-machine scp $file $host_prefix-master:
 done
 
@@ -83,6 +83,42 @@ for i in $(seq 1 $numworkers); do
 done
 
 docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml $stack_name
+
+# Update the database
+docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.migrate.yml ${stack_name}
+
+function wait_for_migration {
+
+    while [ 1 ]; do
+	desired_state=$( docker-machine ssh $host_prefix-master docker service ps --format '{{.DesiredState}}' ${stack_name}_migration )
+	current_state=$( docker-machine ssh $host_prefix-master docker service ps --format '{{.CurrentState}}' ${stack_name}_migration )
+
+	echo 'Migration' $desired_state $current_state
+
+	if [ $desired_state = 'Shutdown' ]; then
+	    migration_container=$(docker-machine ssh $host_prefix-master docker service ps --format '{{.ID}}' ${stack_name}_migration)
+	    migration_status=$(docker-machine ssh $host_prefix-master docker inspect --format '{{.Status.ContainerStatus.ExitCode}}' $migration_container)
+	    return
+	fi
+
+	sleep 1
+    done
+}
+
+# Wait for it to complete
+wait_for_migration
+
+# Check exit status of migration service
+docker-machine ssh $host_prefix-master docker service logs ${stack_name}_migration
+
+# Delete the migration service
+docker-machine ssh $host_prefix-master docker service rm ${stack_name}_migration
+
+# Check exit status of migration service
+if [ $migration_status -ne 0 ]; then
+    echo "ERROR: Database migration failed"
+    exit 1;
+fi
 
 # Update images for running services
 docker-machine ssh $host_prefix-master docker service update --image jhaiduce/cycling-pyramid ${stack_name}_worker
