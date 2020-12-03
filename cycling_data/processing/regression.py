@@ -20,7 +20,7 @@ def get_model(dbsession):
     return model
 
 @celery.task(ignore_result=False)
-def train_model():
+def train_model(epochs=2000,patience=300):
 
     from ..celery import session_factory
     from ..models import get_tm_session
@@ -69,7 +69,8 @@ def train_model():
             dbsession.add(model)
             try:
 
-                model.train(train_dataset,predict_columns)
+                model.train(train_dataset,predict_columns,
+                            epochs=epochs,patience=patience)
 
                 train_dataset_size=model.train_dataset_size
 

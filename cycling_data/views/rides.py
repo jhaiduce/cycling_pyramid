@@ -341,6 +341,9 @@ class RideViews(object):
             from ..processing.weather import update_ride_weather
             update_weather_task=update_ride_weather.delay(ride.id)
 
+            from ..processing.regression import train_model
+            train_model_task = train_model.delay()
+
             url = self.request.route_url('rides')
             return HTTPFound(
                 url,
@@ -348,7 +351,8 @@ class RideViews(object):
                 charset='',
                 text=json.dumps(
                     {'ride_id':ride.id,
-                     'update_weather_task_id':update_weather_task.task_id}))
+                     'update_weather_task_id':update_weather_task.task_id,
+                     'train_model_task_id':train_model_task.task_id}))
 
         return dict(form=form)
 

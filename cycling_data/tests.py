@@ -31,8 +31,8 @@ def dict_to_postdata(inputdict):
 
     return postdata
 
-update_ride_weather_mock_result=Mock()
-update_ride_weather_mock_result.task_id=''
+mock_task_result=Mock()
+mock_task_result.task_id=0
 
 def dummy_request(dbsession):
     return testing.DummyRequest(dbsession=dbsession)
@@ -510,7 +510,7 @@ class ModelTests(BaseTest):
         with patch.object(
                 celery,'session_factory',
                 wraps=get_session_factory(self.engine)) as session_factory:
-            train_dataset_size=train_model()
+            train_dataset_size=train_model(epochs=10)
 
         self.assertEqual(train_dataset_size,self.rideCount)
 
@@ -665,9 +665,12 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,200)
 
     @patch(
+        'cycling_data.processing.regression.train_model.delay',
+        return_value=mock_task_result)
+    @patch(
         'cycling_data.processing.weather.update_ride_weather.delay',
-        return_value=update_ride_weather_mock_result)
-    def test_ride_addedit(self,update_ride_weather):
+        return_value=mock_task_result)
+    def test_ride_addedit(self,update_ride_weather,train_model):
         self.login()
         from .models import Ride
         session=self.get_session()
@@ -692,6 +695,8 @@ class FunctionalTests(unittest.TestCase):
                 endloc='Work'
             ))
         )
+        train_model.assert_called()
+        update_ride_weather.assert_called()
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
         created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
