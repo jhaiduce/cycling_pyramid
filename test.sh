@@ -25,7 +25,7 @@ $VENV/bin/pytest -q cycling_data/migration_tests.py
 sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.test.yml -p ci build
 
 # Migrate database
-sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.migrate.yml -p ci up -d
+sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.migrate_test.yml -p ci up -d
 
 sudo docker wait ci_migration_1
 
