@@ -57,10 +57,10 @@ class PredictionModel(Base,TimestampedRecord):
 
     id = Column(Integer, Sequence('predictionmodel_seq'), primary_key=True)
     weightsbuf=Column('weights',Binary)
-    statsbuf_=Column('stats',String)
+    statsbuf_=Column('stats',Text)
     stats_=None
-    predict_columns_=Column('predict_columns',String)
-    input_columns_=Column('input_columns',String)
+    predict_columns_=Column('predict_columns',Text)
+    input_columns_=Column('input_columns',Text)
     train_dataset_size_=Column('train_dataset_size',Integer)
     input_size_=Column('input_size',Integer)
     training_in_progress=Column(Boolean,default=False)

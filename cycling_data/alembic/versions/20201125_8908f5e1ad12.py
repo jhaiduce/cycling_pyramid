@@ -18,19 +18,19 @@ depends_on = None
 def upgrade():
 
     with op.batch_alter_table('predictionmodel', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('input_columns', sa.String(), nullable=True))
+        batch_op.add_column(sa.Column('input_columns', sa.Text(), nullable=True))
         batch_op.add_column(sa.Column('input_size', sa.Integer(), nullable=True))
-        batch_op.add_column(sa.Column('predict_columns', sa.String(), nullable=True))
+        batch_op.add_column(sa.Column('predict_columns', sa.Text(), nullable=True))
         batch_op.alter_column('stats',
                existing_type=sa.BLOB(),
-               type_=sa.String(),
+               type_=sa.Text(),
                existing_nullable=True)
 
 def downgrade():
 
     with op.batch_alter_table('predictionmodel', schema=None) as batch_op:
         batch_op.alter_column('stats',
-               existing_type=sa.String(),
+               existing_type=sa.Text(),
                type_=sa.BLOB(),
                existing_nullable=True)
         batch_op.drop_column('predict_columns')
