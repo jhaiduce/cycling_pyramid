@@ -19,7 +19,6 @@ def setup_models(dbsession,ini_file):
         'upgrade', 'head',
     ]
     alembic.config.main(argv=alembicArgs)
-    engine=dbsession.bind
 
 def create_database(engine,settings):
 
