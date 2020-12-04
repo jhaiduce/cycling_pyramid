@@ -346,9 +346,10 @@ class MetarTests(BaseTest):
         
         self.init_database()
 
+    @patch('cycling_data.processing.regression.train_model.delay')
     @patch('cycling_data.models.get_tm_session')
     @patch('cycling_data.processing.weather.fetch_metars',return_value=ogimet_text_dca)
-    def test_fetch_metars_for_ride(self,fetch_metars,get_tm_session):
+    def test_fetch_metars_for_ride(self,fetch_metars,get_tm_session,train_model):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
@@ -423,6 +424,8 @@ class MetarTests(BaseTest):
             dtend+window_expansion,
             url='https://www.ogimet.com/display_metars2.php'
         )
+
+        train_model.assert_called()
 
         for key in MetarTests.ride_average_weather.keys():
             self.assertEqual(getattr(ride.wxdata,key),
@@ -694,12 +697,9 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,200)
 
     @patch(
-        'cycling_data.processing.regression.train_model.delay',
-        return_value=mock_task_result)
-    @patch(
         'cycling_data.processing.weather.update_ride_weather.delay',
         return_value=mock_task_result)
-    def test_ride_addedit(self,update_ride_weather,train_model):
+    def test_ride_addedit(self,update_ride_weather):
         self.login()
         from .models import Ride
         session=self.get_session()
@@ -727,7 +727,6 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
         created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
-        train_model.assert_called()
         update_ride_weather.assert_called_with(created_ride_id)
         self.assertEqual(created_ride.equipment_id,0)
         self.assertEqual(created_ride.surface_id,0)
@@ -747,7 +746,6 @@ class FunctionalTests(unittest.TestCase):
             )
 
         self.assertEqual(res.status_code,200)
-        train_model.assert_called()
         update_ride_weather.assert_called_with(created_ride_id)
 
         res=self.testapp.post(
@@ -772,7 +770,6 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
         created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
-        train_model.assert_called()
         update_ride_weather.assert_called_with(created_ride_id)
         self.assertEqual(created_ride.equipment_id,0)
         self.assertEqual(created_ride.surface_id,0)

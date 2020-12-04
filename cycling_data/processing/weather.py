@@ -369,13 +369,19 @@ def update_location_rides_weather(location_id):
         ( Ride.startloc_id == location_id ) |
         ( Ride.endloc_id == location_id ) )
 
-    for ride in location_rides:
-        update_ride_weather.delay(ride.id)
+    from celery import chord
+    from .regression import train_model
+
+    # Update ride weather for all rides and re-train prediction model when
+    # finished
+    chord(
+        update_ride_weather.delay(ride.id, train_model=False) for ride in location_rides
+    )(train_model.s())
 
     return location_id
 
 @celery.task(ignore_result=False)
-def update_ride_weather(ride_id):
+def update_ride_weather(ride_id, train_model=True):
 
     from ..celery import session_factory
     from ..models import get_tm_session
@@ -401,5 +407,9 @@ def update_ride_weather(ride_id):
                 setattr(ride.wxdata,key,value)
 
         transaction.commit()
+
+    if train_model:
+        from .regression import train_model
+        train_model.delay()
 
     return ride_id

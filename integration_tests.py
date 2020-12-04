@@ -176,7 +176,6 @@ class BaseTest(unittest.TestCase):
         submission_metadata=json.loads(resp.history[0].text)
         ride_id=submission_metadata['ride_id']
         update_weather_task_id=submission_metadata['update_weather_task_id']
-        train_model_task_id=submission_metadata['train_model_task_id']
 
         # Check redirect URL
         self.assertEqual(
@@ -190,10 +189,6 @@ class BaseTest(unittest.TestCase):
         # Wait for update_ride_weather task to complete
         from celery.result import AsyncResult
         task_result=AsyncResult(update_weather_task_id,app=celery)
-        task_result.wait(10)
-
-        # Wait for train_model task to complete
-        task_result=AsyncResult(train_model_task_id,app=celery)
         task_result.wait(10)
 
         # Check ride details page

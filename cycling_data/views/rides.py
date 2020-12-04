@@ -341,9 +341,6 @@ class RideViews(object):
             from ..processing.weather import update_ride_weather
             update_weather_task=update_ride_weather.delay(ride.id)
 
-            from ..processing.regression import train_model
-            train_model_task = train_model.delay()
-
             url = self.request.route_url('rides')
             return HTTPFound(
                 url,
@@ -351,8 +348,7 @@ class RideViews(object):
                 charset='',
                 text=json.dumps(
                     {'ride_id':ride.id,
-                     'update_weather_task_id':update_weather_task.task_id,
-                     'train_model_task_id':train_model_task.task_id}))
+                     'update_weather_task_id':update_weather_task.task_id}))
 
         return dict(form=form)
 
@@ -396,17 +392,11 @@ class RideViews(object):
 
             from ..celery import after_commit_task_hook
             from ..processing.weather import update_ride_weather
-            from ..processing.regression import train_model
 
             # add hook to submit update_ride_weather task after commit
             ride_id=ride.id
             self.request.tm.get().addAfterCommitHook(
                 after_commit_task_hook(update_ride_weather,task_args=[ride.id]))
-
-            # add hook to train model after commit
-            ride_id=ride.id
-            self.request.tm.get().addAfterCommitHook(
-                after_commit_task_hook(train_model,task_args=[ride.id]))
 
             url = self.request.route_url('rides')
             return HTTPFound(url)
