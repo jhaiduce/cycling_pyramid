@@ -34,22 +34,16 @@ def build_model(train_set_size,input_size):
     c=np.log(np.expm1(1.))
 
     model = keras.Sequential([
-        tfp.layers.DenseVariational(12,
-                                    posterior_mean_field, prior_trainable,
-                                    kl_weight=train_set_size,
-                                    activation='relu'),
+        layers.Dense(64, input_shape=[input_size],
+                         activation='relu'),
+        layers.Dense(64, activation='relu'),
         layers.LeakyReLU(alpha=0.3),
-        tfp.layers.DenseVariational(1+1,
-                                    posterior_mean_field, prior_trainable,
-                                    kl_weight=train_set_size),
-        tfp.layers.DistributionLambda(lambda t: tfd.Normal(
-            loc=t[..., :1],
-            scale=1e-5+tf.math.softplus(c * t[...,1:]))),
+        layers.Dense(1)
     ])
 
     optimizer = tf.optimizers.Adam(learning_rate=0.02,epsilon=0.001)
 
-    model.compile(loss=negloglik,
+    model.compile(loss='mse',
                   optimizer=optimizer,
                   metrics=['mae', 'mse'])
     model.build([None,input_size])

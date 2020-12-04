@@ -528,14 +528,14 @@ class ModelTests(BaseTest):
 
             dataset_copy=dataset.copy()
             normed_data=model.norm(dataset)
-            predictions,errors=model.predict(dataset)
+            predictions=model.predict(dataset)
             stats=model.stats
             self.assertTrue(np.allclose(dataset,dataset_copy))
             for a,b in zip(weights,model.model.get_weights()):
                 self.assertTrue(np.allclose(a,b))
             self.assertEqual(predictions.shape,(self.rideCount,1))
             self.assertEqual(np.isnan(predictions).sum(),0)
-            predictions_new,errors_new=model.predict(dataset)
+            predictions_new=model.predict(dataset)
             normed_data_new=model.norm(dataset)
             self.assertTrue(np.allclose(stats,model.stats))
             self.assertTrue(np.allclose(
@@ -547,10 +547,10 @@ class ModelTests(BaseTest):
             from .models.prediction import get_ride_predictions
 
             # Check that get_ride_predictions returns the same results
-            ride_predictions,ride_errors=get_ride_predictions(session,rides)
+            ride_predictions=get_ride_predictions(session,rides)
             self.assertEqual(ride_predictions.shape,(self.rideCount,1))
             self.assertTrue(np.allclose(predictions,ride_predictions))
-            single_prediction,single_errors=get_ride_predictions(session,[session.query(Ride).first()])
+            single_prediction=get_ride_predictions(session,[session.query(Ride).first()])
             self.assertEqual(single_prediction.shape,(1,1))
             self.assertTrue(np.allclose(single_prediction[0],ride_predictions[0]))
 import webtest

@@ -195,18 +195,10 @@ class PredictionModel(Base,TimestampedRecord):
         if len(self.predict_columns)==0:
             return
         normed_data=self.norm(data.drop(columns=self.predict_columns))
-        yhats=[self.model(normed_data.to_numpy()) for _ in range(samples)]
 
-        predictions=np.mean([yhat.mean().numpy() for yhat in yhats],axis=0)
+        predictions=self.model.predict(normed_data)
 
-        errors=np.linalg.norm(
-            [
-                np.mean([yhat.stddev().numpy().flatten() for yhat in yhats],axis=0),
-                np.std([yhat.mean().numpy().flatten() for yhat in yhats],axis=0)
-            ],
-        axis=0)
-
-        return predictions,errors
+        return predictions
 
     @property
     def predict_columns(self):
