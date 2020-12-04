@@ -53,6 +53,9 @@ def train_model(epochs=2000,patience=300):
         predict_columns=['avspeed']
         train_dataset=get_data(dbsession,predict_columns)
 
+        if train_dataset is None:
+            raise ValueError('Empty training dataset')
+
         with transaction.manager:
             dbsession=get_tm_session(session_factory,transaction.manager)
             dbsession.add(model)
