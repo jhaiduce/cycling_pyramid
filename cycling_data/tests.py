@@ -664,13 +664,18 @@ class FunctionalTests(unittest.TestCase):
         ride_count=int(re.search(r'(\d+) total rides',res.text).group(1))
         self.assertEqual(ride_count,2)
 
-    def test_ride_details(self):
+    @patch(
+        'cycling_data.models.prediction.get_ride_predictions',
+        return_value={'avspeed':19.4}
+    )
+    def test_ride_details(self,get_ride_predictions):
         self.login()
         from .models import Ride
         session=self.get_session()
         url='http://localhost/rides/{}/details'.format(self.ride_id)
         ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
         res=self.testapp.get(url)
+        get_ride_predictions.assert_called()
         self.assertEqual(res.status_code,200)
 
     @patch(

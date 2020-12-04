@@ -359,6 +359,7 @@ class RideViews(object):
     @view_with_header
     @view_config(route_name='ride_details', renderer='../templates/ride_details.jinja2')
     def ride_details(self):
+        from ..models.prediction import get_ride_predictions
 
         ride_id=int(self.request.matchdict['ride_id'])
 
@@ -366,9 +367,12 @@ class RideViews(object):
 
         ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
-        wxdata=ride.wxdata or RideWeatherData()
+        if ride.wxdata is None:
+            ride.wxdata=RideWeatherData()
 
-        return dict(ride=ride,wxdata=wxdata)
+        predictions=get_ride_predictions(dbsession,[ride])
+
+        return dict(ride=ride,wxdata=ride.wxdata,predictions=predictions)
 
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
