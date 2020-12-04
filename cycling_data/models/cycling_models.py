@@ -145,7 +145,7 @@ class PredictionModel(Base,TimestampedRecord):
             (cls.input_size_, new_dataset_size)
         ]
 
-    def __norm(self,x):
+    def norm(self,x):
         std=self.stats['std'].replace(0,1)
         return (x - self.stats['mean']) / std
 
@@ -169,7 +169,7 @@ class PredictionModel(Base,TimestampedRecord):
         train_labels=train_dataset[predict_columns]
         train_dataset = train_dataset.drop(columns=predict_columns)
 
-        normed_train_data = self.__norm(train_dataset)
+        normed_train_data = self.norm(train_dataset)
 
         self.train_dataset_size_=train_dataset.shape[0]
         self.input_size_=train_dataset.shape[1]
@@ -189,11 +189,24 @@ class PredictionModel(Base,TimestampedRecord):
 
         self.__save_weights()
 
-    def predict(self,data):
+    def predict(self,data,samples=100):
+        import numpy as np
+
         if len(self.predict_columns)==0:
             return
-        data=data.drop(columns=self.predict_columns)
-        return self.model.predict(self.__norm(data))
+        normed_data=self.norm(data.drop(columns=self.predict_columns))
+        yhats=[self.model(normed_data.to_numpy()) for _ in range(samples)]
+
+        predictions=np.mean([yhat.mean().numpy() for yhat in yhats],axis=0)
+
+        errors=np.linalg.norm(
+            [
+                np.mean([yhat.stddev().numpy().flatten() for yhat in yhats],axis=0),
+                np.std([yhat.mean().numpy().flatten() for yhat in yhats],axis=0)
+            ],
+        axis=0)
+
+        return predictions,errors
 
     @property
     def predict_columns(self):
