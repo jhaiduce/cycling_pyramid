@@ -389,11 +389,20 @@ class RideViews(object):
             ride=appstruct_to_ride(dbsession,appstruct,ride)
             
             dbsession.add(ride)
-            
-            # submitting update_ride_weather task
+
+            from ..celery import after_commit_task_hook
+            from ..processing.weather import update_ride_weather
+            from ..processing.regression import train_model
+
+            # add hook to submit update_ride_weather task after commit
             ride_id=ride.id
             self.request.tm.get().addAfterCommitHook(
-                submit_update_ride_weather_task,args=[ride.id])
+                after_commit_task_hook(update_ride_weather,task_args=[ride.id]))
+
+            # add hook to train model after commit
+            ride_id=ride.id
+            self.request.tm.get().addAfterCommitHook(
+                after_commit_task_hook(train_model,task_args=[ride.id]))
 
             url = self.request.route_url('rides')
             return HTTPFound(url)

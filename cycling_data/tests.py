@@ -695,11 +695,11 @@ class FunctionalTests(unittest.TestCase):
                 endloc='Work'
             ))
         )
-        train_model.assert_called()
-        update_ride_weather.assert_called()
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
         created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
+        train_model.assert_called()
+        update_ride_weather.assert_called_with(created_ride_id)
         self.assertEqual(created_ride.equipment_id,0)
         self.assertEqual(created_ride.surface_id,0)
         self.assertEqual(created_ride.startloc.name,'Home')
@@ -718,6 +718,8 @@ class FunctionalTests(unittest.TestCase):
             )
 
         self.assertEqual(res.status_code,200)
+        train_model.assert_called()
+        update_ride_weather.assert_called_with(created_ride_id)
 
         res=self.testapp.post(
             add_url,
@@ -741,6 +743,8 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,302)
         created_ride_id=json.loads(res.text)['ride_id']
         created_ride=session.query(Ride).filter(Ride.id==created_ride_id).one()
+        train_model.assert_called()
+        update_ride_weather.assert_called_with(created_ride_id)
         self.assertEqual(created_ride.equipment_id,0)
         self.assertEqual(created_ride.surface_id,0)
         self.assertEqual(created_ride.startloc.name,'Home')
