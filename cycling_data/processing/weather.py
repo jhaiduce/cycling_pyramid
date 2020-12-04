@@ -144,6 +144,15 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
 def fetch_metars_for_ride(session,ride):
     from .locations import get_nearby_locations
+    if (
+            ride.startloc.lat is None
+            or ride.endloc.lat is None
+            or ride.startloc.lon is None
+            or ride.endloc.lon is None
+    ):
+        # Incomplete location data, can't search for METARS
+        return []
+
     lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
     lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
     nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
