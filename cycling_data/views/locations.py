@@ -122,6 +122,8 @@ class LocationViews(object):
     @view_config(route_name='location_edit', renderer='../templates/location_addedit.jinja2')
     def location_edit(self):
 
+        import json
+
         dbsession=self.request.dbsession
     
         location_id = int(self.request.matchdict['location_id'])
@@ -146,6 +148,8 @@ class LocationViews(object):
 
             transaction.commit()
 
+            from ..processing.weather import update_location_rides_weather
+
             update_weather_task=update_location_rides_weather.delay(location.id)
 
             url = self.request.route_url('locations_table')
@@ -155,7 +159,8 @@ class LocationViews(object):
                 charset='',
                 text=json.dumps({
                     'location_id':location.id,
-                    'update_weather_task_id':update_weather_task.task_id}))
+                    'update_weather_task_id':update_weather_task.task_id
+                }))
 
         form=self.location_form.render(dict(
             name=location.name,
