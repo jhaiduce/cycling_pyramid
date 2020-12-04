@@ -35,6 +35,8 @@ def regress(dbsession):
     # Fetch the data
     dataset=get_data(dbsession,predict_columns)
 
+    dataset=dataset.dropna()
+
     train_dataset = dataset.sample(frac=0.8,random_state=0)
     test_dataset = dataset.drop(train_dataset.index)
 
