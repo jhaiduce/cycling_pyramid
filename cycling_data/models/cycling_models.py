@@ -188,13 +188,18 @@ class PredictionModel(Base,TimestampedRecord):
         self.__save_weights()
 
     def predict(self,data):
+        if len(self.predict_columns)==0:
+            return
         data=data.drop(columns=self.predict_columns)
         return self.model.predict(self.__norm(data))
 
     @property
     def predict_columns(self):
         import json
-        return json.loads(self.predict_columns_)
+        if self.predict_columns_:
+            return json.loads(self.predict_columns_)
+        else:
+            return []
 
     @predict_columns.setter
     def predict_columns(self,new_value):
