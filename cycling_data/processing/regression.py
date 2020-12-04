@@ -6,18 +6,7 @@ logger = get_task_logger(__name__)
 
 import transaction
 
-def get_model(dbsession):
-    from ..models.cycling_models import PredictionModel
-
-    from sqlalchemy.orm.exc import NoResultFound
-
-    try:
-        model=dbsession.query(PredictionModel).one()
-    except NoResultFound:
-        model=PredictionModel()
-        dbsession.add(model)
-
-    return model
+from ..models.prediction import get_model
 
 @celery.task(ignore_result=False)
 def train_model(epochs=2000,patience=300):

@@ -72,7 +72,23 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
     from .cycling_models import RiderGroup, SurfaceType, Equipment
     import pandas as pd
 
-    dataset=pd.read_sql_query(rides.statement,rides.session.bind)
+    if hasattr(rides,'statement'):
+        dataset=pd.read_sql_query(rides.statement,rides.session.bind)
+    else:
+        dataset=pd.DataFrame([
+            dict(
+                distance=ride.distance,
+                ridergroup_id=ride.ridergroup_id,
+                surface_id=ride.surface_id,
+                equipment_id=ride.equipment_id,
+                trailer=ride.trailer,
+                rolling_time=ride.rolling_time,
+                avspeed=ride.avspeed,
+            )
+            for ride in rides
+        ])
+
+    if len(dataset)==0: return
 
     dataset['fraction_day']=[ride.fraction_day for ride in rides]
 
@@ -124,6 +140,43 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
 
     dataset=pd.get_dummies(dataset, prefix='', prefix_sep='')
 
-    dataset.dropna(inplace=True)
-
     return dataset
+
+def get_model(dbsession):
+    from .cycling_models import PredictionModel
+
+    from sqlalchemy.orm.exc import NoResultFound
+
+    try:
+        model=dbsession.query(PredictionModel).one()
+    except NoResultFound:
+        model=PredictionModel()
+        dbsession.add(model)
+
+    return model
+
+def get_ride_predictions(session,rides):
+
+    import numpy as np
+
+    model=get_model(session)
+    if not hasattr(rides,'statement'):
+        filtered_rides=[ride for ride in rides if ride.wxdata is not None]
+        filtered_inds=[ind for ind,ride in enumerate(rides)
+                       if ride.wxdata is not None]
+    else:
+        filtered_rides=rides
+
+    prediction_inputs=prepare_model_dataset(filtered_rides,session,model.predict_columns)
+    if prediction_inputs is not None:
+        predictions=model.predict(prediction_inputs)
+    else:
+        predictions=np.empty([0,1])
+
+    if not hasattr(rides,'statement'):
+        predictions_with_nulls=np.empty([len(rides),1])
+        predictions_with_nulls.fill(np.nan)
+        predictions_with_nulls[filtered_inds]=predictions
+        predictions=predictions_with_nulls
+
+    return predictions

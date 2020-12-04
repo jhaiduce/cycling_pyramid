@@ -158,6 +158,8 @@ class PredictionModel(Base,TimestampedRecord):
         import tensorflow_docs as tfdocs
         import tensorflow_docs.modeling
 
+        train_dataset.dropna(inplace=True)
+
         train_stats = train_dataset.describe()
         train_stats = train_stats.drop(columns=predict_columns)
         train_stats = train_stats.transpose()
