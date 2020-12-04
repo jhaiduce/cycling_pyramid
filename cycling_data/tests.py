@@ -805,3 +805,56 @@ class FunctionalTests(unittest.TestCase):
         self.assertEqual(res.status_code,200)
         count=int(re.search(r'(\d+) total locations',res.text).group(1))
         self.assertGreaterEqual(count,0)
+
+    @patch(
+        'cycling_data.processing.weather.update_location_rides_weather.delay',
+        return_value=mock_task_result)
+    def test_location_addedit(self,update_location_rides):
+        import json
+        from .models import Location
+
+        self.login()
+        session=self.get_session()
+
+        res=self.testapp.post(
+            'http://localhost/locations/add',
+            params=dict_to_postdata(dict(
+                name='New Location',
+                coordinates=dict(
+                    lat=str(42.479703643392526),
+                    lon=str(-83.11677199999998),
+                    elevation=str(193.9267883300781)),
+                loctype=1,
+                submit='submit'
+            ))
+        )
+        self.assertEqual(res.status_code,302)
+        created_location_id=json.loads(res.text)['location_id']
+        created_location=session.query(Location).filter(Location.id==created_location_id).one()
+
+        self.assertEqual(created_location.name,'New Location')
+        self.assertAlmostEqual(created_location.lat,42.479703643392526)
+        self.assertAlmostEqual(created_location.lon,-83.11677199999998)
+        self.assertAlmostEqual(created_location.elevation,193.9267883300781)
+
+        res=self.testapp.post(
+            'http://localhost/locations/{}/edit'.format(created_location_id),
+            params=dict_to_postdata(dict(
+                name='New Location 1',
+                coordinates=dict(
+                    lat=str(42.0),
+                    lon=str(-83.0),
+                    elevation=str(195.7)),
+                loctype=1,
+                submit='submit'
+            ))
+        )
+        self.assertEqual(res.status_code,302)
+        update_location_rides.assert_called_with(created_location_id)
+
+        created_location=session.query(Location).filter(Location.id==created_location_id).one()
+
+        self.assertEqual(created_location.name,'New Location 1')
+        self.assertAlmostEqual(created_location.lat,42.0)
+        self.assertAlmostEqual(created_location.lon,-83.0)
+        self.assertAlmostEqual(created_location.elevation,195.7)
