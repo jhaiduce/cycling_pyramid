@@ -16,7 +16,8 @@
        {{'{:0.2f}'.format(ride.avspeed)}}
     {% elif ride.average_speed is not none %}
        {{'({:0.2f})'.format(ride.average_speed)}}
-    {% else %} - {% endif %}</td></tr>
+     {% else %} - {% endif %}
+     {% if predictions %}(predicted {{predictions}}) {% endif %}</td></tr>
 <tr><th>Max speed</th><td>{{ride.maxspeed}}</td></tr>
 <tr><th>Equipment</th><td>{{ride.equipment.name}}</td></tr>
 <tr><th>Trailer</th><td>{{ride.trailer}}</td></tr>
