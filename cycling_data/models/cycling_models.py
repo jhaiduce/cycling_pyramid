@@ -629,7 +629,9 @@ class Ride(Base,TimestampedRecord):
         Azimuth from self.startloc to self.endloc
         """
 
-        if self.startloc is None or self.endloc is None:
+        if self.startloc is None or self.endloc is None \
+           or self.startloc.lon is None or self.startloc.lat is None \
+           or self.endloc.lon is None or self.endloc.lon is None:
             return None
 
         from math import atan2
