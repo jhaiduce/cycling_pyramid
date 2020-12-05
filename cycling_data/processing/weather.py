@@ -240,13 +240,23 @@ def average_weather(metars,dtstart,dtend,altitude):
         if report_time<dtstart:
             dt=dtstart-report_time
             weights=[0,0]
-            weights[1]=dt.total_seconds()/(next_report_time-dtstart).total_seconds()
+
+            if next_report_time!=dtstart:
+                weights[1]=dt.total_seconds()/(next_report_time-dtstart).total_seconds()
+            else:
+                weights[1]=1
+
             weights[0]=1-weights[1]
         elif next_report_time>dtend:
             dt=dtend-report_time
             weights=[0,0]
-            weights[0]=dt.total_seconds()/(dtend-report_time).total_seconds()
-            weights[1]=1-weights[0]
+
+            if dtend!=report_time:
+                weights[0]=dt.total_seconds()/(dtend-report_time).total_seconds()
+            else:
+                weights[0]=1
+
+                weights[1]=1-weights[0]
         else:
             dt=next_report_time-report_time
             weights=[0.5,0.5]
