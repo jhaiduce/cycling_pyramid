@@ -726,7 +726,8 @@ class Ride(Base,TimestampedRecord):
                         predawn_segment+day_segment+postdusk_segment
                         -timedelta(1)
                 ).total_seconds()) > 5:
-                    raise ValueError('Segments do not fill day')
+                    raise ValueError(
+                        'On ride {}: Segments do not fill day'.format(self.id))
 
             time_day+=day_segment
             time_night+=predawn_segment+postdusk_segment
@@ -736,7 +737,7 @@ class Ride(Base,TimestampedRecord):
 
         if abs((total_time - accounted_time).total_seconds()) > 5:
             raise ValueError(
-                'Day/night times do not cover duration of ride.')
+                'On ride {}: Day/night times do not cover duration of ride.'.format(self.id))
 
         if total_time==timedelta(0):
            return None
