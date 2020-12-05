@@ -528,6 +528,10 @@ class Ride(Base,TimestampedRecord):
         if self.start_timezone:
             return self.start_time_.replace(
                 tzinfo=pytz.timezone(self.start_timezone))
+        elif self.end_timezone:
+            return self.start_time_.replace(
+                tzinfo=pytz.timezone(self.end_timezone)
+            )
         else:
             return self.start_time_.replace(
                 tzinfo=pytz.timezone('UTC')
@@ -553,9 +557,13 @@ class Ride(Base,TimestampedRecord):
         if self.end_timezone:
             return self.end_time_.replace(
                 tzinfo=pytz.timezone(self.end_timezone))
+        elif self.start_timezone:
+            return self.end_time_.replace(
+                tzinfo=pytz.timezone(self.start_timezone))
         else:
             return self.end_time_.replace(
-                tzinfo=pytz.timezone('UTC'))
+                tzinfo=pytz.timezone('UTC')
+            )
 
     @end_time.setter
     def end_time(self,new_end_time):
