@@ -617,7 +617,8 @@ class Ride(Base,TimestampedRecord):
     @property
     def grade(self):
         if self.distance is None or \
-           self.startloc is None or self.endloc is None:
+           self.startloc is None or self.endloc is None \
+           or self.startloc.elevation is None or self.endloc.elevation is None:
             return None
         distance_m=self.distance/1000
         return (self.endloc.elevation-self.startloc.elevation)/distance_m
