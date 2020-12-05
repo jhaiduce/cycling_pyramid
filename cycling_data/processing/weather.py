@@ -394,29 +394,31 @@ def update_location_rides_weather(location_id):
 def update_ride_weather(ride_id, train_model=True):
 
     from ..celery import session_factory
-    from ..models import get_tm_session
-    
-    dbsession=get_tm_session(session_factory,transaction.manager)
     
     logger.debug('Received update weather task for ride {}'.format(ride_id))
 
-    ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+    dbsession=session_factory()
+    dbsession.expire_on_commit=False
 
-    metars=fetch_metars_for_ride(dbsession,ride)
+    with transaction.manager:
+        ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+
+    with transaction.manager:
+        metars=fetch_metars_for_ride(dbsession,ride)
 
     if len(metars)>0:
         dtstart,dtend=ride_times_utc(ride)
         altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
         averages=average_weather(metars,dtstart,dtend,altitude)
         logger.debug('Ride weather average values: {}'.format(averages))
-        if len(averages)>0:
-            if ride.wxdata is None:
-                ride.wxdata=RideWeatherData()
-                ride.wxdata.station=metars[0].station
-            for key,value in averages.items():
-                setattr(ride.wxdata,key,value)
 
-        transaction.commit()
+        if len(averages)>0:
+            with transaction.manager:
+                if ride.wxdata is None:
+                    ride.wxdata=RideWeatherData()
+                    ride.wxdata.station=metars[0].station
+                for key,value in averages.items():
+                    setattr(ride.wxdata,key,value)
 
     if train_model:
         from .regression import train_model
