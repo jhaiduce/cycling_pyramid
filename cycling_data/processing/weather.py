@@ -385,7 +385,7 @@ def update_location_rides_weather(location_id):
     # Update ride weather for all rides and re-train prediction model when
     # finished
     chord(
-        update_ride_weather.delay(ride.id, train_model=False) for ride in location_rides
+        update_ride_weather.s(ride.id, train_model=False) for ride in location_rides
     )(train_model.s())
 
     return location_id
