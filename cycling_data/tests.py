@@ -456,7 +456,9 @@ class ModelTests(BaseTest):
             location=Location(
                 name='Location {}'.format(i),
                 lat=random.gauss(28.084,0.05),
-                lon=random.gauss(-80.5901,0.05))
+                lon=random.gauss(-80.5901,0.05),
+                elevation=100*random.lognormvariate(0,1)
+            )
             locations.append(location)
             self.session.add(location)
 
@@ -478,6 +480,8 @@ class ModelTests(BaseTest):
             odo+=distance
             temperature=random.gauss(25,5)
             ride = Ride(
+                startloc=random.choice(locations),
+                endloc=random.choice(locations),
                 start_time=start_time,
                 end_time=end_time,
                 total_time=end_time-start_time,
