@@ -22,3 +22,5 @@ services:
         target: /etc/my.cnf.d/certificates/server-cert.pem
       - source: mysql_key
         target: /etc/my.cnf.d/certificates/server-key.pem
+    ports:
+      - 3306:3306
