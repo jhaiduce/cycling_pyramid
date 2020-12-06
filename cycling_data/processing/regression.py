@@ -71,5 +71,8 @@ def train_model(*args,epochs=2000,patience=300):
 
             finally:
                 model.training_in_progress=False
+                dbsession.commit()
+
+        dbsession.commit()
 
     return train_dataset_size
