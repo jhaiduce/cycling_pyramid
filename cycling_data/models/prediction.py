@@ -134,7 +134,15 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
 
     dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']]
 
-    dataset=pd.get_dummies(dataset, prefix='', prefix_sep='')
+    for column, values in (
+            ('ridergroup',ridergroups),
+            ('equipment',equipments),
+            ('surfacetype',surfacetypes)
+    ):
+        dataset=pd.get_dummies(dataset, columns=[column], prefix=column, prefix_sep='_')
+        for value in values:
+            if value.name not in dataset:
+                dataset[column+'_'+value.name]=0.0
 
     return dataset
 
