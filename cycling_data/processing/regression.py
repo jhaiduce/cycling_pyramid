@@ -28,6 +28,7 @@ def train_model(*args,epochs=2000,patience=300):
         model=get_model(dbsession)
 
         if model.training_in_progress:
+            logger.debug('Training already in progress, exiting.')
             return
 
         data_modified_date = dbsession.query(func.max(Ride.modified_date).label('last_modified')).one().last_modified
@@ -41,6 +42,9 @@ def train_model(*args,epochs=2000,patience=300):
             )
             and not model.training_in_progress
         )
+
+    if not training_due:
+        logger.debug('Training is not due, exiting.')
 
     if training_due:
 
