@@ -20,9 +20,10 @@ def train_model(*args,epochs=2000,patience=300):
 
     train_dataset_size=None
 
+    dbsession=session_factory()
+    dbsession.expire_on_commit=False
+
     with transaction.manager:
-        dbsession=get_tm_session(session_factory,transaction.manager)
-        dbsession.expire_on_commit=False
 
         model=get_model(dbsession)
 
@@ -44,9 +45,9 @@ def train_model(*args,epochs=2000,patience=300):
     if training_due:
 
         with transaction.manager:
-            dbsession=get_tm_session(session_factory,transaction.manager)
-            dbsession.add(model)
             model.training_in_progress=True
+
+        dbsession.commit()
 
         from ..models.prediction import get_data
 
@@ -57,8 +58,6 @@ def train_model(*args,epochs=2000,patience=300):
             raise ValueError('Empty training dataset')
 
         with transaction.manager:
-            dbsession=get_tm_session(session_factory,transaction.manager)
-            dbsession.add(model)
             try:
 
                 model.train(train_dataset,predict_columns,

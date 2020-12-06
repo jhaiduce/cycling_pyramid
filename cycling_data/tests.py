@@ -347,16 +347,21 @@ class MetarTests(BaseTest):
         self.init_database()
 
     @patch('cycling_data.processing.regression.train_model.delay')
-    @patch('cycling_data.models.get_tm_session')
+    @patch('cycling_data.celery.session_factory')
     @patch('cycling_data.processing.weather.fetch_metars',return_value=ogimet_text_dca)
-    def test_fetch_metars_for_ride(self,fetch_metars,get_tm_session,train_model):
+    def test_fetch_metars_for_ride(self,fetch_metars,session_factory,train_model):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
 
         from datetime import datetime, timedelta
+        from .models import get_session_factory
 
-        get_tm_session.return_value=self.session
+        sessionmaker=get_session_factory(self.engine)
+
+        session=sessionmaker()
+
+        session_factory.return_value=session
 
         washington_monument=Location(
                 name='Washington Monument',
@@ -392,10 +397,10 @@ class MetarTests(BaseTest):
             startloc=washington_monument,
             endloc=us_capitol
         )
-        self.session.add(ride)
-        self.session.add(dca)
-        self.session.add(bwi)
-        self.session.flush()
+        session.add(ride)
+        session.add(dca)
+        session.add(bwi)
+        session.commit()
         
         locations=self.session.query(Location)
 
@@ -403,8 +408,8 @@ class MetarTests(BaseTest):
 
         from cycling_data.processing.weather import ride_times_utc
         dtstart,dtend=ride_times_utc(ride)
-        
-        metars=fetch_metars_for_ride(self.session,ride)
+
+        metars=fetch_metars_for_ride(session,ride)
         
         self.assertEqual(metars[0].station.name,'KDCA')
         fetch_metars.assert_called_with(
@@ -510,20 +515,23 @@ class ModelTests(BaseTest):
         from .models.prediction import prepare_model_dataset
         import numpy as np
 
+        transaction.commit()
+
+        session_factory=get_session_factory(self.engine)
+        session=session_factory()
+
         with patch.object(
                 celery,'session_factory',
-                wraps=get_session_factory(self.engine)) as session_factory:
+                return_value=session) as session_factory:
             train_dataset_size=train_model(epochs=10)
 
         self.assertEqual(train_dataset_size,self.rideCount)
 
         with transaction.manager:
-            session=get_tm_session(get_session_factory(self.engine),transaction.manager)
             rides=session.query(Ride)
             dataset=prepare_model_dataset(rides,session,['avspeed'])
 
         with transaction.manager:
-            session=get_tm_session(get_session_factory(self.engine),transaction.manager)
             model=session.query(PredictionModel).one()
             weights=model.model.get_weights()
 
