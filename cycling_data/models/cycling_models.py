@@ -90,7 +90,10 @@ class PredictionModel(Base,TimestampedRecord):
                 for key in weightfile.keys():
                     weights.append(weightfile[key])
 
-                self.model_.set_weights(weights)
+                try:
+                    self.model_.set_weights(weights)
+                except ValueError:
+                    pass
 
     def __save_weights(self):
         import io
