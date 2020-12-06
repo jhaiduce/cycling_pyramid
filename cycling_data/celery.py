@@ -11,9 +11,19 @@ session_factory=None
 config=configparser.ConfigParser()
 config.read('/run/secrets/production.ini')
 
-def after_commit_task_hook(success,task,run_on_failure=False,run_on_success=True,task_args=[],task_kwargs={}):
-    if (success and run_on_success) or (not success and run_on_failure):
-        task.delay(*task_args,**task_kwargs)
+class after_commit_task_hook(object):
+
+    def __init__(self,task,run_on_failure=False,run_on_success=True,task_args=[],task_kwargs={}):
+        self.task=task
+        self.run_on_failure=run_on_failure
+        self.run_on_success=run_on_success
+        self.task_args=task_args
+        self.task_kwargs=task_kwargs
+
+    def __call__(self,success):
+        if (success and self.run_on_success) \
+           or (not success and self.run_on_failure):
+            self.task.delay(*self.task_args,**self.task_kwargs)
 
 @worker_process_init.connect
 def bootstrap_pyramid(signal, sender, **kwargs):
