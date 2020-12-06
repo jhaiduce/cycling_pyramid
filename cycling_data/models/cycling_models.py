@@ -432,7 +432,7 @@ class StationWeatherData(WeatherData):
                 self.station=session.query(Location).filter(and_(Location.name==obs.station_id,Location.loctype_id==2)).one()
                 self.report_time=obs.time
             except NoResultFound:
-                location=Location(name=metar.station_id,loctype_id=2)
+                location=Location(name=obs.station_id,loctype_id=2)
                 session.add(location)
 
             try:
