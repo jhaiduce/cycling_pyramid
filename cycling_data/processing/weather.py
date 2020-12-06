@@ -138,6 +138,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
                 wxdata=q.first()
             else:
                 session.add(wxdata)
+                session.commit()
             stored_metars.append(wxdata)
 
     return stored_metars
