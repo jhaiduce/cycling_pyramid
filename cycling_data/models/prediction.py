@@ -86,32 +86,45 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
 
     if len(dataset)==0: return
 
-    dataset['fraction_day']=[ride.fraction_day for ride in rides]
+    dataset['fraction_day']=pd.Series([ride.fraction_day for ride in rides],
+                                          dtype=float)
 
-    dataset['grade']=[ride.grade for ride in rides]
+    dataset['grade']=pd.Series([ride.grade for ride in rides], dtype=float)
 
-    dataset['tailwind']=[ride.tailwind for ride in rides]
+    dataset['tailwind']=pd.Series([ride.tailwind for ride in rides],
+                                   dtype=float)
 
-    dataset['crosswind']=[ride.crosswind for ride in rides]
+    dataset['crosswind']=pd.Series([ride.crosswind for ride in rides],
+                                   dtype=float)
 
-    dataset['temperature']=[ride.wxdata.temperature for ride in rides]
+    dataset['temperature']=pd.Series(
+        [ride.wxdata.temperature for ride in rides], dtype=float)
 
-    dataset['pressure']=[ride.wxdata.pressure for ride in rides]
+    dataset['pressure']=pd.Series([ride.wxdata.pressure for ride in rides],
+                                  dtype=float)
 
-    dataset['rain']=[ride.wxdata.rain for ride in rides]
+    dataset['rain']=pd.Series([ride.wxdata.rain for ride in rides], dtype=float)
 
-    dataset['snow']=[ride.wxdata.snow for ride in rides]
+    dataset['snow']=pd.Series([ride.wxdata.snow for ride in rides], dtype=float)
 
-    dataset['startlat']=[ride.startloc.lat if ride.startloc else None
-                         for ride in rides]
-    dataset['endlat']=[ride.endloc.lat if ride.endloc else None
-                       for ride in rides]
-    dataset['startlon']=[ride.startloc.lon if ride.startloc else None
-                         for ride in rides]
-    dataset['endlon']=[ride.endloc.lon if ride.endloc else None
-                       for ride in rides]
+    dataset['startlat']=pd.Series(
+        [ride.startloc.lat if ride.startloc else None
+         for ride in rides], dtype=float)
 
-    dataset['crowdist']=[ride.crowdist for ride in rides]
+    dataset['endlat']=pd.Series(
+        [ride.endloc.lat if ride.endloc else None
+         for ride in rides], dtype=float)
+
+    dataset['startlon']=pd.Series(
+        [ride.startloc.lon if ride.startloc else None
+         for ride in rides], dtype=float)
+
+    dataset['endlon']=pd.Series(
+        [ride.endloc.lon if ride.endloc else None
+         for ride in rides], dtype=float)
+
+    dataset['crowdist']=pd.Series(
+        [ride.crowdist for ride in rides], dtype=float)
 
     ridergroups=dbsession.query(RiderGroup)
     surfacetypes=dbsession.query(SurfaceType)
