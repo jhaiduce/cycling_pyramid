@@ -65,9 +65,11 @@ def get_data(dbsession,predict_columns):
 def prepare_model_dataset(rides,dbsession,predict_columns):
     from .cycling_models import RiderGroup, SurfaceType, Equipment
     import pandas as pd
+    import transaction
 
     if hasattr(rides,'statement'):
-        dataset=pd.read_sql_query(rides.statement,rides.session.bind)
+        with transaction.manager:
+            dataset=pd.read_sql_query(rides.statement,dbsession.bind)
     else:
         dataset=pd.DataFrame([
             dict(
