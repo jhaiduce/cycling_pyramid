@@ -15,6 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
 from sqlalchemy import func, orm
+from sqlalchemy.orm.exc import NoResultFound
 
 from .meta import Base
 
