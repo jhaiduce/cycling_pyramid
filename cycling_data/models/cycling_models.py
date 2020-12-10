@@ -682,6 +682,7 @@ class Ride(Base,TimestampedRecord):
         from astral import LocationInfo
         from astral.sun import sun
         from datetime import timedelta, time, datetime
+        import pytz
 
         def location_to_locationinfo(loc):
             return LocationInfo(
@@ -707,7 +708,7 @@ class Ride(Base,TimestampedRecord):
         if self.end_time < self.start_time:
             return None
 
-        numdays=(self.end_time.date()-self.start_time.date()).days+1
+        numdays=(self.end_time.astimezone(self.start_time.tzinfo).date()-self.start_time.date()).days+1
 
         time_day=timedelta(0)
         time_night=timedelta(0)
