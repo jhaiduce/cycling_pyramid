@@ -420,6 +420,7 @@ def update_ride_weather(ride_id, train_model=True):
                     ride.wxdata.station=metars[0].station
                 for key,value in averages.items():
                     setattr(ride.wxdata,key,value)
+            dbsession.commit()
 
     if train_model:
         from .regression import train_model
