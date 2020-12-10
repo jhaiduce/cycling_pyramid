@@ -558,6 +558,10 @@ class Ride(Base,TimestampedRecord):
     @hybrid_property
     def end_time(self):
         import pytz
+
+        if self.end_time_ is None:
+            return None
+
         if self.end_timezone:
             return self.end_time_.replace(
                 tzinfo=pytz.timezone(self.end_timezone))
