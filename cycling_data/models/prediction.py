@@ -98,14 +98,17 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
                                    dtype=float)
 
     dataset['temperature']=pd.Series(
-        [ride.wxdata.temperature for ride in rides], dtype=float)
+        [ride.wxdata.temperature if ride.wxdata else None
+         for ride in rides], dtype=float)
 
-    dataset['pressure']=pd.Series([ride.wxdata.pressure for ride in rides],
+    dataset['pressure']=pd.Series([ride.wxdata.pressure if ride.wxdata else None for ride in rides],
                                   dtype=float)
 
-    dataset['rain']=pd.Series([ride.wxdata.rain for ride in rides], dtype=float)
+    dataset['rain']=pd.Series([ride.wxdata.rain if ride.wxdata else None
+                               for ride in rides], dtype=float)
 
-    dataset['snow']=pd.Series([ride.wxdata.snow for ride in rides], dtype=float)
+    dataset['snow']=pd.Series([ride.wxdata.snow if ride.wxdata else None
+                               for ride in rides], dtype=float)
 
     dataset['startlat']=pd.Series(
         [ride.startloc.lat if ride.startloc else None
