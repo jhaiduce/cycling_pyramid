@@ -250,6 +250,8 @@ class RideViews(object):
         xvar=self.request.params.get('x','start_time')
         yvar=self.request.params.get('y','avspeed')
 
+        self.request.dbsession.autoflush=False
+
         computed_vars=['avspeed_est']
         
         # List of valid variable names
