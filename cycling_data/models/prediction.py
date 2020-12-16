@@ -43,7 +43,7 @@ def build_model(train_set_size,input_size):
         layers.Dense(1)
     ])
 
-    optimizer = tf.optimizers.Adam(learning_rate=0.02,epsilon=0.001)
+    optimizer = tf.keras.optimizers.RMSprop(0.001)
 
     model.compile(loss='mse',
                   optimizer=optimizer,
