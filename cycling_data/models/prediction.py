@@ -157,8 +157,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
     ):
         dataset=pd.get_dummies(dataset, columns=[column], prefix=column, prefix_sep='_')
         for value in values:
-            if value.name not in dataset:
-                dataset[column+'_'+value.name]=0.0
+            dummy_name=column+'_'+value.name
+            if dummy_name not in dataset:
+                dataset[dummy_name]=0
 
     return dataset
 
