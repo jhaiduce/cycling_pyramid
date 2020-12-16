@@ -186,7 +186,13 @@ class PredictionModel(Base,TimestampedRecord):
         early_stop = keras.callbacks.EarlyStopping(
             monitor='val_loss', min_delta=1e-5, patience=patience)
 
-        history=self.model.fit(normed_train_data, train_labels,
+        # Re-create model. Note that we use self.model_ instead of self.model
+        # because we want to initialize the weights from scratch and not
+        # restore them from the database
+        from .prediction import build_model
+        self.model_=build_model(self.train_dataset_size,self.input_size)
+
+        history=self.model_.fit(normed_train_data, train_labels,
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
                           callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
