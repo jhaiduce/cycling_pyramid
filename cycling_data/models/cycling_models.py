@@ -656,7 +656,7 @@ class Ride(Base,TimestampedRecord):
     def end_timezone(self,value):
         self.end_timezone_=value
 
-    @property
+    @hybrid_property
     def grade(self):
         if self.distance is None or \
            self.startloc is None or self.endloc is None \
@@ -665,7 +665,21 @@ class Ride(Base,TimestampedRecord):
         distance_m=self.distance/1000
         return (self.endloc.elevation-self.startloc.elevation)/distance_m
 
-    @property
+    @grade.expression
+    def grade(cls):
+        from sqlalchemy import select
+        from sqlalchemy.orm import aliased
+        endloc=aliased(Location)
+        startloc=aliased(Location)
+
+        return select(
+            [
+                (
+                    (endloc.elevation-startloc.elevation)/(cls.distance/1000.)
+                ).label('grade')
+            ]
+        ).where(endloc.id==cls.endloc_id).where(startloc.id==cls.startloc_id)
+
     def azimuth(self):
         """
         Azimuth from self.startloc to self.endloc
