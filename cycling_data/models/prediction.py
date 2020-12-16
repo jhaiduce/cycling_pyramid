@@ -5,6 +5,8 @@ tfd = tfp.distributions
 from tensorflow import keras
 from tensorflow.keras import layers
 
+tf.keras.backend.set_floatx('float64')
+
 # Specify the surrogate posterior over `keras.layers.Dense` `kernel` and `bias`.
 def posterior_mean_field(kernel_size, bias_size=0, dtype=None):
     n = kernel_size + bias_size
