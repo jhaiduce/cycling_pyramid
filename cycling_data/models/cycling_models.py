@@ -154,7 +154,7 @@ class PredictionModel(Base,TimestampedRecord):
         std=self.stats['std'].replace(0,1)
         return (x - self.stats['mean']) / std
 
-    def train(self,train_dataset,predict_columns,epochs=2000,patience=300):
+    def train(self,train_dataset,predict_columns,epochs=1000,patience=100):
         import pandas as pd
         from .prediction import get_data
         import io
@@ -184,7 +184,7 @@ class PredictionModel(Base,TimestampedRecord):
         # The patience parameter is the amount of epochs to check for
         # improvement
         early_stop = keras.callbacks.EarlyStopping(
-            monitor='val_loss', min_delta=1e-7, patience=patience)
+            monitor='val_loss', min_delta=1e-5, patience=patience)
 
         history=self.model.fit(normed_train_data, train_labels,
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
