@@ -92,8 +92,9 @@ class PredictionModel(Base,TimestampedRecord):
 
                 try:
                     self.model_.set_weights(weights)
-                except ValueError:
-                    pass
+                    log.debug('Loaded weights')
+                except ValueError as e:
+                    log.error(e)
 
     def __save_weights(self):
         import io
