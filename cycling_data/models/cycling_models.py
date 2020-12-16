@@ -197,6 +197,7 @@ class PredictionModel(Base,TimestampedRecord):
                           callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
         self.predict_columns=predict_columns
+        self.input_columns=train_dataset.columns.values.tolist()
 
         self.__save_weights()
 
@@ -205,7 +206,12 @@ class PredictionModel(Base,TimestampedRecord):
 
         if len(self.predict_columns)==0:
             return
-        normed_data=self.norm(data.drop(columns=self.predict_columns))
+
+        # Ensure column order is same as training set
+        data=data[self.input_columns]
+
+        # Normalize the data
+        normed_data=self.norm(data)
 
         predictions=self.model.predict(normed_data)
 
@@ -223,6 +229,19 @@ class PredictionModel(Base,TimestampedRecord):
     def predict_columns(self,new_value):
         import json
         self.predict_columns_=json.dumps(new_value)
+
+    @property
+    def input_columns(self):
+        import json
+        if self.input_columns_:
+            return json.loads(self.input_columns_)
+        else:
+            return []
+
+    @input_columns.setter
+    def input_columns(self,new_value):
+        import json
+        self.input_columns_=json.dumps(new_value)
 
     @property
     def stats(self):
