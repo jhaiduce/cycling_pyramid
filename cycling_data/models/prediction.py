@@ -56,11 +56,7 @@ def get_data(dbsession,predict_columns):
     from .cycling_models import Ride
     import pandas as pd
 
-    rides=dbsession.query(Ride).filter(
-        Ride.wxdata!=None
-    ).filter(
-        Ride.rolling_time is not None
-    )
+    rides=dbsession.query(Ride)
 
     return prepare_model_dataset(rides,dbsession,predict_columns)
 
