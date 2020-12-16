@@ -61,13 +61,15 @@ def get_data(dbsession,predict_columns):
     return prepare_model_dataset(rides,dbsession,predict_columns)
 
 def prepare_model_dataset(rides,dbsession,predict_columns):
-    from .cycling_models import RiderGroup, SurfaceType, Equipment
+    from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment
     import pandas as pd
     import transaction
 
     if hasattr(rides,'statement'):
         with transaction.manager:
-            dataset=pd.read_sql_query(rides.statement,dbsession.bind)
+            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed)
+            dataset=pd.read_sql_query(q.statement,dbsession.bind)
+            rides=[dbsession.query(Ride).filter(Ride.id==ride_id).one() for ride_id in dataset['id']]
     else:
         dataset=pd.DataFrame([
             dict(
