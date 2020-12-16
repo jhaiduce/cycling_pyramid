@@ -267,7 +267,7 @@ class PredictionModel(Base,TimestampedRecord):
 
         self.stats_=newstats
 
-        with io.StringIO(self.statsbuf_) as sio:
+        with io.StringIO() as sio:
            self.stats_.to_json(sio)
            self.statsbuf_=sio.getvalue()
 
