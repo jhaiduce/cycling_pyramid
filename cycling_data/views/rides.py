@@ -252,7 +252,7 @@ class RideViews(object):
 
         self.request.dbsession.autoflush=False
 
-        computed_vars=['avspeed_est']
+        computed_vars=['avspeed_est','avspeed_pred']
         
         # List of valid variable names
         valid_vars=Ride.__table__.columns.keys()+computed_vars
@@ -278,6 +278,12 @@ class RideViews(object):
         import pandas as pd
         import numpy as np
         df=pd.read_sql_query(rides.statement,rides.session.bind)
+
+        from ..models.prediction import get_ride_predictions
+
+        predictions=get_ride_predictions(self.request.dbsession,
+                                         ride_query)
+        df['avspeed_pred']=predictions[:,0]
         
         # Fill in missing average speeds
         if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar]:
