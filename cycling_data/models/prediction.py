@@ -181,23 +181,11 @@ def get_ride_predictions(session,rides):
     import numpy as np
 
     model=get_model(session)
-    if not hasattr(rides,'statement'):
-        filtered_rides=[ride for ride in rides if ride.wxdata is not None]
-        filtered_inds=[ind for ind,ride in enumerate(rides)
-                       if ride.wxdata is not None]
-    else:
-        filtered_rides=rides
 
-    prediction_inputs=prepare_model_dataset(filtered_rides,session,model.predict_columns)
+    prediction_inputs=prepare_model_dataset(rides,session,model.predict_columns)
     if prediction_inputs is not None:
         predictions=model.predict(prediction_inputs)
     else:
         predictions=np.empty([0,1])
-
-    if not hasattr(rides,'statement'):
-        predictions_with_nulls=np.empty([len(rides),1])
-        predictions_with_nulls.fill(np.nan)
-        predictions_with_nulls[filtered_inds]=predictions
-        predictions=predictions_with_nulls
 
     return predictions
