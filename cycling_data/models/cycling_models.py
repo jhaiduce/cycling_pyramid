@@ -164,6 +164,7 @@ class PredictionModel(Base,TimestampedRecord):
         import tensorflow_docs.modeling
 
         train_dataset=train_dataset.dropna()
+        train_dataset = train_dataset.sample(frac=1.0,replace=False)
 
         train_stats = train_dataset.describe()
         train_stats = train_stats.drop(columns=predict_columns)
