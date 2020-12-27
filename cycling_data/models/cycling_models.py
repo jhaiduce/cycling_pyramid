@@ -193,7 +193,7 @@ class PredictionModel(Base,TimestampedRecord):
         from .prediction import build_model
         self.model_=build_model(self.train_dataset_size,self.input_size)
 
-        history=self.model_.fit(normed_train_data, train_labels,
+        self.history=self.model_.fit(normed_train_data, train_labels,
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
                           callbacks=[early_stop, tfdocs.modeling.EpochDots()])
 
