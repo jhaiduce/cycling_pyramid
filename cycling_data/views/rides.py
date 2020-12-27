@@ -272,7 +272,8 @@ class RideViews(object):
                 fetch_entities.append(getattr(Ride,var))
 
         # Fetch the data
-        rides=self.request.dbsession.query(Ride).with_entities(*fetch_entities)
+        ride_query=self.request.dbsession.query(Ride)
+        rides=ride_query.with_entities(*fetch_entities)
         
         # Convert data to pandas
         import pandas as pd
