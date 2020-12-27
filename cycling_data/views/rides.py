@@ -315,7 +315,7 @@ class RideViews(object):
                 'config':{'responsive':True}
             }
         ]
-        
+
         # Add "ids" to each of the graphs to pass up to the client
         # for templating
         ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
