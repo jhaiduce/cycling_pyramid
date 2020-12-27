@@ -36,9 +36,9 @@ def build_model(train_set_size,input_size):
     c=np.log(np.expm1(1.))
 
     model = keras.Sequential([
-        layers.Dense(64, input_shape=[input_size],
+        layers.Dense(32, input_shape=[input_size],
                          activation='relu'),
-        layers.Dense(64, activation='relu'),
+        layers.Dense(16, activation='relu'),
         layers.LeakyReLU(alpha=0.3),
         layers.Dense(1)
     ])
