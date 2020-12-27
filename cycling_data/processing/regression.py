@@ -9,7 +9,7 @@ import transaction
 from ..models.prediction import get_model
 
 @celery.task(ignore_result=False)
-def train_model(*args,epochs=2000,patience=300):
+def train_model(*args,epochs=1000,patience=100):
 
     from ..celery import session_factory
     from ..models import get_tm_session
