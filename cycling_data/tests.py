@@ -202,7 +202,10 @@ class RideViewTests(BaseTest):
 
         # Runnnig a query through sqlalchemy seems to be needed to let
         # pandas see the data in sqlite
-        self.session.query(Ride).count()
+        count=self.session.query(Ride).count()
+        self.assertEqual(count,2)
+        import transaction
+        transaction.commit()
 
         info = views.rides_scatter()
 
