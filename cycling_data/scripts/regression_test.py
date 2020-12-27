@@ -125,9 +125,18 @@ def main(argv=sys.argv):
 
     try:
 
-        with env['request'].tm:
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        import transaction
+
+        engine=create_engine('mysql://cycling:cycling_db_password@127.0.0.1:3306/cycling')
+
+        Session=sessionmaker(engine)
+
+        dbsession=Session()
             
-            dbsession = env['request'].dbsession
+        with transaction.manager:
+
 
             regress(dbsession)
 
