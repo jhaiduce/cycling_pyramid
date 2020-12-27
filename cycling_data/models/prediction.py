@@ -69,7 +69,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
         with transaction.manager:
             q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
-            rides=[dbsession.query(Ride).filter(Ride.id==ride_id).one() for ride_id in dataset['id']]
+        rides=[dbsession.query(Ride).filter(Ride.id==ride_id).one() for ride_id in dataset['id']]
     else:
         dataset=pd.DataFrame([
             dict(
