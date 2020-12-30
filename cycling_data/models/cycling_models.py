@@ -684,6 +684,7 @@ class Ride(Base,TimestampedRecord):
             ]
         ).where(endloc.id==cls.endloc_id).where(startloc.id==cls.startloc_id)
 
+    @property
     def azimuth(self):
         """
         Azimuth from self.startloc to self.endloc
