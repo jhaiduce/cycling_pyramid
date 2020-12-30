@@ -60,14 +60,14 @@ def get_data(dbsession,predict_columns):
 
     return prepare_model_dataset(rides,dbsession,predict_columns)
 
-def prepare_model_dataset(rides,dbsession,predict_columns):
+def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
     from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment
     import pandas as pd
     import transaction
 
     if hasattr(rides,'statement'):
         with transaction.manager:
-            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed)
+            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,*extra_fields)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
         rides=[dbsession.query(Ride).filter(Ride.id==ride_id).one() for ride_id in dataset['id']]
     else:
@@ -148,7 +148,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns):
 
     dataset.trailer=dataset.trailer.astype(float)
 
-    dataset=dataset[predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']]
+    dataset=dataset[set(predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
 
     for column, values in (
             ('ridergroup',ridergroups),
