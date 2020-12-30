@@ -382,6 +382,8 @@ class RideViews(object):
         predictions=get_ride_predictions(dbsession,[ride])
         if predictions:
             predicted_speed=predictions[0,0]
+        else:
+            predicted_speed=None
 
         return dict(ride=ride,wxdata=ride.wxdata,predicted_speed=predicted_speed)
 
