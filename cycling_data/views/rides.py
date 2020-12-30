@@ -278,13 +278,17 @@ class RideViews(object):
         # Convert data to pandas
         import pandas as pd
         import numpy as np
-        df=pd.read_sql_query(rides.statement,rides.session.bind)
 
-        from ..models.prediction import get_ride_predictions
+        from ..models.prediction import get_ride_predictions, prepare_model_dataset, get_model
+        df=prepare_model_dataset(ride_query,self.request.dbsession,['avspeed'],extra_fields=fetch_entities)
 
-        predictions=get_ride_predictions(self.request.dbsession,
-                                         ride_query)
-        df['avspeed_pred']=predictions[:,0]
+        model=get_model(self.request.dbsession)
+
+        predictions=model.predict(df)
+        if predictions is not None:
+            df['avspeed_pred']=predictions[:,0]
+        else:
+            df['avspeed_pred']=np.nan
         
         # Fill in missing average speeds
         if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar]:
