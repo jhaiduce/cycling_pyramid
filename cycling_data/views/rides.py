@@ -380,8 +380,10 @@ class RideViews(object):
             ride.wxdata=RideWeatherData()
 
         predictions=get_ride_predictions(dbsession,[ride])
+        if predictions:
+            predicted_speed=predictions[0,0]
 
-        return dict(ride=ride,wxdata=ride.wxdata,predictions=predictions)
+        return dict(ride=ride,wxdata=ride.wxdata,predicted_speed=predicted_speed)
 
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
