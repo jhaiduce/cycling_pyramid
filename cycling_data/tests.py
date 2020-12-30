@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 
 from pytz import timezone, UTC
 
+import numpy as np
+
 def dict_to_postdata(inputdict):
 
     import collections
@@ -699,7 +701,7 @@ class FunctionalTests(unittest.TestCase):
 
     @patch(
         'cycling_data.models.prediction.get_ride_predictions',
-        return_value={'avspeed':19.4}
+        return_value=np.array([[19.4]])
     )
     def test_ride_details(self,get_ride_predictions):
         self.login()
