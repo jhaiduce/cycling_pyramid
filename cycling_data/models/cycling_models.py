@@ -22,6 +22,9 @@ from .meta import Base
 from timezonefinder import TimezoneFinder
 tz=TimezoneFinder()
 
+import logging
+log = logging.getLogger(__name__)
+
 def register_function(raw_con, conn_record):
 
     if isinstance(raw_con ,pysqlite2.dbapi2.Connection):
