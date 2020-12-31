@@ -3,7 +3,7 @@ FROM python:3.8.6-slim-buster
 WORKDIR /app
 
 RUN apt-get update
-RUN apt-get -y install python-numpy python-mysqldb python-scipy python-pandas python-shapely npm git libmariadb-dev python-cffi python-matplotlib libffi-dev libcap2-bin
+RUN apt-get -y install python-numpy python-mysqldb python-scipy python-pandas python-shapely npm git libmariadb-dev python-cffi python-matplotlib libffi-dev libcap2-bin curl
 
 COPY requirements.txt /app
 RUN pip3 install --trusted-host pypi.python.org --upgrade pip
