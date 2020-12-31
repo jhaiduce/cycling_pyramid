@@ -18,6 +18,16 @@ sudo docker-compose -f docker-compose.yml build
 
 sudo docker-compose -f docker-compose.yml push
 
+function isSwarmNode(){
+    host=$1
+    swarm_status="$(docker-machine ssh $host docker info | grep Swarm | sed 's/ Swarm: //g')"
+    if [ $swarm_status == "active" ]; then
+        swarm_node=1
+    else
+        swarm_node=0
+    fi
+}
+
 if [ $(docker-machine ls -q|grep -c cycling-master) -eq "0" ]; then
   docker-machine create --driver digitalocean \
 		 --digitalocean-size=$node_size \
@@ -25,10 +35,15 @@ if [ $(docker-machine ls -q|grep -c cycling-master) -eq "0" ]; then
 		 --digitalocean-access-token $DOTOKEN \
 		 --digitalocean-tags $DOTAGS \
 		 $host_prefix-master
-  master_ip=$(docker-machine ip $host_prefix-master)
-  docker-machine ssh $host_prefix-master docker swarm init --advertise-addr $master_ip
-else
-  master_ip=$(docker-machine ip $host_prefix-master)
+fi
+
+master_ip=$(docker-machine ip $host_prefix-master)
+
+isSwarmNode $host_prefix-master
+
+if [ $swarm_node == 0 ]; then
+    echo "Initializing swarm"
+    docker-machine ssh $host_prefix-master docker swarm init --advertise-addr $master_ip
 fi
 
 docker-machine ssh $host_prefix-master docker node update --label-add db=true $host_prefix-master
@@ -59,15 +74,6 @@ done
 for file in nginx/dhparams.pem production_secrets/fullchain.pem production_secrets/privkey.pem; do
     docker-machine scp $file $host_prefix-master:nginx/ssl
 done
-
-function isSwarmNode(){
-    host=$1
-    if [ "$(docker-machine ssh $host docker info | grep Swarm | sed 's/ Swarm: //g')" == "active" ]; then
-        swarm_node=1
-    else
-        swarm_node=0
-    fi
-}
 
 for i in $(seq 1 $numworkers); do
     host=$host_prefix-$i
