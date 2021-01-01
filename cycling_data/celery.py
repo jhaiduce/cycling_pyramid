@@ -32,8 +32,10 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     
     import os
     from pyramid.paster import bootstrap
+    from sqlalchemy.pool import StaticPool
 
     settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+    settings['sqlalchemy.poolclass']=StaticPool
 
     engine=models.get_engine(settings,prefix='sqlalchemy.')
     
