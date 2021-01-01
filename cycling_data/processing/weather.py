@@ -392,6 +392,33 @@ def update_location_rides_weather(location_id):
     return location_id
 
 @celery.task(ignore_result=False)
+def fill_missing_weather():
+    from ..celery import session_factory
+    from ..models import get_tm_session
+
+    dbsession=get_tm_session(session_factory,transaction.manager)
+
+    rides_without_weather=dbsession.query(Ride).filter(
+        Ride.wxdata==None
+    )
+
+    from celery import chord
+    from .regression import train_model
+
+    # Update ride weather for all rides and re-train prediction model when
+    # finished
+    chord(
+        update_ride_weather.s(ride.id, train_model=False) for ride in rides_without_weather
+    )(train_model.s())
+
+    return [ride.id for ride in rides_without_weather]
+
+@celery.on_after_finalize.connect
+def schedule_fill_missing_weather(sender,**kwargs):
+    from celery.schedules import crontab
+    sender.add_periodic_task(crontab(minute=30), fill_missing_weather.s())
+
+@celery.task(ignore_result=False)
 def update_ride_weather(ride_id, train_model=True):
 
     from ..celery import session_factory
