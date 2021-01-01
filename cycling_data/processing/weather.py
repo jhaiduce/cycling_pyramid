@@ -359,11 +359,11 @@ def ride_times_utc(ride):
 
     dtstart=ride.start_time.replace(
         tzinfo=timezone(ride.start_timezone)
-    ).astimezone(utc)
+    ).astimezone(utc) if ride.start_time is not None else None
     
     dtend=ride.end_time.replace(
         tzinfo=timezone(ride.end_timezone)
-    ).astimezone(utc)
+    ).astimezone(utc) if ride.end_time is not None else None
 
     return dtstart,dtend
 
