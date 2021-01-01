@@ -397,12 +397,13 @@ def update_location_rides_weather(location_id):
 def fill_missing_weather():
     from ..celery import session_factory
     from ..models import get_tm_session
+    from sqlalchemy import or_
 
     dbsession=get_tm_session(session_factory,transaction.manager)
 
     rides_without_weather=dbsession.query(Ride).filter(
-        Ride.wxdata==None
-    )
+        or_(Ride.wxdata==None, RideWeatherData.wx_station==None)
+    ).outerjoin(RideWeatherData,Ride.wxdata_id == RideWeatherData.id)
 
     from celery import chord
     from .regression import train_model
