@@ -146,12 +146,14 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 def fetch_metars_for_ride(session,ride):
     from .locations import get_nearby_locations
     if (
-            ride.startloc.lat is None
+            ride.start_time is None
+            or ride.end_time is None
+            or ride.startloc.lat is None
             or ride.endloc.lat is None
             or ride.startloc.lon is None
             or ride.endloc.lon is None
     ):
-        # Incomplete location data, can't search for METARS
+        # Incomplete time/location data, can't search for METARS
         return []
 
     lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
@@ -439,6 +441,8 @@ def update_ride_weather(ride_id, train_model=True):
 
     if len(metars)>0:
         dtstart,dtend=ride_times_utc(ride)
+        if dtstart is None or dtend is None:
+            return
         altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
         averages=average_weather(metars,dtstart,dtend,altitude)
         logger.debug('Ride weather average values: {}'.format(averages))
