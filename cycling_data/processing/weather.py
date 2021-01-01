@@ -405,13 +405,16 @@ def fill_missing_weather():
     from celery import chord
     from .regression import train_model
 
-    # Update ride weather for all rides and re-train prediction model when
-    # finished
-    chord(
-        update_ride_weather.s(ride.id, train_model=False) for ride in rides_without_weather
-    )(train_model.s())
+    ride_ids=[ride.id for ride in rides_without_weather]
 
-    return [ride.id for ride in rides_without_weather]
+    if rides_without_weather.count()>0:
+        # Update ride weather for all rides and re-train prediction model when
+        # finished
+        chord(
+            update_ride_weather.s(ride_id, train_model=False) for ride_id in ride_ids
+        )(train_model.s())
+
+    return ride_ids
 
 @celery.on_after_finalize.connect
 def schedule_fill_missing_weather(sender,**kwargs):
