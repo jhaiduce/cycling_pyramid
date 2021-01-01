@@ -29,6 +29,9 @@ RUN groupadd --system appuser && \
 
 RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/python3.8
 
+RUN mkdir celerybeat
+RUN chown appuser:appuser celerybeat
+
 USER appuser
 
 HEALTHCHECK CMD curl --fail http://localhost/ || exit 1

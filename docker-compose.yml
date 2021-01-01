@@ -68,6 +68,25 @@ services:
     command: ["/usr/local/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--concurrency","1","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/local/bin/python3","/app/celery_healthcheck.py"]
+    secrets:
+      - source: pyramid_main_ini
+        target: /run/secrets/production.ini
+    logging:
+      driver: journald
+  celerybeat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jhaiduce/cycling-pyramid
+    deploy:
+      replicas: 1
+      resources:
+        reservations:
+          memory: 300M
+    command: ["/usr/local/bin/celery","-A","cycling_data","beat","--app=cycling_data.celery","--loglevel=info"]
+    working_dir: /app/celerybeat
+    healthcheck:
+      disable: true
     container_name: cycling_stack_worker
     secrets:
       - source: pyramid_main_ini
