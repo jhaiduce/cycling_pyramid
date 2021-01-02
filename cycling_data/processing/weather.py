@@ -86,6 +86,9 @@ def download_metars(station,dtstart,dtend):
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
 
+    if len(metar_codes)==0:
+        logger.warn('No METARS found for {}, {} - {}, OGIMET response was {}'.format(station,dtstart,dtend,ogimet_text))
+
     # Parse metar codes
     metars=[
         Metar.Metar(metar_code,year=date.year,month=date.month,utcdelta=0)
