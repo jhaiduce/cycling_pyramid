@@ -1,4 +1,4 @@
-from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location
+from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog
 from metar import Metar
 from datetime import datetime, timedelta
 
@@ -37,7 +37,7 @@ def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metar
 
     r.raise_for_status()
 
-    return r.text
+    return r
 
 def extract_metars_from_ogimet(text):
 
@@ -66,7 +66,7 @@ def extract_metars_from_ogimet(text):
 
     return dates,metars
 
-def download_metars(station,dtstart,dtend):
+def download_metars(station,dtstart,dtend,dbsession=None):
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
@@ -78,10 +78,24 @@ def download_metars(station,dtstart,dtend):
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
     # Download METARs
-    ogimet_text=fetch_metars(station,dtstart,dtend,url=ogimet_url)
+    ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
 
-    if(ogimet_text.startswith('#Sorry')):
-        raise ValueError('OGIMET quota limit reached')
+    requestlog=SentRequestLog(
+        time=datetime.now(),
+        status_code=ogimet_result.status_code,
+        url=ogimet_result.url)
+
+    ogimet_text=ogimet_result.text
+
+    try:
+        if(ogimet_text.find('#Sorry')>-1):
+            e=ValueError('OGIMET quota limit reached')
+            e.text=ogimet_text
+            requestlog.rate_limited=True
+            raise e
+    finally:
+        dbsession.add(requestlog)
+        dbsession.commit()
 
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
@@ -122,7 +136,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         data_spans_interval=False
 
     if not data_spans_interval:
-        fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion)
+        fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session)
 
         stored_metars=[]
 

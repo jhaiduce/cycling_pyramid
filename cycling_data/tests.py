@@ -336,6 +336,11 @@ class MetarTests(BaseTest):
                         RMK AO2 SLP276 T02000078=
 
 """
+
+    mock_ogimet_response=Mock()
+    mock_ogimet_response.text=ogimet_text_dca
+    mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
+    mock_ogimet_response.status_code=200
     
     ogimet_text_quota_exceeded="""#Sorry, Your quota limit for slow queries rate has been reached"""
 
@@ -353,7 +358,7 @@ class MetarTests(BaseTest):
 
     @patch('cycling_data.processing.regression.train_model.delay')
     @patch('cycling_data.celery.session_factory')
-    @patch('cycling_data.processing.weather.fetch_metars',return_value=ogimet_text_dca)
+    @patch('cycling_data.processing.weather.fetch_metars',return_value=mock_ogimet_response)
     def test_fetch_metars_for_ride(self,fetch_metars,session_factory,train_model):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather

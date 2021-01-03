@@ -822,3 +822,21 @@ class Ride(Base,TimestampedRecord):
         return sqrt(1.2391e4 * ((self.endloc.lat - self.startloc.lat)**2
                                 + (self.endloc.lon - self.startloc.lon)**2)
                     + dalt**2)
+
+class SentRequestLog(Base):
+
+    __tablename__='sent_request_log'
+
+    id = Column(Integer, Sequence('sentrequestlog_seq'), primary_key=True)
+
+    time=Column(DateTime)
+    url=Column(Text)
+    status_code=Column(Integer)
+    rate_limited=Column(Boolean,default=False)
+
+    def __init__(self,*args,**kwargs):
+
+        super(SentRequestLog,self).__init__(*args,**kwargs)
+
+        if self.rate_limited is None:
+            self.rate_limited=False
