@@ -1,6 +1,7 @@
 from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog
 from metar import Metar
 from datetime import datetime, timedelta
+from sqlalchemy import func
 
 from ..celery import celery
 
@@ -11,6 +12,8 @@ logger = get_task_logger(__name__)
 import transaction
 
 import requests
+
+from time import sleep
 
 def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metars2.php'):
 
@@ -66,7 +69,9 @@ def extract_metars_from_ogimet(text):
 
     return dates,metars
 
-def download_metars(station,dtstart,dtend,dbsession=None):
+def download_metars(station,dtstart,dtend,dbsession=None,task=None):
+
+    import random
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
@@ -76,6 +81,21 @@ def download_metars(station,dtstart,dtend,dbsession=None):
         ogimet_url=settings['ogimet_url']
     except:
         ogimet_url='https://www.ogimet.com/display_metars2.php'
+
+    #past_requests=dbsession.query(SentRequestLog).order_by(SentRequestLog.time.desc()).limit(100)
+    last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
+
+    min_delay_seconds=1
+    random_delay_scale=1
+    retry_delay=min_delay_seconds+random.lognormvariate(random_delay_scale,random_delay_scale)
+
+    if last_request_time is not None and \
+       (datetime.now()-last_request_time).total_seconds() < min_delay_seconds:
+        if task is not None:
+            raise task.retry(
+                RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
+        else:
+            sleep(retry_delay)
 
     # Download METARs
     ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
@@ -92,7 +112,10 @@ def download_metars(station,dtstart,dtend,dbsession=None):
             e=ValueError('OGIMET quota limit reached')
             e.text=ogimet_text
             requestlog.rate_limited=True
-            raise e
+            if task is not None:
+                raise task.retry(e,countdown=retry_delay)
+            else:
+                raise e
     finally:
         dbsession.add(requestlog)
         dbsession.commit()
@@ -113,7 +136,7 @@ def download_metars(station,dtstart,dtend,dbsession=None):
     
     return metars
 
-def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4)):
+def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
 
     from pytz import utc
 
@@ -136,7 +159,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         data_spans_interval=False
 
     if not data_spans_interval:
-        fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session)
+        fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session,task=task)
 
         stored_metars=[]
 
@@ -160,7 +183,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
     return stored_metars
 
-def fetch_metars_for_ride(session,ride):
+def fetch_metars_for_ride(session,ride,task=None):
     from .locations import get_nearby_locations
     if (
             ride.start_time is None
@@ -181,7 +204,7 @@ def fetch_metars_for_ride(session,ride):
 
     for station in nearby_stations:
         
-        metars=get_metars(session,station,dtstart,dtend)
+        metars=get_metars(session,station,dtstart,dtend,task=task)
         
         if len(metars)>0:
             return metars
@@ -441,8 +464,8 @@ def schedule_fill_missing_weather(sender,**kwargs):
     from celery.schedules import crontab
     sender.add_periodic_task(crontab(minute=30), fill_missing_weather.s())
 
-@celery.task(ignore_result=False)
-def update_ride_weather(ride_id, train_model=True):
+@celery.task(bind=True,ignore_result=False)
+def update_ride_weather(self,ride_id, train_model=True):
 
     from ..celery import session_factory
     
@@ -455,7 +478,7 @@ def update_ride_weather(ride_id, train_model=True):
         ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
     with transaction.manager:
-        metars=fetch_metars_for_ride(dbsession,ride)
+        metars=fetch_metars_for_ride(dbsession,ride,task=self)
 
     if len(metars)>0:
         dtstart,dtend=ride_times_utc(ride)
