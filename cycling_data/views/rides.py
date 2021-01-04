@@ -350,7 +350,11 @@ class RideViews(object):
             # Flush dbsession so ride gets an id assignment
             dbsession.flush()
 
-            # Add an after-commit hook to update the ride's weather data
+            # Commit ride to database
+            import transaction
+            transaction.commit()
+
+            # Queue a task to update ride's weather data
             from ..processing.weather import update_ride_weather
             update_weather_task=update_ride_weather.delay(ride.id)
 
