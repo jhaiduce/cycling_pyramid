@@ -333,6 +333,10 @@ class RideViews(object):
             
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
+
+        from ..models import get_tm_session
+        import transaction
+
         form=self.ride_form.render()
 
         dbsession=self.request.dbsession
@@ -344,19 +348,24 @@ class RideViews(object):
             except deform.ValidationFailure as e:
                 return dict(form=e.render())
 
-            ride=appstruct_to_ride(dbsession,appstruct)
-            dbsession.add(ride)
+            tmp_tm = transaction.TransactionManager(explicit=True)
+            with tmp_tm:
+                dbsession_factory = self.request.registry['dbsession_factory']
+                tmp_dbsession = get_tm_session(dbsession_factory, tmp_tm)
+                ride=appstruct_to_ride(tmp_dbsession,appstruct)
+                tmp_dbsession.add(ride)
 
-            # Flush dbsession so ride gets an id assignment
-            dbsession.flush()
+                # Flush dbsession so ride gets an id assignment
+                tmp_dbsession.flush()
 
-            # Commit ride to database
-            import transaction
-            transaction.commit()
+                # Store ride id
+                ride_id=ride.id
+
+            ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
             # Queue a task to update ride's weather data
             from ..processing.weather import update_ride_weather
-            update_weather_task=update_ride_weather.delay(ride.id)
+            update_weather_task=update_ride_weather.delay(ride_id)
 
             url = self.request.route_url('rides')
             return HTTPFound(
@@ -364,7 +373,7 @@ class RideViews(object):
                 content_type='application/json',
                 charset='',
                 text=json.dumps(
-                    {'ride_id':ride.id,
+                    {'ride_id':ride_id,
                      'update_weather_task_id':update_weather_task.task_id}))
 
         return dict(form=form)
