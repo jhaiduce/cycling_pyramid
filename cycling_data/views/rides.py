@@ -216,13 +216,13 @@ class RideViews(object):
     def __init__(self, request):
         self.request = request
         
-    @property
-    def ride_form(self):
-        all_equipment = self.request.dbsession.query(Equipment)
+    def ride_form(self,dbsession=None):
+        if dbsession is None: dbsession=self.request.dbsession
+        all_equipment = dbsession.query(Equipment)
         equipment_choices=[(equipment.id,equipment.name) for equipment in all_equipment]
-        surfacetypes = self.request.dbsession.query(SurfaceType)
+        surfacetypes = dbsession.query(SurfaceType)
         surface_choices=[(surface.id,surface.name) for surface in surfacetypes]
-        ridergroups = self.request.dbsession.query(RiderGroup)
+        ridergroups = dbsession.query(RiderGroup)
         ridergroup_choices=[(ridergroup.id,ridergroup.name) for ridergroup in ridergroups]
         schema=RideForm().bind(
             request=self.request,
@@ -330,28 +330,34 @@ class RideViews(object):
         graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
 
         return {'graphJSON':graphJSON, 'ids':ids}
-            
+
     @view_config(route_name='rides_add', renderer='../templates/rides_addedit.jinja2')
     def ride_add(self):
 
         from ..models import get_tm_session
         import transaction
 
-        form=self.ride_form.render()
-
-        dbsession=self.request.dbsession
+        tmp_tm = transaction.TransactionManager(explicit=True)
+        with tmp_tm:
+            dbsession_factory = self.request.registry['dbsession_factory']
+            tmp_dbsession = get_tm_session(dbsession_factory, tmp_tm)
+            form=self.ride_form(tmp_dbsession).render()
 
         if 'submit' in self.request.params:
-            controls=self.request.POST.items()
-            try:
-                appstruct=self.ride_form.validate(controls)
-            except deform.ValidationFailure as e:
-                return dict(form=e.render())
 
             tmp_tm = transaction.TransactionManager(explicit=True)
             with tmp_tm:
+
                 dbsession_factory = self.request.registry['dbsession_factory']
                 tmp_dbsession = get_tm_session(dbsession_factory, tmp_tm)
+
+                controls=self.request.POST.items()
+
+                try:
+                    appstruct=self.ride_form(tmp_dbsession).validate(controls)
+                except deform.ValidationFailure as e:
+                    return dict(form=e.render())
+
                 ride=appstruct_to_ride(tmp_dbsession,appstruct)
                 tmp_dbsession.add(ride)
 
@@ -361,7 +367,9 @@ class RideViews(object):
                 # Store ride id
                 ride_id=ride.id
 
-            ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            log.info('Added ride {}'.format(ride_id))
+
+            ride=self.request.dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
             # Queue a task to update ride's weather data
             from ..processing.weather import update_ride_weather
@@ -402,7 +410,7 @@ class RideViews(object):
 
     @view_config(route_name='rides_edit', renderer='../templates/rides_addedit.jinja2')
     def ride_edit(self):
-        form=self.ride_form.render()
+        form=self.ride_form().render()
 
         dbsession=self.request.dbsession
 
@@ -412,7 +420,7 @@ class RideViews(object):
         if 'submit' in self.request.params:
             controls=self.request.POST.items()
             try:
-                appstruct=self.ride_form.validate(controls)
+                appstruct=self.ride_form().validate(controls)
             except deform.ValidationFailure as e:
                 return dict(form=e.render())
 
@@ -431,7 +439,7 @@ class RideViews(object):
             url = self.request.route_url('rides')
             return HTTPFound(url)
 
-        form=self.ride_form.render(dict(
+        form=self.ride_form().render(dict(
             id=ride.id,
             startloc=ride.startloc.name if ride.startloc else '',
             endloc=ride.endloc.name if ride.endloc else '',
