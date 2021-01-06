@@ -28,3 +28,6 @@ cycling_data/lib
 .eggs
 \#*\#
 .\#.\#
+nginx/ssl
+nginx/dhparams.pem
+node_modules
