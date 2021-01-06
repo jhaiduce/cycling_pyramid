@@ -31,3 +31,4 @@ cycling_data/lib
 nginx/ssl
 nginx/dhparams.pem
 node_modules
+.\#*
