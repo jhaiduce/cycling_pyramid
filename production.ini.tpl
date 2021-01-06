@@ -30,6 +30,9 @@ auth.secret={pyramid_auth_secret}
 sqlalchemy_admin.url = mysql://root:{mysql_root_password_encoded}@cycling_stack_db:3306
 mysql_cycling_password={mysql_production_password}
 mysql_worker_password={mysql_worker_password}
+
+ogimet_url=https://www.ogimet.com/display_metars2.php
+
 admin_password={cycling_admin_password}
 
 [pshell]
