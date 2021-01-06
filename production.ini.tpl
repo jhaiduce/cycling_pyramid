@@ -99,5 +99,5 @@ use = egg:PasteDeploy#prefix
 scheme=https
 
 [celery]
-backend_url = rpc://cycling_stack_rabbitmq
-broker_url = pyamqp://guest@cycling_stack_rabbitmq
+backend_url = redis://cycling_stack_redis
+broker_url = pyamqp://cycling:{rabbitmq_password_encoded}@cycling_stack_rabbitmq
