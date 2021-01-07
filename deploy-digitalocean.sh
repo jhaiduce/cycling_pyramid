@@ -61,9 +61,8 @@ done
 
 join_token=$(docker-machine ssh $host_prefix-master docker swarm join-token -q worker)
 
-for file in docker-compose.yml docker-compose.migrate.yml mysql-config-cycling.cnf mysql_production_password mysql_root_password pyramid_auth_secret cycling_admin_password production.ini storage_key.keyfile ca.pem server-key.pem server-cert.pem cycling_rabbitmq_password; do
-    docker-machine scp $file $host_prefix-master:
-done
+transfer_files="docker-compose.yml docker-compose.migrate.yml mysql-config-cycling.cnf production_secrets"
+rsync -avz -e "docker-machine ssh $host_prefix-master" $transfer_files :
 
 docker-machine ssh $host_prefix-master mkdir -p nginx/ssl
 

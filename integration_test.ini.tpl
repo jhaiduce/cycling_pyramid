@@ -11,14 +11,17 @@ pyramid.debug_authorization = false
 pyramid.debug_notfound = false
 pyramid.debug_routematch = false
 pyramid.default_locale_name = en
+pyramid.includes =
+    pyramid_debugtoolbar
 
 retry.attempts = 3
 
 filter-with = proxy-prefix
 
-sqlalchemy.url = mysql://cycling:{mysql_production_password_encoded}@cycling_stack_db:3306/cycling
+sqlalchemy.url = mysql://cycling:{mysql_production_password_encoded}@ci_db_1:3306/cycling
 sqlalchemy.pool_recycle=3600
 sqlalchemy.pool_pre_ping = true
+sqlalchemy.echo = true
 
 worker_sqlalchemy.url = mysql://cycling_worker:{mysql_worker_password_encoded}@ci_db_1:3306/cycling
 worker_sqlalchemy.pool_recycle=3600
@@ -27,11 +30,11 @@ worker_sqlalchemy.echo = true
 
 auth.secret={pyramid_auth_secret}
 
-sqlalchemy_admin.url = mysql://root:{mysql_root_password_encoded}@cycling_stack_db:3306
+sqlalchemy_admin.url = mysql://root:{mysql_root_password_encoded}@ci_db_1:3306
 mysql_cycling_password={mysql_production_password}
 mysql_worker_password={mysql_worker_password}
 
-ogimet_url=https://www.ogimet.com/display_metars2.php
+ogimet_url=http://fake_ogimet
 
 admin_password={cycling_admin_password}
 
@@ -47,7 +50,7 @@ setup = cycling_data.pshell.setup
 script_location = cycling_data/alembic
 file_template = %%(year)d%%(month).2d%%(day).2d_%%(rev)s
 # file_template = %%(rev)s_%%(slug)s
-sqlalchemy.url = mysql://root:{mysql_root_password_encoded}@cycling_stack_db:3306/cycling
+sqlalchemy.url = mysql://root:{mysql_root_password_encoded}@ci_db_1:3306/cycling
 sqlalchemy.pool_recycle=14400
 
 [server:main]
@@ -73,7 +76,7 @@ level = WARN
 handlers = console
 
 [logger_cycling_data]
-level = WARN
+level = DEBUG
 handlers =
 qualname = cycling_data
 
@@ -96,8 +99,8 @@ format = %(asctime)s %(levelname)-5.5s [%(name)s:%(lineno)s][%(threadName)s] %(m
 
 [filter:proxy-prefix]
 use = egg:PasteDeploy#prefix
-scheme=https
+scheme=http
 
 [celery]
-backend_url = redis://cycling_stack_redis
-broker_url = pyamqp://cycling:{rabbitmq_password_encoded}@cycling_stack_rabbitmq
+backend_url = redis://cycling_test_redis
+broker_url = pyamqp://guest@cycling_test_rabbitmq

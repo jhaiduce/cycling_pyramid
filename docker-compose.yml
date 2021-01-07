@@ -142,27 +142,28 @@ services:
         target: /etc/nginx/dhparams.pem
 secrets:
   storage_key.1:
-    file: ./storage_key.keyfile
+    file: production_secrets/storage_key.keyfile
   mysql_root_password:
     name: mysql_root_password.1
-    file: ./mysql_root_password
+    file: production_secrets/mysql_root_password
   mysql_production_password.1:
-    file: ./mysql_production_password
+    file: production_secrets/mysql_production_password
   pyramid_auth_secret.1:
-    file: ./pyramid_auth_secret
+    file: production_secrets/pyramid_auth_secret
   cycling_admin_password.1:
-    file: ./cycling_admin_password
+    file: production_secrets/cycling_admin_password
   pyramid_main_ini:
-    name: production.ini.6
-    file: ./production.ini
+    name: production.ini.7
+    file: production_secrets/production.ini
   mysql_ca:
-    file: ./ca.pem
+    file: production_secrets/ca.pem
   mysql_cert:
-    file: ./server-cert.pem
+    name: mysql_cert.1
+    file: production_secrets/server-cert.pem
   mysql_key:
-    file: ./server-key.pem
+    file: production_secrets/server-key.pem
   cycling_rabbitmq_password.2:
-    file: ./cycling_rabbitmq_password
+    file: production_secrets/cycling_rabbitmq_password
   dhparams:
     file: nginx/dhparams.pem
   ssl_certificate:

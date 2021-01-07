@@ -61,18 +61,19 @@ def get_data(dbsession,predict_columns):
     return prepare_model_dataset(rides,dbsession,predict_columns)
 
 def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
-    from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment
+    from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment, Location
     import pandas as pd
     import transaction
+    from sqlalchemy.orm import joinedload, subqueryload
 
     if hasattr(rides,'statement'):
         with transaction.manager:
             q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,*extra_fields)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
-        rides=[dbsession.query(Ride).filter(Ride.id==ride_id).one() for ride_id in dataset['id']]
     else:
         dataset=pd.DataFrame([
             dict(
+                id=ride.id,
                 distance=ride.distance,
                 ridergroup_id=ride.ridergroup_id,
                 surface_id=ride.surface_id,
@@ -86,52 +87,37 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     if len(dataset)==0: return
 
-    dataset['fraction_day']=pd.Series([ride.fraction_day for ride in rides],
-                                          dtype=float)
+    for column_name in 'fraction_day','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','crowdist':
+        dataset[column_name]=pd.Series(np.nan, index=dataset.index, dtype=float)
 
-    dataset['grade']=pd.Series([ride.grade for ride in rides], dtype=float)
+    for i,ride_id in enumerate(dataset['id']):
+        with transaction.manager:
+            ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            dataset.loc[i,'fraction_day']=ride.fraction_day
+            dataset.loc[i,'grade']=ride.grade
+            dataset.loc[i,'crowdist']=ride.crowdist
 
-    dataset['tailwind']=pd.Series([ride.tailwind for ride in rides],
-                                   dtype=float)
+            if ride.wxdata:
+                dataset.loc[i,'tailwind']=ride.tailwind
+                dataset.loc[i,'crosswind']=ride.crosswind
+                dataset.loc[i,'temperature']=ride.wxdata.temperature
+                dataset.loc[i,'pressure']=ride.wxdata.pressure
+                dataset.loc[i,'rain']=ride.wxdata.rain
+                dataset.loc[i,'snow']=ride.wxdata.snow
 
-    dataset['crosswind']=pd.Series([ride.crosswind for ride in rides],
-                                   dtype=float)
+            if ride.startloc:
+                dataset.loc[i,'startlat']=ride.startloc.lat
+                dataset.loc[i,'startlon']=ride.startloc.lon
 
-    dataset['temperature']=pd.Series(
-        [ride.wxdata.temperature if ride.wxdata else None
-         for ride in rides], dtype=float)
+            if ride.endloc:
+                dataset.loc[i,'endlat']=ride.endloc.lat
+                dataset.loc[i,'endlon']=ride.endloc.lon
+            transaction.commit()
 
-    dataset['pressure']=pd.Series([ride.wxdata.pressure if ride.wxdata else None for ride in rides],
-                                  dtype=float)
-
-    dataset['rain']=pd.Series([ride.wxdata.rain if ride.wxdata else None
-                               for ride in rides], dtype=float)
-
-    dataset['snow']=pd.Series([ride.wxdata.snow if ride.wxdata else None
-                               for ride in rides], dtype=float)
-
-    dataset['startlat']=pd.Series(
-        [ride.startloc.lat if ride.startloc else None
-         for ride in rides], dtype=float)
-
-    dataset['endlat']=pd.Series(
-        [ride.endloc.lat if ride.endloc else None
-         for ride in rides], dtype=float)
-
-    dataset['startlon']=pd.Series(
-        [ride.startloc.lon if ride.startloc else None
-         for ride in rides], dtype=float)
-
-    dataset['endlon']=pd.Series(
-        [ride.endloc.lon if ride.endloc else None
-         for ride in rides], dtype=float)
-
-    dataset['crowdist']=pd.Series(
-        [ride.crowdist for ride in rides], dtype=float)
-
-    ridergroups=dbsession.query(RiderGroup)
-    surfacetypes=dbsession.query(SurfaceType)
-    equipments=dbsession.query(Equipment)
+    with transaction.manager:
+        ridergroups=dbsession.query(RiderGroup)
+        surfacetypes=dbsession.query(SurfaceType)
+        equipments=dbsession.query(Equipment)
 
     dataset['ridergroup']=dataset['ridergroup_id'].map({ridergroup.id:ridergroup.name for ridergroup in ridergroups})
 
