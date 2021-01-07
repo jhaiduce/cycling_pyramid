@@ -30,6 +30,7 @@ def create_database(engine,settings):
     conn.execute('create database if not exists cycling')
     s=text("create or replace user cycling identified by '{pw}'".format(
         pw=escape_string(settings['mysql_cycling_password']).decode('ascii')))
+    conn.execute(s)
     s=text("create or replace user cycling_worker identified by '{pw}'".format(
         pw=escape_string(settings['mysql_worker_password']).decode('ascii')))
     conn.execute(s)
