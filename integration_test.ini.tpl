@@ -36,6 +36,8 @@ mysql_worker_password={mysql_worker_password}
 
 ogimet_url=http://fake_ogimet
 
+admin_password={cycling_admin_password}
+
 [pshell]
 setup = cycling_data.pshell.setup
 
