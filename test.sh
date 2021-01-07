@@ -6,7 +6,7 @@ sudo docker kill cycling_test_cycling_web
 sudo docker kill cycling_test_worker
 sudo docker kill ci_sut_1
 
-secret_files=("integration_test_secrets/integration_test.ini" "integration_test_secrets/mysql_root_password" "integration_test_secrets/ca.pem" "integration_test_secrets/server-cert.pem" "integration_test_secrets/server-key.pem" "integration_test_secrets/storage_key.keyfile" "mysql-config-cycling.cnf")
+secret_files=("integration_test_secrets/integration_test.ini" "integration_test_secrets/mysql_root_password" "integration_test_secrets/ca.pem" "integration_test_secrets/server-cert.pem" "integration_test_secrets/server-key.pem" "integration_test_secrets/storage_key.keyfile" "mysql-config-cycling.cnf" "ogimet-cache/ogimet-cache.json")
 
 for file in "${secret_files[@]}"
 do
