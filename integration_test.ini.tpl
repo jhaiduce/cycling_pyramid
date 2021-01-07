@@ -30,7 +30,7 @@ worker_sqlalchemy.echo = true
 
 auth.secret={pyramid_auth_secret}
 
-sqlalchemy_admin.url = mysql://root:{mysql_root_password_encoded}@cycling_stack_db:3306
+sqlalchemy_admin.url = mysql://root:{mysql_root_password_encoded}@ci_db_1:3306
 mysql_cycling_password={mysql_production_password}
 mysql_worker_password={mysql_worker_password}
 
