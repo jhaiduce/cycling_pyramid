@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
-from sqlalchemy import func, orm
+from sqlalchemy import func, orm, UniqueConstraint
 from sqlalchemy.orm.exc import NoResultFound
 
 from .meta import Base
@@ -841,3 +841,17 @@ class SentRequestLog(Base):
 
         if self.rate_limited is None:
             self.rate_limited=False
+
+class PredictionModelResult(Base,TimestampedRecord):
+    __tablename__ = 'predictionmodel_result'
+    __table_args__={'mysql_encrypted':'yes'}
+
+    id = Column(Integer, Sequence('modelresult_seq'), primary_key=True)
+    model_id = Column(Integer, ForeignKey('predictionmodel.id'))
+    ride_id = Column(Integer, ForeignKey('ride.id'))
+    result = Column(Float)
+
+    model = relationship(PredictionModel,foreign_keys=model_id)
+    ride = relationship(Ride,foreign_keys=ride_id)
+
+    UniqueConstraint('model_id','ride_id')
