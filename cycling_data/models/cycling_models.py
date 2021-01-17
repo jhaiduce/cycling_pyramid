@@ -157,7 +157,7 @@ class PredictionModel(Base,TimestampedRecord):
         std=self.stats['std'].replace(0,1)
         return (x - self.stats['mean']) / std
 
-    def train(self,train_dataset,predict_columns,epochs=1000,patience=100):
+    def train(self,train_dataset,predict_columns,epochs=1000,patience=100,ignore_columns=['id']):
         import pandas as pd
         from .prediction import get_data
         import io
@@ -171,12 +171,14 @@ class PredictionModel(Base,TimestampedRecord):
 
         train_stats = train_dataset.describe()
         train_stats = train_stats.drop(columns=predict_columns)
+        train_stats = train_stats.drop(columns=ignore_columns)
         train_stats = train_stats.transpose()
 
         self.stats=train_stats
 
         train_labels=train_dataset[predict_columns]
         train_dataset = train_dataset.drop(columns=predict_columns)
+        train_dataset = train_dataset.drop(columns=ignore_columns)
 
         normed_train_data = self.norm(train_dataset)
 

@@ -544,6 +544,7 @@ class ModelTests(BaseTest):
         with transaction.manager:
             rides=session.query(Ride)
             dataset=prepare_model_dataset(rides,session,['avspeed'])
+            dataset=dataset.drop(columns=['id'])
 
         with transaction.manager:
             model=session.query(PredictionModel).one()
