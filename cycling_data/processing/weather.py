@@ -492,9 +492,9 @@ def update_ride_weather(self,ride_id, train_model=True):
             with transaction.manager:
                 if ride.wxdata is None:
                     ride.wxdata=RideWeatherData()
-                    ride.wxdata.station=metars[0].station
                 for key,value in averages.items():
                     setattr(ride.wxdata,key,value)
+                ride.wxdata.station=metars[0].station
             dbsession.commit()
 
     if train_model:
