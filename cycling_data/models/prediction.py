@@ -51,14 +51,14 @@ def build_model(train_set_size,input_size):
     model.build([None,input_size])
     return model
 
-def get_data(dbsession,predict_columns):
+def get_data(dbsession,predict_columns,extra_fields=[]):
 
     from .cycling_models import Ride
     import pandas as pd
 
     rides=dbsession.query(Ride)
 
-    return prepare_model_dataset(rides,dbsession,predict_columns)
+    return prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=extra_fields)
 
 def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
     from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment, Location
