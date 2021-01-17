@@ -52,8 +52,9 @@ def bootstrap_pyramid(signal, sender, **kwargs):
             conn=engine.connect()
             conn.execute("select 'OK'")
 
-        except sqlalchemy.exc.OperationalError:
+        except sqlalchemy.exc.OperationalError as e:
             import time
+            print(e)
             print("Connection failed. Sleeping.")
             time.sleep(2)
             continue
