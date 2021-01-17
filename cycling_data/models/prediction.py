@@ -134,7 +134,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     dataset.trailer=dataset.trailer.astype(float)
 
-    dataset=dataset[set(predict_columns+['distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
+    dataset=dataset[set(predict_columns+['id','distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
 
     for column, values in (
             ('ridergroup',ridergroups),
