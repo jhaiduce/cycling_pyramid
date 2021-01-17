@@ -153,7 +153,7 @@ secrets:
   cycling_admin_password.1:
     file: production_secrets/cycling_admin_password
   pyramid_main_ini:
-    name: production.ini.10
+    name: production.ini.11
     file: production_secrets/production.ini
   mysql_ca:
     file: production_secrets/ca.pem
