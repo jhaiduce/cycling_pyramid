@@ -474,7 +474,8 @@ class StationWeatherData(WeatherData):
                 rh=vapres_dew/vapres
             except:
                 rh=None
-            self.windspeed=obs.wind_speed.value(units='mph')
+            self.windspeed=obs.wind_speed.value(units='mph') \
+                if obs.wind_speed is not None else None
             try: self.winddir=obs.wind_dir.value()
             except AttributeError: self.winddir=None
             try: self.gust=obs.wind_gust.value(units='mph')
