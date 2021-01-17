@@ -7,13 +7,16 @@ logger = get_task_logger(__name__)
 import transaction
 
 from ..models.prediction import get_model
+from sqlalchemy.orm.exc import NoResultFound
+
+import numpy as np
 
 @celery.task(ignore_result=False)
 def train_model(*args,epochs=1000,patience=100):
 
     from ..celery import session_factory
     from ..models import get_tm_session
-    from ..models.cycling_models import Ride
+    from ..models.cycling_models import Ride, PredictionModelResult
     from sqlalchemy import func
 
     logger.debug('Received train model task')
@@ -61,16 +64,34 @@ def train_model(*args,epochs=1000,patience=100):
         if train_dataset is None:
             raise ValueError('Empty training dataset')
 
-        with transaction.manager:
-            try:
+        try:
 
+            with transaction.manager:
                 model.train(train_dataset,predict_columns,
                             epochs=epochs,patience=patience)
 
                 train_dataset_size=model.train_dataset_size
 
-            finally:
+        finally:
+            with transaction.manager:
                 model.training_in_progress=False
+                dbsession.commit()
+
+        predictions=model.predict(train_dataset)
+
+        for ride_id,prediction in zip(train_dataset['id'],predictions):
+            logger.debug('Recording regression result for ride {}'.format(ride_id))
+            with transaction.manager:
+                try:
+                    ride_prediction=dbsession.query(PredictionModelResult).filter(
+                        PredictionModelResult.model_id==model.id,
+                        PredictionModelResult.ride_id==ride_id).one()
+                except NoResultFound:
+                    ride_prediction=PredictionModelResult(
+                        model_id=model.id, ride_id=ride_id)
+
+                ride_prediction.result=prediction[0] if not np.isnan(prediction[0]) else None
+                dbsession.add(ride_prediction)
                 dbsession.commit()
 
         dbsession.commit()
