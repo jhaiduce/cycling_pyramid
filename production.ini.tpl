@@ -20,7 +20,7 @@ sqlalchemy.url = mysql://cycling:{mysql_production_password_encoded}@cycling_sta
 sqlalchemy.pool_recycle=3600
 sqlalchemy.pool_pre_ping = true
 
-worker_sqlalchemy.url = mysql://cycling_worker:{mysql_worker_password_encoded}@ci_db_1:3306/cycling
+worker_sqlalchemy.url = mysql://cycling_worker:{mysql_worker_password_encoded}@cycling_stack_db:3306/cycling
 worker_sqlalchemy.pool_recycle=3600
 worker_sqlalchemy.pool_pre_ping = true
 worker_sqlalchemy.echo = true
