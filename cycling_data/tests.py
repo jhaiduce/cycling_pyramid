@@ -517,6 +517,24 @@ class ModelTests(BaseTest):
 
             self.session.add(ride)
 
+        self.useable_ride_count=self.rideCount
+
+        ride_null_end_time=Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=None,
+            total_time=timedelta(minutes=15),
+            rolling_time=None,
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        self.session.add(ride_null_end_time)
+        self.rideCount+=1
+
         transaction.commit()
 
     def test_train_model(self):
@@ -539,7 +557,7 @@ class ModelTests(BaseTest):
                 return_value=session) as session_factory:
             train_dataset_size=train_model(epochs=10)
 
-        self.assertEqual(train_dataset_size,self.rideCount)
+        self.assertEqual(train_dataset_size,self.useable_ride_count)
 
         with transaction.manager:
             rides=session.query(Ride)
@@ -556,26 +574,34 @@ class ModelTests(BaseTest):
             normed_data=model.norm(dataset)
             predictions=model.predict(dataset)
             stats=model.stats
-            self.assertTrue(np.allclose(dataset,dataset_copy))
+
+            self.assertEqual(dataset.dropna().shape[0],dataset_copy.dropna().shape[0])
+            self.assertEqual(dataset.dropna().shape[0],self.useable_ride_count)
+            self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
             for a,b in zip(weights,model.model.get_weights()):
                 self.assertTrue(np.allclose(a,b))
             self.assertEqual(predictions.shape,(self.rideCount,1))
-            self.assertEqual(np.isnan(predictions).sum(),0)
+            self.assertEqual(np.isnan(predictions).sum(),1)
             predictions_new=model.predict(dataset)
             normed_data_new=model.norm(dataset)
+            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count)
+            self.assertEqual(np.sum(np.isfinite(predictions_new)),self.useable_ride_count)
             self.assertTrue(np.allclose(stats,model.stats))
             self.assertTrue(np.allclose(
-                normed_data_new.drop(columns=['avspeed']),
-                normed_data.drop(columns=['avspeed'])))
-            self.assertTrue(np.allclose(dataset,dataset_copy))
-            self.assertTrue(np.allclose(predictions_new,predictions))
+                normed_data_new.drop(columns=['avspeed']).dropna(),
+                normed_data.drop(columns=['avspeed']).dropna()))
+            self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
+            self.assertTrue(np.allclose(predictions_new[np.isfinite(predictions_new)],predictions[np.isfinite(predictions)]))
 
             from .models.prediction import get_ride_predictions
 
             # Check that get_ride_predictions returns the same results
             ride_predictions=get_ride_predictions(session,rides)
+            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count)
+            self.assertEqual(np.sum(np.isfinite(ride_predictions)),self.useable_ride_count)
             self.assertEqual(ride_predictions.shape,(self.rideCount,1))
-            self.assertTrue(np.allclose(predictions,ride_predictions))
+            self.assertTrue(np.allclose(predictions[np.isfinite(predictions)],
+                                        ride_predictions[np.isfinite(ride_predictions)]))
             single_prediction=get_ride_predictions(session,[session.query(Ride).first()])
             self.assertEqual(single_prediction.shape,(1,1))
             self.assertTrue(np.allclose(single_prediction[0],ride_predictions[0]))
@@ -686,6 +712,24 @@ class FunctionalTests(unittest.TestCase):
         self.ride_null_rolling_time_id=ride_null_rolling_time.id
         transaction.commit()
 
+        ride_null_end_time=models.Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=None,
+            total_time=timedelta(minutes=15),
+            rolling_time=None,
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        session.add(ride_null_end_time)
+        session.flush()
+        self.ride_null_end_time_id=ride_null_end_time.id
+        transaction.commit()
+
     def login(self):
         res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
 
@@ -721,7 +765,7 @@ class FunctionalTests(unittest.TestCase):
         res=self.testapp.get('http://localhost/rides')
         self.assertEqual(res.status_code,200)
         ride_count=int(re.search(r'(\d+) total rides',res.text).group(1))
-        self.assertEqual(ride_count,3)
+        self.assertEqual(ride_count,4)
 
     @patch(
         'cycling_data.models.prediction.get_ride_predictions',
@@ -739,6 +783,12 @@ class FunctionalTests(unittest.TestCase):
 
         url='http://localhost/rides/{}/details'.format(self.ride_null_rolling_time_id)
         ride=session.query(Ride).filter(Ride.id==self.ride_null_rolling_time_id).one()
+        res=self.testapp.get(url)
+        get_ride_predictions.assert_called()
+        self.assertEqual(res.status_code,200)
+
+        url='http://localhost/rides/{}/details'.format(self.ride_null_end_time_id)
+        ride=session.query(Ride).filter(Ride.id==self.ride_null_end_time_id).one()
         res=self.testapp.get(url)
         get_ride_predictions.assert_called()
         self.assertEqual(res.status_code,200)
