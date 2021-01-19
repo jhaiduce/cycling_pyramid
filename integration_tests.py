@@ -189,7 +189,7 @@ class BaseTest(unittest.TestCase):
         # Wait for update_ride_weather task to complete
         from celery.result import AsyncResult
         task_result=AsyncResult(update_weather_task_id,app=celery)
-        task_result.wait(10)
+        task_result.wait(20)
 
         # Check ride details page
         resp=self.session.get('http://cycling_test_cycling_web/rides/{:d}/details'.format(ride_id))
