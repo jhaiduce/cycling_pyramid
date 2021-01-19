@@ -668,6 +668,24 @@ class FunctionalTests(unittest.TestCase):
         self.ride_null_total_time_id=ride_null_total_time.id
         transaction.commit()
 
+        ride_null_rolling_time=models.Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            total_time=timedelta(minutes=15),
+            rolling_time=None,
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0
+        )
+        session.add(ride_null_rolling_time)
+        session.flush()
+        self.ride_null_rolling_time_id=ride_null_rolling_time.id
+        transaction.commit()
+
     def login(self):
         res=self.testapp.post('http://localhost/login',{**self.admin_login,'form.submitted':'true'})
 
@@ -703,7 +721,7 @@ class FunctionalTests(unittest.TestCase):
         res=self.testapp.get('http://localhost/rides')
         self.assertEqual(res.status_code,200)
         ride_count=int(re.search(r'(\d+) total rides',res.text).group(1))
-        self.assertEqual(ride_count,2)
+        self.assertEqual(ride_count,3)
 
     @patch(
         'cycling_data.models.prediction.get_ride_predictions',
@@ -715,6 +733,12 @@ class FunctionalTests(unittest.TestCase):
         session=self.get_session()
         url='http://localhost/rides/{}/details'.format(self.ride_id)
         ride=session.query(Ride).filter(Ride.id==self.ride_id).one()
+        res=self.testapp.get(url)
+        get_ride_predictions.assert_called()
+        self.assertEqual(res.status_code,200)
+
+        url='http://localhost/rides/{}/details'.format(self.ride_null_rolling_time_id)
+        ride=session.query(Ride).filter(Ride.id==self.ride_null_rolling_time_id).one()
         res=self.testapp.get(url)
         get_ride_predictions.assert_called()
         self.assertEqual(res.status_code,200)

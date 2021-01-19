@@ -125,7 +125,8 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     dataset['equipment']=dataset['equipment_id'].map({equipment.id:equipment.name for equipment in equipments})
 
-    computed_avspeed=dataset.distance/dataset.rolling_time.dt.total_seconds()*3600
+    rolling_time=pd.to_timedelta(dataset.rolling_time,errors='coerce')
+    computed_avspeed=dataset.distance/rolling_time.dt.total_seconds()*3600
     pd.options.mode.use_inf_as_na = True
 
     dataset.avspeed.fillna(computed_avspeed,inplace=True)
