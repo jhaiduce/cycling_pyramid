@@ -7,7 +7,7 @@ from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
 
-from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, RideWeatherData
+from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, RideWeatherData, PredictionModelResult
 
 import logging
 log = logging.getLogger(__name__)
@@ -266,7 +266,7 @@ class RideViews(object):
             raise ValueError('Invalid field {0}'.format(yvar))
 
         # Build list of columns to fetch
-        fetch_entities=[Ride.distance,Ride.rolling_time]
+        fetch_entities=[Ride.id,Ride.distance,Ride.rolling_time]
         for var in xvar,yvar:
             if var in Ride.__table__.columns.keys():
                 fetch_entities.append(getattr(Ride,var))
@@ -274,22 +274,25 @@ class RideViews(object):
         # Fetch the data
         ride_query=self.request.dbsession.query(Ride)
         rides=ride_query.with_entities(*fetch_entities)
-        
+
         # Convert data to pandas
         import pandas as pd
         import numpy as np
 
         from ..models.prediction import get_ride_predictions, prepare_model_dataset, get_model
-        df=prepare_model_dataset(ride_query,self.request.dbsession,['avspeed'],extra_fields=fetch_entities)
+        dbsession_factory = self.request.registry['dbsession_factory']
+        df=pd.read_sql_query(rides.statement,rides.session.bind)
 
-        model=get_model(self.request.dbsession)
+        if 'avspeed_pred' in [xvar,yvar]:
+            prediction_query=dbsession_factory().query(PredictionModelResult).with_entities(PredictionModelResult.ride_id,PredictionModelResult.result)
+            df_predictions=pd.read_sql_query(
+                prediction_query.statement,
+                prediction_query.session.bind
+            )
+            df_predictions=df_predictions.rename(columns={'result':'avspeed_pred','ride_id':'id'})
 
-        predictions=model.predict(df)
-        if predictions is not None:
-            df['avspeed_pred']=predictions[:,0]
-        else:
-            df['avspeed_pred']=np.nan
-        
+            df=df.merge(df_predictions,on='id')
+
         # Fill in missing average speeds
         if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar]:
             rolling_time_hours=df['rolling_time']/np.timedelta64(1,'h')
