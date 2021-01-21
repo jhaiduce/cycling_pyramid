@@ -13,8 +13,8 @@ from sqlalchemy import (
     Binary
 )
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-from sqlalchemy.orm import relationship
-from sqlalchemy import func, orm, UniqueConstraint
+from sqlalchemy.orm import relationship, aliased
+from sqlalchemy import func, orm, UniqueConstraint, func, select
 from sqlalchemy.orm.exc import NoResultFound
 import sqlalchemy as sa
 
@@ -690,7 +690,7 @@ class Ride(Base,TimestampedRecord):
             ]
         ).where(endloc.id==cls.endloc_id).where(startloc.id==cls.startloc_id).label('grade')
 
-    @property
+    @hybrid_property
     def azimuth(self):
         """
         Azimuth from self.startloc to self.endloc
@@ -706,7 +706,20 @@ class Ride(Base,TimestampedRecord):
         return atan2(self.endloc.lon - self.startloc.lon,
                      self.endloc.lat - self.startloc.lat)
 
-    @property
+    @azimuth.expression
+    def azimuth(cls):
+        startloc=aliased(Location)
+        endloc=aliased(Location)
+
+        return select([
+            (func.atan2(endloc.lon - startloc.lon,
+                       endloc.lat - startloc.lat)).label('azimuth')
+        ]).where(
+            startloc.id==cls.startloc_id
+        ).where(
+            endloc.id==cls.endloc_id).label('azimuth')
+
+    @hybrid_property
     def tailwind(self):
         from math import cos
 
@@ -717,7 +730,28 @@ class Ride(Base,TimestampedRecord):
 
         return cos((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
 
-    @property
+    @tailwind.expression
+    def tailwind(cls):
+        wxdata=aliased(WeatherData)
+        startloc=aliased(Location)
+        endloc=aliased(Location)
+
+        azimuth=(func.atan2(endloc.lon - startloc.lon,
+                       endloc.lat - startloc.lat)).label('azimuth')
+
+        return select([
+            (
+                func.cos((azimuth-180)-wxdata.winddir)*wxdata.windspeed
+            ).label('tailwind')
+        ]).where(
+            startloc.id==cls.startloc_id
+        ).where(
+            endloc.id==cls.endloc_id
+        ).where(
+            wxdata.id==cls.wxdata_id
+        ).label('tailwind')
+
+    @hybrid_property
     def crosswind(self):
         from math import sin
 
@@ -727,6 +761,25 @@ class Ride(Base,TimestampedRecord):
             return None
 
         return sin((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
+
+    @crosswind.expression
+    def crosswind(cls):
+        wxdata=aliased(WeatherData)
+        startloc=aliased(Location)
+        endloc=aliased(Location)
+
+        azimuth=(func.atan2(endloc.lon - startloc.lon,
+                       endloc.lat - startloc.lat)).label('azimuth')
+
+        return select([
+            (
+                func.sin((azimuth-180)-wxdata.winddir)*wxdata.windspeed
+            ).label('crosswind')
+        ]).where(
+            startloc.id==cls.startloc_id
+        ).where(
+            endloc.id==cls.endloc_id
+        ).where(wxdata.id==cls.wxdata_id).as_scalar().label('crosswind')
 
     @property
     def fraction_day(self):
