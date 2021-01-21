@@ -688,7 +688,7 @@ class Ride(Base,TimestampedRecord):
                     (endloc.elevation-startloc.elevation)/(cls.distance/1000.)
                 ).label('grade')
             ]
-        ).where(endloc.id==cls.endloc_id).where(startloc.id==cls.startloc_id)
+        ).where(endloc.id==cls.endloc_id).where(startloc.id==cls.startloc_id).label('grade')
 
     @property
     def azimuth(self):
