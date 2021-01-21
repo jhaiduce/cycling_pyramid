@@ -7,7 +7,7 @@ from pyramid.response import Response
 
 from .showtable import SqlalchemyOrmPage
 
-from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, RideWeatherData, PredictionModelResult
+from ..models.cycling_models import Ride, Equipment, SurfaceType, RiderGroup, Location, WeatherData, RideWeatherData, PredictionModelResult
 
 import logging
 log = logging.getLogger(__name__)
@@ -256,7 +256,7 @@ class RideViews(object):
         hybrid_properties=['grade','azimuth','tailwind','crosswind']
         
         # List of valid variable names
-        valid_vars=Ride.__table__.columns.keys()+computed_vars+hybrid_properties
+        valid_vars=Ride.__table__.columns.keys()+WeatherData.__table__.columns.keys()+RideWeatherData.__table__.columns.keys()+computed_vars+hybrid_properties
         
         # Make sure xvar is a valid column name
         if xvar not in valid_vars:
@@ -271,9 +271,13 @@ class RideViews(object):
         for var in xvar,yvar:
             if var in Ride.__table__.columns.keys() or var in hybrid_properties:
                 fetch_entities.append(getattr(Ride,var))
+            elif var in WeatherData.__table__.columns.keys():
+                fetch_entities.append(getattr(WeatherData,var))
+            elif var in RideWeatherData.__table__.columns.keys():
+                fetch_entities.append(getattr(RideWeatherData,var))
 
         # Fetch the data
-        ride_query=self.request.dbsession.query(Ride)
+        ride_query=self.request.dbsession.query(Ride).join(Ride.wxdata,isouter=True)
         rides=ride_query.with_entities(*fetch_entities)
 
         # Convert data to pandas
