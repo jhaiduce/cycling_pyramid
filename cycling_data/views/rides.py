@@ -253,9 +253,10 @@ class RideViews(object):
         self.request.dbsession.autoflush=False
 
         computed_vars=['avspeed_est','avspeed_pred']
+        hybrid_properties=['grade','azimuth','tailwind','crosswind']
         
         # List of valid variable names
-        valid_vars=Ride.__table__.columns.keys()+computed_vars
+        valid_vars=Ride.__table__.columns.keys()+computed_vars+hybrid_properties
         
         # Make sure xvar is a valid column name
         if xvar not in valid_vars:
@@ -268,7 +269,7 @@ class RideViews(object):
         # Build list of columns to fetch
         fetch_entities=[Ride.id,Ride.distance,Ride.rolling_time]
         for var in xvar,yvar:
-            if var in Ride.__table__.columns.keys():
+            if var in Ride.__table__.columns.keys() or var in hybrid_properties:
                 fetch_entities.append(getattr(Ride,var))
 
         # Fetch the data
