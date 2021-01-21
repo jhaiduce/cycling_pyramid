@@ -324,6 +324,14 @@ class RideViews(object):
                         'size':4
                     }
                 }],
+                'layout':{
+                    'xaxis':{
+                        'title':xvar
+                    },
+                    'yaxis':{
+                        'title':yvar
+                    },
+                },
                 'config':{'responsive':True}
             }
         ]
