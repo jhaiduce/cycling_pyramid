@@ -16,6 +16,7 @@ from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship
 from sqlalchemy import func, orm, UniqueConstraint
 from sqlalchemy.orm.exc import NoResultFound
+import sqlalchemy as sa
 
 from .meta import Base
 
@@ -25,13 +26,15 @@ tz=TimezoneFinder()
 import logging
 log = logging.getLogger(__name__)
 
-def register_function(raw_con, conn_record):
-
-    if isinstance(raw_con ,pysqlite2.dbapi2.Connection):
-        raw_con.create_function("cos", 1, math.cos)
-        raw_con.create_function("sin", 1, math.sin)
-        raw_con.create_function("acos", 1, math.acos)
-        raw_con.create_function("atan2", 2, math.atan2)
+@sa.event.listens_for(sa.engine.Engine,'connect')
+def register_functions(conn, connection_record):
+    from sqlite3 import Connection as sqliteConnection
+    import math
+    if isinstance(conn,sqliteConnection):
+        conn.create_function("cos", 1, math.cos)
+        conn.create_function("sin", 1, math.sin)
+        conn.create_function("acos", 1, math.acos)
+        conn.create_function("atan2", 2, math.atan2)
 
 class TimestampedRecord(object):
     entry_date_ = Column('entry_date', DateTime, server_default=func.now())
