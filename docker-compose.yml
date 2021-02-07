@@ -167,10 +167,10 @@ secrets:
   dhparams:
     file: nginx/dhparams.pem
   ssl_certificate:
-    name: ssl_certificate.4
+    name: ssl_certificate.5
     file: ./nginx/ssl/fullchain.pem
   ssl_certificate_key:
-    name: ssl_certificate_key.4
+    name: ssl_certificate_key.5
     file: ./nginx/ssl/privkey.pem
 volumes:
   cycling-data:
