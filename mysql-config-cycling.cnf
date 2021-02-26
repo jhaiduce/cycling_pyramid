@@ -5,3 +5,5 @@ file_key_management_encryption_algorithm = AES_CTR
 ssl_cert=/etc/my.cnf.d/certificates/server-cert.pem
 ssl_key=/etc/my.cnf.d/certificates/server-key.pem
 ssl_ca=/etc/my.cnf.d/certificates/ca.pem
+innodb_rollback_on_timeout=on
+innodb_lock_wait_timeout=10
