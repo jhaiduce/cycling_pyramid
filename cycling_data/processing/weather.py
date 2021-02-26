@@ -497,8 +497,8 @@ def update_ride_weather(self,ride_id, train_model=True):
                 ride.wxdata.station=metars[0].station
             dbsession.commit()
 
-    if train_model:
-        from .regression import train_model
-        train_model.delay()
+        if train_model:
+            from .regression import train_model
+            train_model.delay()
 
     return ride_id
