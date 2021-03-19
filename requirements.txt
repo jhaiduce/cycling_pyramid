@@ -52,7 +52,7 @@ paginate==0.5.6
 pandas==1.1.0
 PasteDeploy==2.0.1
 peppercorn==0.6
-Pillow==7.1.0
+Pillow==8.1.1
 plaster==1.0
 plaster-pastedeploy==0.6
 plotly==4.9.0
