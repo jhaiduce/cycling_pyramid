@@ -22,7 +22,7 @@ services:
         source: ./mysql-config-cycling.cnf
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
     configs:
-      - source: mysql-config-cycling.4
+      - source: mysql-config-cycling
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
     logging:
       driver: journald
@@ -176,7 +176,8 @@ volumes:
   cycling-data:
   mysql-data:
 configs:
-  mysql-config-cycling.4:
+  mysql-config-cycling:
+    name: mysql-config-cycling.5
     file: ./mysql-config-cycling.cnf
   nginx-conf-cycling:
     name: nginx-conf-cycling.3
