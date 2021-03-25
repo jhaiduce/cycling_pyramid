@@ -74,7 +74,7 @@ pytest-cov==2.6.1
 python-dateutil==2.8.0
 python-editor==1.0.4
 pytz==2018.9
-PyYAML==5.1
+PyYAML==5.4
 redis==3.4.1
 repoze.lru==0.7
 requests==2.21.0
