@@ -233,6 +233,56 @@ class BaseTest(unittest.TestCase):
         ride_id=submission_metadata['ride_id']
         update_weather_task_id=submission_metadata['update_weather_task_id']
 
+        # Post a ride with new locations referenced by name
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/rides/add',
+            data=dict_to_postdata(dict(
+                start_time={'date':'2005-01-01','time':'10:00:00'},
+                end_time={'date':'2005-01-01','time':'10:15:00'},
+                total_time=str(15*60),
+                rolling_time=str(12*60),
+                distance='7',
+                odometer='357',
+                avspeed='28',
+                maxspeed='40',
+                equipment_id='0',
+                ridergroup_id='0',
+                surface_id='0',
+                submit='submit',
+                startloc='Home 1',
+                endloc='Church 2'
+            ))
+        )
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
+        # Parse metadata sent with redirect response
+        submission_metadata=json.loads(resp.history[0].text)
+        ride_id=submission_metadata['ride_id']
+        update_weather_task_id=submission_metadata['update_weather_task_id']
+
+        # Check that the locations were created
+        resp=self.session.get('http://cycling_test_cycling_web/locations/list')
+        self.assertIn('>Home 1</a></td>', resp.text)
+        self.assertIn('>Church 2</a></td>', resp.text)
+
+        # Get the location id for Home 1
+        location_id=int(re.search(r'<td><a href="/locations/(\d+)/edit">Home 1</a></td>',resp.text).group(1))
+
+        # Check that we can load the location edit page for Home 1
+        resp=self.session.get('http://cycling_test_cycling_web/locations/{}/edit'.format(location_id))
+        self.assertEqual(resp.status_code,200)
+
+        # Check that we can load the ride details page for the newly created ride
+        resp=self.session.get('http://cycling_test_cycling_web/rides/{}/details'.format(ride_id))
+        self.assertEqual(resp.status_code,200)
+
+        # Wait for update_ride_weather task to complete
+        from celery.result import AsyncResult
+        task_result=AsyncResult(update_weather_task_id,app=celery)
+        task_result.wait(20)
+
     def tearDown(self):
         resp=self.session.post('http://cycling_test_cycling_web/logout')
         self.assertEqual(resp.history[0].status_code,302)
