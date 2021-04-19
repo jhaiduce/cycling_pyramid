@@ -186,12 +186,16 @@ class BaseTest(unittest.TestCase):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         ride_count_after=int(re.search(r'(\d+) total rides',resp.text).group(1))
 
+        # Make sure we can load the ride details page
+        resp=self.session.get('http://cycling_test_cycling_web/rides/{:d}/details'.format(ride_id))
+        self.assertEqual(resp.status_code,200)
+
         # Wait for update_ride_weather task to complete
         from celery.result import AsyncResult
         task_result=AsyncResult(update_weather_task_id,app=celery)
         task_result.wait(20)
 
-        # Check ride details page
+        # Check the weather data in the ride details page
         resp=self.session.get('http://cycling_test_cycling_web/rides/{:d}/details'.format(ride_id))
         self.assertEqual(resp.status_code,200)
         p=int(re.search(r'<td>(\d+) Pa</td>',resp.text).group(1))
