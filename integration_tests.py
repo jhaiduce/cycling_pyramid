@@ -233,6 +233,19 @@ class BaseTest(unittest.TestCase):
         ride_id=submission_metadata['ride_id']
         update_weather_task_id=submission_metadata['update_weather_task_id']
 
+        # Check that we can load the ride details page for the newly created ride
+        resp=self.session.get('http://cycling_test_cycling_web/rides/{}/details'.format(ride_id))
+        self.assertEqual(resp.status_code,200)
+
+        # Wait for update_ride_weather task to complete
+        from celery.result import AsyncResult
+        task_result=AsyncResult(update_weather_task_id,app=celery)
+        task_result.wait(20)
+
+        # Check that we can load the ride details page for the newly created ride
+        resp=self.session.get('http://cycling_test_cycling_web/rides/{}/details'.format(ride_id))
+        self.assertEqual(resp.status_code,200)
+
         # Post a ride with new locations referenced by name
         resp=self.session.post(
             'http://cycling_test_cycling_web/rides/add',
