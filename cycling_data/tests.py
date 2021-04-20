@@ -386,6 +386,10 @@ class MetarTests(BaseTest):
                 elevation=12.86381340026855
         )
 
+        new_intersection=Location(
+                name='New intersection'
+        )
+
         dca=Location(
             name='KDCA',
             lat=38.86,
@@ -407,7 +411,14 @@ class MetarTests(BaseTest):
             startloc=washington_monument,
             endloc=us_capitol
         )
+        ride_with_incomplete_endpoint = Ride(
+            start_time=datetime(2005,1,1,10),
+            end_time=datetime(2005,1,1,10,15),
+            startloc=washington_monument,
+            endloc=new_intersection
+        )
         session.add(ride)
+        session.add(ride_with_incomplete_endpoint)
         session.add(dca)
         session.add(bwi)
         session.commit()
@@ -446,6 +457,15 @@ class MetarTests(BaseTest):
             self.assertEqual(getattr(ride.wxdata,key),
                              MetarTests.ride_average_weather[key],
                              'Discrepancy for key {}'.format(key))
+
+        # Reset call info for fetch_metars mock
+        fetch_metars.reset_mock()
+
+        # Update ride weather for ride without coordinate data for an endpoint
+        update_ride_weather(ride_with_incomplete_endpoint.id)
+
+        # Without coordinates, fetch_metars should not be called
+        fetch_metars.assert_not_called()
 
 class ModelTests(BaseTest):
 
