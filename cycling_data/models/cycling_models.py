@@ -26,15 +26,30 @@ tz=TimezoneFinder()
 import logging
 log = logging.getLogger(__name__)
 
+class null_wrapper(object):
+    def __init__(self,fun):
+        self.fun=fun
+
+    def __call__(self,*args):
+
+        if None in args:
+            return None
+        else:
+            return self.fun(*args)
+
 @sa.event.listens_for(sa.engine.Engine,'connect')
 def register_functions(conn, connection_record):
     from sqlite3 import Connection as sqliteConnection
     import math
     if isinstance(conn,sqliteConnection):
-        conn.create_function("cos", 1, math.cos)
-        conn.create_function("sin", 1, math.sin)
-        conn.create_function("acos", 1, math.acos)
-        conn.create_function("atan2", 2, math.atan2)
+        conn.create_function("radians", 1, null_wrapper(math.radians))
+        conn.create_function("cos", 1, null_wrapper(math.cos))
+        conn.create_function("sin", 1, null_wrapper(math.sin))
+        conn.create_function("asin", 1, null_wrapper(math.asin))
+        conn.create_function("acos", 1, null_wrapper(math.acos))
+        conn.create_function("atan2", 2, null_wrapper(math.atan2))
+        conn.create_function('sqrt',1, null_wrapper(math.sqrt))
+        conn.create_function("power", 2, null_wrapper(math.pow))
 
 class TimestampedRecord(object):
     entry_date_ = Column('entry_date', DateTime, server_default=func.now())
