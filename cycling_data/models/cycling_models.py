@@ -768,14 +768,14 @@ class Ride(Base,TimestampedRecord):
 
     @hybrid_property
     def crosswind(self):
-        from math import sin
+        from math import sin,radians
 
         if self.wxdata is None: return None
 
         if self.azimuth is None or self.wxdata.winddir is None:
             return None
 
-        return sin((self.azimuth-180)-self.wxdata.winddir)*self.wxdata.windspeed
+        return sin(radians((self.azimuth-180)-self.wxdata.winddir))*self.wxdata.windspeed
 
     @crosswind.expression
     def crosswind(cls):
@@ -788,7 +788,7 @@ class Ride(Base,TimestampedRecord):
 
         return select([
             (
-                func.sin((azimuth-180)-wxdata.winddir)*wxdata.windspeed
+                func.sin(func.radians((azimuth-180)-wxdata.winddir))*wxdata.windspeed
             ).label('crosswind')
         ]).where(
             startloc.id==cls.startloc_id
