@@ -186,8 +186,8 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 def fetch_metars_for_ride(session,ride,task=None):
     from .locations import get_nearby_locations
     if (
-            ride.start_time is None
-            or ride.end_time is None
+            ride.start_time_ is None
+            or ride.end_time_ is None
             or ride.startloc.lat is None
             or ride.endloc.lat is None
             or ride.startloc.lon is None
