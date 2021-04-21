@@ -43,6 +43,7 @@ def register_functions(conn, connection_record):
     import math
     if isinstance(conn,sqliteConnection):
         conn.create_function("radians", 1, null_wrapper(math.radians))
+        conn.create_function("degrees", 1, null_wrapper(math.degrees))
         conn.create_function("cos", 1, null_wrapper(math.cos))
         conn.create_function("sin", 1, null_wrapper(math.sin))
         conn.create_function("asin", 1, null_wrapper(math.asin))
@@ -716,10 +717,10 @@ class Ride(Base,TimestampedRecord):
            or self.endloc.lon is None or self.endloc.lon is None:
             return None
 
-        from math import atan2
+        from math import atan2, degrees
 
-        return atan2(self.endloc.lon - self.startloc.lon,
-                     self.endloc.lat - self.startloc.lat)
+        return degrees(atan2(self.endloc.lon - self.startloc.lon,
+                     self.endloc.lat - self.startloc.lat))
 
     @azimuth.expression
     def azimuth(cls):
@@ -783,7 +784,7 @@ class Ride(Base,TimestampedRecord):
         startloc=aliased(Location)
         endloc=aliased(Location)
 
-        azimuth=(func.atan2(endloc.lon - startloc.lon,
+        azimuth=func.degrees(func.atan2(endloc.lon - startloc.lon,
                        endloc.lat - startloc.lat)).label('azimuth')
 
         return select([
