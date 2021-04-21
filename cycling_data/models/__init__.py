@@ -12,42 +12,10 @@ from .security import User  # flake8: noqa
 # all relationships can be setup
 configure_mappers()
 
-def load_extension(dbapi_conn, unused):
-    import tempfile,shutil
-    from pkg_resources import resource_string
-    import os
-
-    extname='libextension-functions'
-
-    tmpdir=tempfile.mkdtemp()
-
-    try:
-        # Load extension's data into memory
-        ext_lib_data=resource_string('cycling_data',os.path.join('lib',extname+'.so'))
-        os.mkdir(os.path.join(tmpdir,'lib'))
-
-        # Write data to a .so file in the temporary directory
-        open(os.path.join(tmpdir,extname+'.so'),'wb').write(ext_lib_data)
-
-        # Turn on sqlite extension loading
-        dbapi_conn.enable_load_extension(True)
-
-        # Load extension from temporary directory
-        dbapi_conn.load_extension(os.path.join(tmpdir,extname))
-        dbapi_conn.enable_load_extension(False)
-
-    finally:
-        shutil.rmtree(tmpdir)
-
 def get_engine(settings, prefix='sqlalchemy.'):
     
     engine=engine_from_config(settings, prefix)
     
-    if 'sqlite' in engine.dialect.name:
-        from sqlalchemy.event import listen
-
-        listen(engine,'connect', load_extension)
-        
     return engine
 
 
