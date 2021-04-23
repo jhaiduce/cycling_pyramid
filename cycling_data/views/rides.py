@@ -303,7 +303,7 @@ class RideViews(object):
             rolling_time_hours=df['rolling_time']/np.timedelta64(1,'h')
             df['avspeed_est']=pd.Series(df['distance']/rolling_time_hours,index=df.index)
         if 'avspeed' in list(df.columns)+[xvar,yvar]:
-            df['avspeed'].fillna(df['avspeed_est'])
+            df['avspeed']=df['avspeed'].fillna(df['avspeed_est'])
 
         for column in 'rolling_time', 'total_time':
             if column in df:
