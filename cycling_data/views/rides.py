@@ -416,7 +416,11 @@ class RideViews(object):
         if ride.wxdata is None:
             ride.wxdata=RideWeatherData()
 
-        predictions=get_ride_predictions(dbsession,[ride])
+        try:
+            predictions=get_ride_predictions(dbsession,[ride])
+        except:
+            predictions=None
+
         if predictions:
             predicted_speed=predictions[0,0]
         else:
