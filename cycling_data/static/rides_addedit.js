@@ -1,21 +1,8 @@
-function parseDate(datestr) {
-    var [datestr,timestr]=datestr.split(" ")
-    var [y,mon,d]=datestr.split("-").map(parseFloat)
-    var [h,min,s]=timestr.split(":").map(parseFloat)
-    return new Date(y,mon-1,d,h,min,s)
-}
-
-function time_string_to_seconds(str){
-    tokens=str.split(':')
-    if(tokens.length!=3) throw Error("Invalid time string")
-    try{
-	var [h,m,s]=tokens.map(parseFloat)
-    }
-    catch(err){
-	throw Error("Invalid time string")
-    }
-    
-    return (h*3600+m*60+s)
+function parseDate(fieldNum) {
+    datestr=(
+	    $("input[id='deformField"+fieldNum+"-date']").val() + " "
+	    +$("input[id='deformField"+fieldNum+"-time']").val());
+    return new Date(datestr);
 }
 
 function seconds_to_time_string(t){
@@ -33,12 +20,12 @@ $(document).ready(function() {
 
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
 	try{
-	    start_time=parseDate($("input[name='start_time']").val())
-	    end_time=parseDate($("input[name='end_time']").val())
+	    start_time=parseDate('3')
+	    end_time=parseDate('4')
 	}
 	catch(err){
 	    return true;
-	}
+	}	
 
 	if(start_time<end_time) return true;
 	else return false;
@@ -47,21 +34,16 @@ $(document).ready(function() {
 
     jQuery.validator.addMethod('check_total_time_consistent',function(value,element){
 	try{
-	    start_time=parseDate($("input[name='start_time']").val())
-	    end_time=parseDate($("input[name='end_time']").val())
+	    start_time=parseDate('3')
+	    end_time=parseDate('4')
 	}
 	catch(err){
 	    return true;
-	}
+	}	
 
 	interval_s=(end_time-start_time)/1000
 
-	try{
-	    total_time_s=time_string_to_seconds($("input[name='total_time']").val())
-	}
-	catch(err){
-	    return true
-	}
+	total_time_s=$("input[name='total_time']").val()
 	if(isNaN(total_time_s) || isNaN(interval_s)) return true;
 
 	delta=Math.abs(interval_s-total_time_s)
@@ -72,8 +54,8 @@ $(document).ready(function() {
 	else return false
 
     },function(params,element){
-	start_time=parseDate($("input[name='start_time']").val())
-	end_time=parseDate($("input[name='end_time']").val())
+	start_time=parseDate('3')
+	end_time=parseDate('4')
 	interval_s=(end_time-start_time)/1000
 	return jQuery.validator.format(
 	    'Expected total time is between {0} and {1}',
@@ -84,8 +66,8 @@ $(document).ready(function() {
     
     jQuery.validator.addMethod('check_total_time_gte_rolling_time',function(value,element){
 	try{
-	    total_time_s=time_string_to_seconds($("input[name='total_time']").val())
-	    rolling_time_s=time_string_to_seconds($("input[name='rolling_time']").val())
+	    total_time_s=$("input[name='total_time']").val()
+	    rolling_time_s=$("input[name='rolling_time']").val()
 	}
 	catch(err){
 	    return true
@@ -111,7 +93,7 @@ $(document).ready(function() {
 	    return true;
 	}
 	try{
-	    hours=time_string_to_seconds($("input[name='rolling_time']").val())/3600.0
+	    hours=$("input[name='rolling_time']").val()/3600.0
 	}
 	catch(err){
 	    return true;
@@ -125,7 +107,7 @@ $(document).ready(function() {
 	else return true;
     },function(params,element){
 	distance=parseFloat($("input[name='distance']").val())
-	hours=time_string_to_seconds($("input[name='rolling_time']").val())/3600.0
+	hours=$("input[name='rolling_time']").val()/3600.0
 	calcspeed=distance/hours
 	min=calcspeed*0.99
 	max=calcspeed*1.02
@@ -171,11 +153,11 @@ $(document).ready(function() {
     $("form[id='deform']").validate({
 	onsubmit:false,
 	rules:{
-	    start_time:{
+	    date:{
 		end_time_after_start_time:true,
 		check_total_time_consistent:true
 	    },
-	    end_time:{
+	    time:{
 		end_time_after_start_time:true,
 		check_total_time_consistent:true
 	    },
