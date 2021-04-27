@@ -62,20 +62,4 @@
 {{ form|safe }}
 </p>
 
-{#<form>
-  <input id="input1-date" name="input1-date" type="text" placeholder="Choose a date">
-  <input id="input1-time" name="input1-time" type="text" placeholder="Choose a time">
-  
-  <input type="submit" value="Submit" class="btn btn-info btn-block">
-</form>
-
-<!-- After including the date picker scripts -->
-<script>
-  $(function() {
-    // Enable Pickadate on an input field
-    $('#input1-date').pickadate();
-    $('#input1-time').pickatime();
-  });   
-</script>#}
-
 {% endblock content %}
