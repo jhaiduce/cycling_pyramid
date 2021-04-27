@@ -48,11 +48,11 @@
 
 	    <script src="{{request.static_url('cycling_data:node_modules/bootstrap-duration-picker/dist/bootstrap-duration-picker-debug.js')}}"></script>
 	    
-	    <script src="{{request.static_url('cycling_data:static/rides_addedit.js')}}"></script>
+	    <script type="text/javascript">
+	      deform.load();
+	    </script>
 
-<script type="text/javascript">
-    deform.load()
-</script>   
+	    <script src="{{request.static_url('cycling_data:static/rides_addedit.js')}}"></script>
 
 {% endblock page_includes %}
 
