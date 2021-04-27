@@ -18,6 +18,17 @@ function seconds_to_time_string(t){
 
 $(document).ready(function() {
 
+    var suffixes=['d','h','m','s'];
+
+    ['rolling_time','total_time'].forEach(function(name){
+	$('input[name='+name+']').next().find('input').each(
+	    function (index,value){
+		this.name=name+'_'+suffixes[index];
+		this.id=name+'_'+suffixes[index];
+	    }
+	);
+    });
+
     jQuery.validator.addMethod('end_time_after_start_time',function(value,element){
 	try{
 	    start_time=parseDate('3')
@@ -161,7 +172,7 @@ $(document).ready(function() {
 		end_time_after_start_time:true,
 		check_total_time_consistent:true
 	    },
-	    total_time:{
+	    total_time_s:{
 		check_total_time_consistent:true,
 		check_total_time_gte_rolling_time:true
 	    },
@@ -188,7 +199,7 @@ $(document).ready(function() {
 		},
 		avspeed_consistent:true
 	    },
-	    rolling_time:{
+	    rolling_time_s:{
 		avspeed_consistent:true,
 		check_total_time_gte_rolling_time:true
 	    },
