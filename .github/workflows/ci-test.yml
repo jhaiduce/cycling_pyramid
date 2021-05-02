@@ -28,7 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: pip install pyotp==2.6.0
-    - run: python generate_secrets.py --secretsdir=integration_test_secrets --ini-template=integration_test.ini.tpl --ini-filename=integration_test.ini
+    - run: python generate_secrets.py --secretsdir=integration_test_secrets --ini-template=integration_test.ini.tpl --ini-filename=integration_test.ini --openssl-root-config=integration_test_root_config.in --openssl-server-config=integration_test_server_config.in
     - name: Build Docker images
       run: docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.test.yml -p ci build
     - name: Migrate database

@@ -97,10 +97,16 @@ def generate_secrets(
 
     if not os.path.exists(os.path.join(secrets_dir,hostname+'.csr')):
 
+        if openssl_server_config:
+            config_args=['-config',openssl_server_config]
+        else:
+            config_args=[]
+
         # Generate CSR
         check_call(['openssl','req','-new',
-              '-key',os.path.join(secrets_dir,hostname+'.key'),
-              '-out',os.path.join(secrets_dir,hostname+'.csr')])
+                    '-key',os.path.join(secrets_dir,hostname+'.key'),
+                    '-out',os.path.join(secrets_dir,hostname+'.csr')]
+                   + config_args)
 
     if not os.path.exists(os.path.join(secrets_dir,hostname+'.ext')):
 
