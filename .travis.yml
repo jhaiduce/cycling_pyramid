@@ -1,5 +1,0 @@
-language: python
-python: 3.8.6
-script:
-  - pytest -q
-  - pytest -q cycling_data/migration_tests.py
