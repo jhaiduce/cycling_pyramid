@@ -24,23 +24,45 @@ def write_password(filename,overwrite=False,*args,**kwargs):
         pw=open(filename).read()
     return pw
 
-def generate_secrets(secrets_dir='secrets',ini_template='production.ini.tpl',iniout='production.ini',hostname='localhost.localdomain'):
+def generate_secrets(
+        secrets_dir='secrets',
+        ini_template='production.ini.tpl',iniout='production.ini',
+        hostname='localhost.localdomain',
+        openssl_root_config=None,openssl_server_config=None):
+
     if not os.path.exists(secrets_dir):
         os.mkdir(secrets_dir)
 
     if not (os.path.exists(secrets_dir+'/ca-key.pem') and os.path.exists(secrets_dir+'/ca.pem')):
+
         print('Generating root certificate')
+
         check_call(['openssl','genrsa','2048'],stdout=open(secrets_dir+'/ca-key.pem','w'))
-        check_call(['openssl','req','-new','-x509','-nodes','-days','365000',
-              '-key',secrets_dir+'/ca-key.pem','-out',secrets_dir+'/ca.pem'])
+
+        if openssl_root_config:
+            config_args=['-config',openssl_root_config]
+        else:
+            config_args=[]
+
+        check_call([
+            'openssl','req','-new','-x509','-nodes','-days','365000',
+            '-key',secrets_dir+'/ca-key.pem','-out',secrets_dir+'/ca.pem'
+        ]+config_args)
 
     if not (os.path.exists(secrets_dir+'/server-key.pem') or os.path.exists(secrets_dir+'/server-req.pem')):
 
         print('Generating server key')
+
+        if openssl_server_config:
+            config_args=['-config',openssl_server_config]
+        else:
+            config_args=[]
+
         check_call(['openssl','req','-newkey','rsa:2048','-days','365000','-nodes',
-              '-keyout',secrets_dir+'/server-key.pem','-out',secrets_dir+'/server-req.pem'])
+                    '-keyout',secrets_dir+'/server-key.pem','-out',secrets_dir+'/server-req.pem']+config_args)
+
         check_call(['openssl','rsa','-in',secrets_dir+'/server-key.pem',
-              '-out',secrets_dir+'/server-key.pem'])
+                    '-out',secrets_dir+'/server-key.pem'])
 
     if not os.path.exists(secrets_dir+'/server-cert.pem'):
 
@@ -144,8 +166,12 @@ if __name__=='__main__':
                         help='Name of ini file')
     parser.add_argument('--hostname',default='localhost.localdomain',
                         help='Web server hostname')
+    parser.add_argument('--openssl-root-config',default=None,help='OpenSSL root certificate configuration file')
+    parser.add_argument('--openssl-server-config',default=None,help='OpenSSL server certificate configuration file')
     args=parser.parse_args()
 
     generate_secrets(args.secretsdir,
                      ini_template=args.ini_template,iniout=args.ini_filename,
-                     hostname=args.hostname)
+                     hostname=args.hostname,
+                     openssl_root_config=args.openssl_root_config,
+                     openssl_server_config=args.openssl_server_config)
