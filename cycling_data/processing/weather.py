@@ -93,7 +93,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
        (datetime.now()-last_request_time).total_seconds() < min_delay_seconds:
         if task is not None:
             raise task.retry(
-                RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
+                exc=RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
         else:
             sleep(retry_delay)
 
@@ -113,7 +113,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
             e.text=ogimet_text
             requestlog.rate_limited=True
             if task is not None:
-                raise task.retry(e,countdown=retry_delay)
+                raise task.retry(exc=e,countdown=retry_delay)
             else:
                 raise e
     finally:
