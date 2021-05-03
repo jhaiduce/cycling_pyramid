@@ -27,13 +27,21 @@ sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml 
 # Migrate database
 sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.migrate_test.yml -p ci up -d
 
-sudo docker wait ci_migration_1
+exitcode=$(sudo docker wait ci_migration_1)
 
 # Print migration logs
 sudo docker logs ci_migration_1
 
+if [ $exitcode -ne 0 ]; then
+    exit $exitcode
+fi
+
 # Run tests
 sudo docker-compose -f docker-compose.test_secrets.yml -f docker-compose.db.yml -f docker-compose.test.yml -p ci up -d
 
+exitcode=$(sudo docker wait ci_sut_1)
+
 # Print test logs
-sudo docker logs -f ci_sut_1
+sudo docker logs ci_sut_1
+
+exit $exitcode
