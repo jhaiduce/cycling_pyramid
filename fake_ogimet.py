@@ -31,6 +31,7 @@ class ogimet_proxy(object):
         try:
             text=self.cache[frozenset(request.params.items())]
         except KeyError:
+            log.info('Fetching OGIMET data for {}'.format(request.params))
             text=requests.get('https://ogimet.com/display_metars2.php',params=request.params).text
             if 'METAR' in text:
                 self.cache[frozenset(request.params.items())]=text
