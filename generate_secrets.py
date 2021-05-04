@@ -34,7 +34,7 @@ def generate_secrets(secrets_dir='secrets',ini_template='production.ini.tpl',ini
         check_call(['openssl','req','-new','-x509','-nodes','-days','365000',
               '-key',secrets_dir+'/ca-key.pem','-out',secrets_dir+'/ca.pem'])
 
-    if not (os.path.exists(secrets_dir+'/server-key.pem') or os.path.exists(secrets_dir+'/server-req.pem')):
+    if not (os.path.exists(secrets_dir+'/server-key.pem') and os.path.exists(secrets_dir+'/server-req.pem')):
 
         print('Generating server key')
         check_call(['openssl','req','-newkey','rsa:2048','-days','365000','-nodes',
