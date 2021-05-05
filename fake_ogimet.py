@@ -28,6 +28,8 @@ class ogimet_proxy(object):
     def ogimet_request(self,request):
         import requests
 
+        log.info('Cache contents: {}'.format(self.cache))
+
         try:
             text=self.cache[frozenset(request.params.items())]
         except KeyError:
