@@ -1,8 +1,9 @@
 function parseDate(fieldNum) {
-    datestr=(
-	    $("input[id='deformField"+fieldNum+"-date']").val() + " "
-	    +$("input[id='deformField"+fieldNum+"-time']").val());
-    return new Date(datestr);
+    datestr=$("input[id='deformField"+fieldNum+"-date']").val()
+    timestr=$("input[id='deformField"+fieldNum+"-time']").val()
+    if(timestr=="") throw "Invalid time";
+    datetimestr=(datestr + " " + timestr);
+    return new Date(datetimestr);
 }
 
 function seconds_to_time_string(t){
@@ -55,7 +56,7 @@ $(document).ready(function() {
 	interval_s=(end_time-start_time)/1000
 
 	total_time_s=$("input[name='total_time']").val()
-	if(isNaN(total_time_s) || isNaN(interval_s)) return true;
+	if(isNaN(total_time_s) || isNaN(interval_s) || total_time_s == 0 ) return true;
 
 	delta=Math.abs(interval_s-total_time_s)
 
@@ -83,7 +84,7 @@ $(document).ready(function() {
 	catch(err){
 	    return true
 	}
-	if(isNaN(total_time_s) || isNaN(rolling_time_s)) return true;
+	if(isNaN(total_time_s) || isNaN(rolling_time_s) || total_time_s == 0 || rolling_time_s == 0) return true;
 
 	if(rolling_time_s<total_time_s) return true;
 	else return false;
