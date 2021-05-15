@@ -52,6 +52,7 @@ def register_functions(conn, connection_record):
         conn.create_function("atan2", 2, null_wrapper(math.atan2))
         conn.create_function('sqrt',1, null_wrapper(math.sqrt))
         conn.create_function("power", 2, null_wrapper(math.pow))
+        conn.create_function("exp", 1, null_wrapper(math.exp))
 
 class TimestampedRecord(object):
     entry_date_ = Column('entry_date', DateTime, server_default=func.now())
