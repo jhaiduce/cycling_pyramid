@@ -10,7 +10,8 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     Interval,
-    Binary
+    Binary,
+    case
 )
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.orm import relationship, aliased
@@ -399,6 +400,33 @@ class RiderGroup(Base):
     def __repr__(self):
         return self.name
 
+import math
+def vapres_buck(T,mathmod=math):
+    # Compute vapor pressure using Buck formula
+    a_water=6.1121
+    b_water=18.678
+    c_water=257.14
+    d_water=234.5
+    a_ice=6.1115
+    b_ice=23.036
+    c_ice=279.82
+    d_ice=333.7
+
+    if mathmod is func:
+        a=case([(T>0,a_water)],else_=a_ice)
+        b=case([(T>0,b_water)],else_=b_ice)
+        c=case([(T>0,c_water)],else_=c_ice)
+        d=case([(T>0,d_water)],else_=d_ice)
+    else:
+        if T>0:
+            a,b,c,d=a_water,b_water,c_water,d_water
+        else:
+            a,b,c,d=a_ice,b_ice,c_ice,d_ice
+
+    vapres=a*mathmod.exp((b-T/d)*T/(T+c))
+
+    return vapres
+
 class WeatherData(Base,TimestampedRecord):
     __tablename__ = 'weatherdata'
     __table_args__={'mysql_encrypted':'yes'}    
@@ -420,15 +448,16 @@ class WeatherData(Base,TimestampedRecord):
     def relative_humidity(self):
         import math
         if self.temperature is None or self.dewpoint is None: return None
-        vapres=6.1121*math.exp((18.678-self.temperature/234.5)*self.temperature/(self.temperature+257.14))
-        vapres_dew=6.1121*math.exp((18.678-self.dewpoint/234.5)*self.dewpoint/(self.dewpoint+257.14))
+        # Compute vapor pressures using the Arden Buck equation
+        vapres=vapres_buck(self.temperature)
+        vapres_dew=vapres_buck(self.dewpoint)
         rh=vapres_dew/vapres
         return rh
 
     @relative_humidity.expression
     def relative_humidity(cls):
-        vapres=6.1121*func.exp((18.678-cls.temperature/234.5)*cls.temperature/(cls.temperature+257.14))
-        vapres_dew=6.1121*func.exp((18.678-cls.dewpoint/234.5)*cls.dewpoint/(cls.dewpoint+257.14))
+        vapres=vapres_buck(cls.temperature,func)
+        vapres_dew=vapres_buck(cls.dewpoint,func)
         rh=vapres_dew/vapres
         return rh
 
