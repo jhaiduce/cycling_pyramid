@@ -249,7 +249,6 @@ def average_weather(metars,dtstart,dtend,altitude):
         'temperature':0,
         'gust':0,
         'dewpoint':0,
-        'relative_humidity':0,
         'rain':0,
         'snow':0,
         'pressure':0

@@ -411,10 +411,26 @@ class WeatherData(Base,TimestampedRecord):
     temperature = Column(Float)
     dewpoint = Column(Float)
     pressure = Column(Float)
-    relative_humidity = Column(Float)
+    relative_humidity_stored = Column('relative_humidity',Float)
     wx_station = Column(Integer, ForeignKey('location.id',name='fk_location_id'))
     station=relationship(Location)
     kind = Column(String(255))
+
+    @hybrid_property
+    def relative_humidity(self):
+        import math
+        if self.temperature is None or self.dewpoint is None: return None
+        vapres=6.1121*math.exp((18.678-self.temperature/234.5)*self.temperature/(self.temperature+257.14))
+        vapres_dew=6.1121*math.exp((18.678-self.dewpoint/234.5)*self.dewpoint/(self.dewpoint+257.14))
+        rh=vapres_dew/vapres
+        return rh
+
+    @relative_humidity.expression
+    def relative_humidity(cls):
+        vapres=6.1121*func.exp((18.678-cls.temperature/234.5)*cls.temperature/(cls.temperature+257.14))
+        vapres_dew=6.1121*func.exp((18.678-cls.dewpoint/234.5)*cls.dewpoint/(cls.dewpoint+257.14))
+        rh=vapres_dew/vapres
+        return rh
 
     __mapper_args__ = {
         'polymorphic_on': kind,
@@ -468,7 +484,7 @@ class StationWeatherData(WeatherData):
 
     def copy(self):
         wx=StationWeatherData()
-        fields=['windspeed','gust','winddir','temperature','dewpoint','pressure','relative_humidity','wx_station','station','kind']
+        fields=['windspeed','gust','winddir','temperature','dewpoint','pressure','wx_station','station','kind']
         for field in fields:
             setattr(wx,field,getattr(self,field))
         return wx
@@ -507,7 +523,7 @@ class StationWeatherData(WeatherData):
             except AttributeError: self.dewpoint=None
             try: self.pressure=obs.press.value('hpa')
             except AttributeError: self.pressure=None
-            self.relative_humidity=rh
+            self.relative_humidity_stored=rh
             self.metar=obs.code
 
 class Ride(Base,TimestampedRecord):
