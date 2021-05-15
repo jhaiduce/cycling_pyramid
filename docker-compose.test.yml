@@ -1,5 +1,8 @@
 version: '3.7'
 services:
+  db:
+    ports:
+      - 3308:3306
   sut:
     build:
       context: .

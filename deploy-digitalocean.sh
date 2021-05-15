@@ -61,7 +61,7 @@ done
 
 join_token=$(docker-machine ssh $host_prefix-master docker swarm join-token -q worker)
 
-transfer_files="docker-compose.yml docker-compose.migrate.yml mysql-config-cycling.cnf production_secrets"
+transfer_files="docker-compose.yml docker-compose.prod.yml docker-compose.migrate.yml mysql-config-cycling.cnf production_secrets"
 rsync -avz -e "docker-machine ssh $host_prefix-master" $transfer_files :
 
 docker-machine ssh $host_prefix-master mkdir -p nginx/ssl
@@ -87,10 +87,10 @@ for i in $(seq 1 $numworkers); do
     fi
 done
 
-docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml $stack_name
+docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml $stack_name
 
 # Update the database
-docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.migrate.yml ${stack_name}
+docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml -c docker-compose.migrate.yml ${stack_name}
 
 function wait_for_migration {
 
