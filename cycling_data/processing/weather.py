@@ -305,87 +305,35 @@ def average_weather(metars,dtstart,dtend,altitude):
         interval_weight=dt.total_seconds()
         weights=[weight*interval_weight for weight in weights]
 
-        if metars[i].windspeed!=None:
-            values['windspeed']+=metars[i].windspeed*weights[0]
-            total_weights['windspeed']+=weights[0]
-        if metars[i+1].windspeed!=None:
-            values['windspeed']+=metars[i+1].windspeed*weights[1]
-            total_weights['windspeed']+=weights[1]
+        for key in values.keys():
 
-        if metars[i].winddir!=None:
-            values['winddir']+=metars[i].winddir*weights[0]
-            total_weights['winddir']+=weights[0]
-        if metars[i+1].winddir!=None:
-            values['winddir']+=metars[i+1].winddir*weights[1]
-            total_weights['winddir']+=weights[1]
+            if key in ('rain','snow'): continue
 
-        if metars[i].gust!=None:
-            values['gust']+=metars[i].gust*weights[0]
-            total_weights['gust']+=weights[0]
-        if metars[i+1].gust!=None:
-            values['gust']+=metars[i+1].gust*weights[1]
-            total_weights['gust']+=weights[1]
-
-        if metars[i].temperature!=None:
-            values['temperature']+=metars[i].weather_at_altitude(
-                altitude).temperature*weights[0]
-            total_weights['temperature']+=weights[0]
-        if metars[i+1].temperature!=None:
-            values['temperature']+=metars[i+1].weather_at_altitude(
-                altitude).temperature*weights[1]
-            total_weights['temperature']+=weights[1]
-
-        if metars[i].dewpoint!=None:
-            values['dewpoint']+=metars[i].dewpoint*weights[0]
-            total_weights['dewpoint']+=weights[0]
-        if metars[i+1].dewpoint!=None:
-            values['dewpoint']+=metars[i+1].dewpoint*weights[1]
-            total_weights['dewpoint']+=weights[1]
-
-        if metars[i].pressure!=None and metars[i].temperature!=None:
-            obs=metars[i]
-            pressure=obs.weather_at_altitude(altitude).pressure
-            values['pressure']+=pressure*weights[0]
-            total_weights['pressure']+=weights[0]
-        if metars[i+1].pressure!=None and metars[i+1].temperature!=None:
-            obs=metars[i+1]
-            pressure=obs.weather_at_altitude(altitude).pressure
-            values['pressure']+=pressure*weights[1]
-            total_weights['pressure']+=weights[1]
-
-        if metars[i].temperature!=None and metars[i].dewpoint!=None:
-            temperature=metars[i].weather_at_altitude(altitude).temperature
-            vapres=6.1121*exp((18.678-temperature/234.5)*temperature/(temperature+257.14))
-            dewpt=metars[i].dewpoint
-            vapres_dew=6.1121*exp((18.678-dewpt/234.5)*dewpt/(dewpt+257.14))
-            rh=vapres_dew/vapres
-            values['relative_humidity']+=rh*weights[0]
-            total_weights['relative_humidity']+=weights[0]
-        if metars[i+1].temperature!=None and metars[i+1].dewpoint!=None:
-            temperature=metars[i+1].weather_at_altitude(altitude).temperature
-            vapres=6.1121*exp((18.678-temperature/234.5)*temperature/(temperature+257.14))
-            dewpt=metars[i+1].dewpoint
-            vapres_dew=6.1121*exp((18.678-dewpt/234.5)*dewpt/(dewpt+257.14))
-            rh=vapres_dew/vapres
-            values['relative_humidity']+=rh*weights[1]
-            total_weights['relative_humidity']+=weights[1]
+            if getattr(metars[i],key)!=None:
+                values[key]+=getattr(
+                    metars[i].weather_at_altitude(altitude),key)*weights[0]
+                total_weights[key]+=weights[0]
+            if getattr(metars[i+1],key)!=None:
+                values[key]+=getattr(
+                    metars[i+1].weather_at_altitude(altitude),key)*weights[1]
+                total_weights[key]+=weights[1]
 
         this_metar=Metar.Metar(metars[i].metar,
                          year=metar.report_time.year,
                          month=metar.report_time.month, utcdelta=0)
         rain,snow=weather_to_numeric(this_metar.weather)
-        values['rain']+=rain*weights[0]
-        values['snow']+=snow*weights[0]
-        total_weights['rain']+=weights[0]
-        total_weights['snow']+=weights[0]
+
+        for key,value in zip(['rain','snow'],[rain,snow]):
+            values[key]+=value*weights[0]
+            total_weights[key]+=weights[0]
+
         next_metar=Metar.Metar(metars[i+1].metar,
                          year=metars[i+1].report_time.year,
                          month=metars[i+1].report_time.month, utcdelta=0)
         rain,snow=weather_to_numeric(next_metar.weather)
-        values['rain']+=rain*weights[1]
-        values['snow']+=snow*weights[1]
-        total_weights['rain']+=weights[1]
-        total_weights['snow']+=weights[1]
+        for key,value in zip(['rain','snow'],[rain,snow]):
+            values[key]+=value*weights[1]
+            total_weights[key]+=weights[1]
 
     for key,weight in total_weights.items():
         try:
