@@ -363,6 +363,7 @@ class MetarTests(BaseTest):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
+        from .models.cycling_models import RideWeatherData
 
         from datetime import datetime, timedelta
         from .models import get_session_factory
@@ -457,6 +458,12 @@ class MetarTests(BaseTest):
             self.assertEqual(getattr(ride.wxdata,key),
                              MetarTests.ride_average_weather[key],
                              'Discrepancy for key {}'.format(key))
+            query=self.session.query(RideWeatherData).with_entities(
+                    getattr(RideWeatherData,key)
+            ).filter(RideWeatherData.id==ride.wxdata_id)
+            self.assertEqual(
+                getattr(query.one(),key),
+                MetarTests.ride_average_weather[key])
 
         # Reset call info for fetch_metars mock
         fetch_metars.reset_mock()
