@@ -300,6 +300,33 @@ class SerializeTests(BaseTest):
 
 class MetarTests(BaseTest):
 
+    ogimet_text_dca_21jul = """
+
+##########################################################
+# Query made at 05/16/2021 18:08:45 UTC
+# Time interval: from 07/21/2020 19:00  to 07/22/2020 04:32  UTC
+##########################################################
+
+##########################################################
+# KDCA, Washington DC, Reagan National Airport (United States)
+# WMO index: 72405
+# Latitude 38-50-54N. Longitude 077-02-03W. Altitude 4 m.
+##########################################################
+
+###################################
+#  METAR/SPECI from KDCA
+###################################
+202007211952 METAR KDCA 211952Z 17005KT 10SM FEW055 SCT250 36/20 A2998 RMK AO2 SLP151 T03560200=
+202007212052 METAR KDCA 212052Z 14005KT 10SM FEW060 SCT250 36/21 A2997 RMK AO2 SLP147 T03560211 58017=
+202007212152 METAR KDCA 212152Z 15008KT 10SM FEW065 BKN170 BKN250 35/22 A2995 RMK AO2 SLP142 T03500222=
+202007212252 METAR KDCA 212252Z 16008KT 10SM R01/5500VP6000FT TS FEW065CB BKN075 BKN180 BKN250 33/21 A2997 RMK AO2 LTG DSNT S-W TSB28 SLP148 FRQ LTGICCG VC S-SW TS S-SW MOV NE T03330211=
+202007212352 METAR KDCA 212352Z VRB05KT 10SM TS SCT036CB SCT080 SCT120 BKN250 26/22 A3002 RMK AO2 WSHFT 2256 LTG DSNT ALQDS RAB2258E33 TSE37B45 PRESRR SLP167 OCNL LTGICCG VC NW-NE FRQ LTGICCG DSNT SE-SW CB VC NW-NE AND S-SW MOV E P0000 600=
+202007220052 METAR KDCA 220052Z 00000KT 1SM R01/4500VP6000FT +TSRA BR BKN028CB BKN047 OVC060 24/22 A3003 RMK AO2 LTG DSNT ALQDS RAB24 TSE07B22 SLP169 FRQ LTGICCG ALQDS TS ALQDS MOV E P0038 T02440222=
+202007220152 METAR KDCA 220152Z 22006KT 10SM FEW050 BKN110 BKN250 25/23 A3005 RMK AO2 LTG DSNT E-SW RAE21 TSE16 SLP176 OCNL LTGICCG DSNT NE-SE AND SW-NW CB DSNT NE-SE AND SW-NW MOV E P0008 T02500233=
+202007220252 METAR KDCA 220252Z 18008KT 10SM -RA FEW110 BKN140 OVC250 25/23 A3002 RMK AO2 RAB15 SLP166 P0002 60048 T02500228 58001=
+202007220352 METAR KDCA 220352Z 00000KT 10SM FEW075 SCT120 OVC250 25/23 A3004 RMK AO2 RAE51 SLP171 P0004 T02500228=
+"""
+
     ogimet_text_dca = """##########################################################
 # Query made at 01/19/2020 16:18:32 UTC
 # Time interval: from 01/01/2005 10:00  to 01/01/2005 19:11  UTC
@@ -418,8 +445,15 @@ class MetarTests(BaseTest):
             startloc=washington_monument,
             endloc=new_intersection
         )
+        ride_that_produces_negative_windspeed = Ride(
+            start_time=datetime(2020,7,21,18,55),
+            end_time=datetime(2020,7,21,19,36),
+            startloc=washington_monument,
+            endloc=us_capitol
+        )
         session.add(ride)
         session.add(ride_with_incomplete_endpoint)
+        session.add(ride_that_produces_negative_windspeed)
         session.add(dca)
         session.add(bwi)
         session.commit()
@@ -435,16 +469,33 @@ class MetarTests(BaseTest):
         
         self.assertEqual(metars[0].station.name,'KDCA')
         fetch_metars.assert_called_with(
-            'KDCA',
-            dtstart-window_expansion,
-            dtend+window_expansion,
-            url='https://www.ogimet.com/display_metars2.php'
+           'KDCA',
+           dtstart-window_expansion,
+           dtend+window_expansion,
+           url='https://www.ogimet.com/display_metars2.php'
         )
 
         self.session.expire_on_commit=False
 
-        update_ride_weather(ride.id)
+        mock_ogimet_response=Mock()
+        mock_ogimet_response.text=MetarTests.ogimet_text_dca_21jul
+        mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
+        mock_ogimet_response.status_code=200
+
+        from .processing import weather
+
+        with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response) as fetch_metars_21jul:
+            metars=fetch_metars_for_ride(session,ride_that_produces_negative_windspeed)
+
+            update_ride_weather(ride_that_produces_negative_windspeed.id)
+
+        self.assertGreater(ride_that_produces_negative_windspeed.wxdata.windspeed,0)
+
+        from time import sleep
+        sleep(1)
         
+        update_ride_weather(ride.id)
+
         fetch_metars.assert_called_with(
             'KDCA',
             dtstart-window_expansion,
