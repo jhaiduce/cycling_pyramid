@@ -15,6 +15,16 @@ import requests
 
 from time import sleep
 
+def random_delay(min_delay=1,random_scale=None):
+
+    import random
+
+    if random_scale is None:
+        random_scale=min_delay
+
+    return min_delay+random.lognormvariate(random_scale,random_scale)
+
+
 def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metars2.php'):
 
     params={
@@ -87,7 +97,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     min_delay_seconds=1
     random_delay_scale=1
-    retry_delay=min_delay_seconds+random.lognormvariate(random_delay_scale,random_delay_scale)
+    retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
     if last_request_time is not None and \
        (datetime.now()-last_request_time).total_seconds() < min_delay_seconds:
@@ -344,7 +354,7 @@ def update_location_rides_weather(location_id):
     # Update ride weather for all rides and re-train prediction model when
     # finished
     chord(
-        update_ride_weather.s(ride.id, train_model=False) for ride in location_rides
+        update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2)) for i,ride in enumerate(location_rides)
     )(train_model.s())
 
     return location_id
@@ -370,7 +380,7 @@ def fill_missing_weather():
         # Update ride weather for all rides and re-train prediction model when
         # finished
         chord(
-            update_ride_weather.s(ride_id, train_model=False) for ride_id in ride_ids
+            update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2)) for i,ride_id in enumerate(ride_ids)
         )(train_model.s())
 
     return ride_ids
