@@ -239,10 +239,15 @@ def weather_to_numeric(weathers):
 
 def average_weather(metars,dtstart,dtend,altitude):
 
+    from scipy.interpolate import interp1d
+
     from pytz import utc
+    import numpy as np
+
+    metars=sorted(metars, key=lambda metar: metar.report_time)
     
     total_time=min(metars[-1].report_time.replace(tzinfo=utc),dtend)-max(metars[0].report_time.replace(tzinfo=utc),dtstart)
-    
+
     values={
         'windspeed':0,
         'winddir':0,
@@ -254,92 +259,56 @@ def average_weather(metars,dtstart,dtend,altitude):
         'pressure':0
     }
     
-    from copy import copy
-    from math import exp
-
     logger.debug('Averaging {} METARS'.format(len(metars)))
 
-    total_weights=copy(values)
     logger.info('Ride time: {} - {}'.format(dtstart,dtend))
-    
-    for i,metar in enumerate(metars):
-        
-        if i==len(metars)-1:
-            logger.debug('End of METAR array, not averaging.')
-            break
-        
-        report_time=metar.report_time.replace(tzinfo=utc)
-        next_report_time=metars[i+1].report_time.replace(tzinfo=utc)
 
-        logger.debug('METAR time: {}'.format(report_time))
-        if next_report_time<dtstart:
-            logger.debug('Next METAR precedes dtstart, skipping.')
-            continue
-        if report_time>dtend:
-            logger.debug('METAR time follows dtend, skipping.')
-            break
-        
-        if report_time<dtstart:
-            dt=dtstart-report_time
-            weights=[0,0]
+    dtstart64=np.datetime64(dtstart.astimezone(utc))
+    dtend64=np.datetime64(dtend.astimezone(utc))
 
-            if next_report_time!=dtstart:
-                weights[1]=dt.total_seconds()/(next_report_time-dtstart).total_seconds()
-            else:
-                weights[1]=1
+    times=np.array([np.datetime64(metar.report_time.replace(tzinfo=utc)) for metar in metars])
+    start_ind=np.searchsorted(times,dtstart64)
+    end_ind=np.searchsorted(times,dtend64)
 
-            weights[0]=1-weights[1]
-        elif next_report_time>dtend:
-            dt=dtend-report_time
-            weights=[0,0]
+    rainsnow = [weather_to_numeric(
+                Metar.Metar(metar.metar,
+                            year=metar.report_time.year,
+                            month=metar.report_time.month,
+                            utcdelta=0).weather) for metar in metars]
 
-            if dtend!=report_time:
-                weights[0]=dt.total_seconds()/(dtend-report_time).total_seconds()
-            else:
-                weights[0]=1
+    for key in values.keys():
 
-                weights[1]=1-weights[0]
+        if key == 'rain':
+            obs = np.array([precip[0] for precip in rainsnow]).astype(float)
+        elif key == 'snow':
+            obs = np.array([precip[1] for precip in rainsnow]).astype(float)
         else:
-            dt=next_report_time-report_time
-            weights=[0.5,0.5]
-        interval_weight=dt.total_seconds()
-        weights=[weight*interval_weight for weight in weights]
+            obs=np.array([getattr(metar.weather_at_altitude(altitude),key) for metar in metars]).astype(float)
 
-        for key in values.keys():
+        obs_valid=np.isfinite(obs)
 
-            if key in ('rain','snow'): continue
+        if np.count_nonzero(obs_valid)<2:
+            values[key] = None
+            continue
 
-            if getattr(metars[i],key)!=None:
-                values[key]+=getattr(
-                    metars[i].weather_at_altitude(altitude),key)*weights[0]
-                total_weights[key]+=weights[0]
-            if getattr(metars[i+1],key)!=None:
-                values[key]+=getattr(
-                    metars[i+1].weather_at_altitude(altitude),key)*weights[1]
-                total_weights[key]+=weights[1]
+        if times[obs_valid][0]>dtstart64 or times[obs_valid][-1]<dtend64:
+            values[key] = None
+            continue
 
-        this_metar=Metar.Metar(metars[i].metar,
-                         year=metar.report_time.year,
-                         month=metar.report_time.month, utcdelta=0)
-        rain,snow=weather_to_numeric(this_metar.weather)
+        interpolator=interp1d(times[obs_valid].astype(float),obs[obs_valid])
 
-        for key,value in zip(['rain','snow'],[rain,snow]):
-            values[key]+=value*weights[0]
-            total_weights[key]+=weights[0]
+        obs_start=interpolator(dtstart64.astype(float))
+        obs_end=interpolator(dtend64.astype(float))
 
-        next_metar=Metar.Metar(metars[i+1].metar,
-                         year=metars[i+1].report_time.year,
-                         month=metars[i+1].report_time.month, utcdelta=0)
-        rain,snow=weather_to_numeric(next_metar.weather)
-        for key,value in zip(['rain','snow'],[rain,snow]):
-            values[key]+=value*weights[1]
-            total_weights[key]+=weights[1]
+        # Observations taken during interval
+        mid_mask=np.logical_and(obs_valid,np.logical_and(times>dtstart64,times<dtend64))
 
-    for key,weight in total_weights.items():
-        try:
-            values[key]=values[key]/weight
-        except ZeroDivisionError:
-            del(values[key])
+        obs_avg=np.trapz(
+            np.concatenate([[obs_start],obs[mid_mask],[obs_end]]),
+            np.concatenate([[dtstart64],times[mid_mask],[dtend64]]).astype(float)
+        )/(dtend64-dtstart64).astype(float)
+
+        values[key] = obs_avg
 
     return values
 
