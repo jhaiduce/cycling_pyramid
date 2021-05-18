@@ -22,6 +22,9 @@ def random_delay(min_delay=1,random_scale=None):
 
     if random_scale is None:
         random_scale=min_delay
+    elif random_scale<=0:
+        raise ValueError(
+            'random_scale must be >=0 (got {})'.format(random_scale))
 
     random_max=random.uniform((random_scale)*3,(random_scale)*5)
 
@@ -357,7 +360,7 @@ def update_location_rides_weather(location_id):
     # Update ride weather for all rides and re-train prediction model when
     # finished
     chord(
-        update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2)) for i,ride in enumerate(location_rides)
+        update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride in enumerate(location_rides)
     )(train_model.s())
 
     return location_id
@@ -383,7 +386,7 @@ def fill_missing_weather():
         # Update ride weather for all rides and re-train prediction model when
         # finished
         chord(
-            update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2)) for i,ride_id in enumerate(ride_ids)
+            update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride_id in enumerate(ride_ids)
         )(train_model.s())
 
     return ride_ids
