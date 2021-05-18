@@ -18,11 +18,14 @@ from time import sleep
 def random_delay(min_delay=1,random_scale=None):
 
     import random
+    from math import log
 
     if random_scale is None:
         random_scale=min_delay
 
-    return min_delay+random.lognormvariate(random_scale,random_scale)
+    random_max=random.uniform((random_scale)*3,(random_scale)*5)
+
+    return min_delay+min(random.lognormvariate(log(random_scale),1),random_max)
 
 
 def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metars2.php'):
