@@ -132,6 +132,13 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
                 raise task.retry(exc=e,countdown=retry_delay)
             else:
                 raise e
+        if(ogimet_text.find('SELECT command denied')>-1):
+            e=ValueError('OGIMET internal database error')
+            e.text=ogimet_text
+            if task is not None:
+                raise task.retry(exc=e,countdown=retry_delay)
+            else:
+                raise e
     finally:
         dbsession.add(requestlog)
         dbsession.commit()
