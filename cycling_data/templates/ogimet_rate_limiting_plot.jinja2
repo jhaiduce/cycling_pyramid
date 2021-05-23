@@ -1,0 +1,33 @@
+{% extends "layout.jinja2" %}
+.0
+{% block page_includes %}
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="text/javascript">
+
+      $(document).ready(function(){
+        var graphs = {{graphJSON | safe}};
+        var ids = {{ids | safe}};
+
+      for(var i in graphs) {
+
+            Plotly.newPlot(ids[i], // the ID of the div, created above
+                        graphs[i].data,
+                        graphs[i].layout || {},
+                        graphs[i].config || {});
+        }
+      })
+
+    </script>
+{% endblock page_includes %}
+
+{% block content %}
+
+    {% for id in ids %}
+        <div id="{{id}}" style="height:80vh"></div>
+    {% endfor %}
+
+{% endblock content %}

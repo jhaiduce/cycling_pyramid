@@ -26,3 +26,4 @@ def includeme(config):
     config.add_route('equipment_add', '/equipment/add')
     config.add_route('equipment_edit','/equipment/{equipment_id}/edit')
     config.add_route('equipment_table','/equipment/list')
+    config.add_route('ogimet_requests','/ogimet_rate_limiting')
