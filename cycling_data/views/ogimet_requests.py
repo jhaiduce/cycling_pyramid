@@ -31,7 +31,7 @@ class ogimet_views(object):
         #windows=np.arange(np.timedelta64(5,'m'),np.timedelta64(125,'m'),np.timedelta64(5,'m'))
         windows=np.arange(5,125,5)
 
-        counts=np.zeros([len(windows),len(request_log)])
+        counts=np.zeros([len(windows),len(request_log)],dtype=int)
         rate_limited=np.zeros([len(windows),len(request_log)])
         offsets=np.zeros([len(windows),len(request_log)])
 
@@ -42,13 +42,17 @@ class ogimet_views(object):
             
                 offset_counts=request_log.rolling(offset).count()
                 counts[i,:]=offset_counts['rate_limited']
-                rate_limited[i,:]=request_log.rolling(offset).mean()['rate_limited']
+                rate_limited[i,counts[i,:]-1]=request_log.rolling(offset).mean()['rate_limited']
                 offsets[i,:]=window
+
+
+        max_count=counts.max()
+        rate_limited[:,:max_count]
 
         graphs=[
             {
                 'data':[{
-                    'x':counts[0,:],
+                    'x':np.arange(1,max_count+1),
                     'y':windows,
                     'z':rate_limited,
                     'type':'heatmap',
