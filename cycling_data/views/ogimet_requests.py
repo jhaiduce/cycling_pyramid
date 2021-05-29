@@ -26,6 +26,8 @@ class ogimet_views(object):
         request_log=pd.read_sql_query(
             request_log_query.statement,request_log_query.session.bind)
 
+        request_log=request_log.set_index('time')
+
         #windows=np.arange(np.timedelta64(5,'m'),np.timedelta64(125,'m'),np.timedelta64(5,'m'))
         windows=np.arange(5,125,5)
 
@@ -36,24 +38,20 @@ class ogimet_views(object):
         if request_log.shape[0]>0:
             for i,window in enumerate(windows):
 
-                offset='{}min'.format(window)
+                offset='{}min'.format(int(window))
             
                 offset_counts=request_log.rolling(offset).count()
-                counts[i,:]=offset_counts
-                rate_limited[i,:]=request_log.rate_limited
+                counts[i,:]=offset_counts['rate_limited']
+                rate_limited[i,:]=request_log.rolling(offset).mean()['rate_limited']
                 offsets[i,:]=window
 
         graphs=[
             {
                 'data':[{
-                    'x':counts.flatten(),
-                    'y':offsets.flatten(),
-                    'color':rate_limited.flatten(),
-                    'type':'scatter',
-                    'mode':'markers',
-                    'marker':{
-                        'size':4
-                    }
+                    'x':counts[0,:],
+                    'y':windows,
+                    'z':rate_limited,
+                    'type':'heatmap',
                 }],
                 'layout':{
                     'xaxis':{
@@ -63,7 +61,8 @@ class ogimet_views(object):
                         'title':'Window (minutes)'
                     },
                 },
-                'config':{'responsive':True}
+                'config':{'responsive':True},
+                'showlegend':True
             }
         ]
         
