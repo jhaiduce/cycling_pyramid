@@ -413,6 +413,7 @@ def schedule_fill_missing_weather(sender,**kwargs):
 @celery.task(bind=True,ignore_result=False)
 def update_ride_weather(self,ride_id, train_model=True):
 
+    from pytz import utc
     from ..celery import session_factory
     
     logger.debug('Received update weather task for ride {}'.format(ride_id))
@@ -430,6 +431,13 @@ def update_ride_weather(self,ride_id, train_model=True):
         dtstart,dtend=ride_times_utc(ride)
         if dtstart is None or dtend is None:
             return
+
+        metar_times=[metar.report_time.replace(tzinfo=utc) for metar in metars]
+
+        if max(metar_times)<dtend or min(metar_times)>dtstart:
+            # METARs do not span time of ride
+            return
+
         altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
         averages=average_weather(metars,dtstart,dtend,altitude)
         logger.debug('Ride weather average values: {}'.format(averages))
