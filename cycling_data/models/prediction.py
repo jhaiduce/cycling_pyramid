@@ -32,7 +32,7 @@ def prior_trainable(kernel_size, bias_size=0, dtype=None):
 def negloglik(y, p_y):
     return -p_y.log_prob(y)
 
-def build_model(train_set_size,input_size):
+def build_model(train_set_size,input_size,output_size):
     c=np.log(np.expm1(1.))
 
     model = keras.Sequential([
@@ -40,7 +40,7 @@ def build_model(train_set_size,input_size):
                          activation='relu'),
         layers.Dense(16, activation='relu'),
         layers.LeakyReLU(alpha=0.3),
-        layers.Dense(1)
+        layers.Dense(output_size)
     ])
 
     optimizer = tf.keras.optimizers.RMSprop(0.001)
@@ -68,7 +68,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     if hasattr(rides,'statement'):
         with transaction.manager:
-            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,*extra_fields)
+            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
     else:
         dataset=pd.DataFrame([
@@ -81,6 +81,8 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
                 trailer=ride.trailer,
                 rolling_time=ride.rolling_time,
                 avspeed=ride.avspeed,
+                maxspeed=ride.maxspeed,
+                total_time=ride.total_time
             )
             for ride in rides
         ])
@@ -128,6 +130,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
     rolling_time=pd.to_timedelta(dataset.rolling_time,errors='coerce')
     computed_avspeed=(dataset.distance/rolling_time.dt.total_seconds()*3600).astype('float64')
     pd.options.mode.use_inf_as_na = True
+
+    dataset.total_time=pd.to_timedelta(
+        dataset.total_time,errors='coerce').dt.total_seconds()/3600
 
     dataset.avspeed.fillna(computed_avspeed,inplace=True)
 

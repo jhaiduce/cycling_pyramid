@@ -58,7 +58,7 @@ def train_model(*args,epochs=1000,patience=100):
 
         from ..models.prediction import get_data
 
-        predict_columns=['avspeed']
+        predict_columns=['avspeed','maxspeed','total_time']
         train_dataset=get_data(dbsession,predict_columns)
 
         if train_dataset is None:
@@ -91,6 +91,9 @@ def train_model(*args,epochs=1000,patience=100):
                         model_id=model.id, ride_id=ride_id)
 
                 ride_prediction.result=prediction[0] if not np.isnan(prediction[0]) else None
+                ride_prediction.avspeed=prediction[0] if not np.isnan(prediction[0]) else None
+                ride_prediction.maxspeed=prediction[1] if not np.isnan(prediction[0]) else None
+                ride_prediction.total_time=prediction[2] if not np.isnan(prediction[0]) else None
                 dbsession.add(ride_prediction)
                 dbsession.commit()
 

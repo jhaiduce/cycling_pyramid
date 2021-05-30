@@ -252,11 +252,14 @@ class RideViews(object):
 
         self.request.dbsession.autoflush=False
 
-        computed_vars=['avspeed_est','avspeed_pred']
+        computed_vars=['avspeed_est']
         hybrid_properties=['grade','azimuth','tailwind','crosswind']
+
+        predicted_vars=['avspeed','maxspeed','total_time']
+        predicted_vars_with_suffix=[var+'_pred' for var in predicted_vars]
         
         # List of valid variable names
-        valid_vars=Ride.__table__.columns.keys()+WeatherData.__table__.columns.keys()+RideWeatherData.__table__.columns.keys()+computed_vars+hybrid_properties
+        valid_vars=Ride.__table__.columns.keys()+WeatherData.__table__.columns.keys()+RideWeatherData.__table__.columns.keys()+computed_vars+hybrid_properties+predicted_vars_with_suffix
         
         # Make sure xvar is a valid column name
         if xvar not in valid_vars:
@@ -288,13 +291,18 @@ class RideViews(object):
         dbsession_factory = self.request.registry['dbsession_factory']
         df=pd.read_sql_query(rides.statement,rides.session.bind)
 
-        if 'avspeed_pred' in [xvar,yvar]:
-            prediction_query=dbsession_factory().query(PredictionModelResult).with_entities(PredictionModelResult.ride_id,PredictionModelResult.result)
+        if xvar in predicted_vars_with_suffix or yvar in predicted_vars_with_suffix:
+            prediction_query=dbsession_factory().query(PredictionModelResult).with_entities(PredictionModelResult.ride_id,PredictionModelResult.avspeed,PredictionModelResult.maxspeed,PredictionModelResult.total_time)
             df_predictions=pd.read_sql_query(
                 prediction_query.statement,
                 prediction_query.session.bind
             )
-            df_predictions=df_predictions.rename(columns={'result':'avspeed_pred','ride_id':'id'})
+            df_predictions=df_predictions.rename(columns={
+                'avspeed':'avspeed_pred',
+                'maxspeed':'maxspeed_pred',
+                'total_time':'total_time_pred',
+                'ride_id':'id',
+            })
 
             df=df.merge(df_predictions,on='id')
 

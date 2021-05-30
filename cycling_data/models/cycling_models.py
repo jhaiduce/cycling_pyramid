@@ -88,6 +88,7 @@ class PredictionModel(Base,TimestampedRecord):
     input_columns_=Column('input_columns',Text)
     train_dataset_size_=Column('train_dataset_size',Integer)
     input_size_=Column('input_size',Integer)
+    output_size_=Column('output_size',Integer)
     training_in_progress=Column(Boolean,default=False)
 
     def __init__(self,*args,**kwargs):
@@ -139,7 +140,7 @@ class PredictionModel(Base,TimestampedRecord):
         from .prediction import build_model
 
         if self.model_ is None:
-            self.model_=build_model(self.train_dataset_size,self.input_size)
+            self.model_=build_model(self.train_dataset_size,self.input_size,self.output_size)
 
         if self.weightsbuf is not None:
             self.__restore_weights()
@@ -174,6 +175,20 @@ class PredictionModel(Base,TimestampedRecord):
             (cls.input_size_, new_dataset_size)
         ]
 
+    @hybrid_property
+    def output_size(self):
+        return self.output_size_
+
+    @output_size.expression
+    def output_size(cls):
+        return cls.output_size_
+
+    @output_size.update_expression
+    def output_size(cls,new_dataset_size):
+        return [
+            (cls.output_size_, new_dataset_size)
+        ]
+
     def norm(self,x):
         std=self.stats['std'].replace(0,1)
         return (x - self.stats['mean']) / std
@@ -205,6 +220,7 @@ class PredictionModel(Base,TimestampedRecord):
 
         self.train_dataset_size_=train_dataset.shape[0]
         self.input_size_=train_dataset.shape[1]
+        self.output_size_=len(predict_columns)
 
         EPOCHS=epochs
 
@@ -217,7 +233,7 @@ class PredictionModel(Base,TimestampedRecord):
         # because we want to initialize the weights from scratch and not
         # restore them from the database
         from .prediction import build_model
-        self.model_=build_model(self.train_dataset_size,self.input_size)
+        self.model_=build_model(self.train_dataset_size,self.input_size,self.output_size)
 
         self.history=self.model_.fit(normed_train_data, train_labels,
                           epochs=EPOCHS, validation_split = 0.2, verbose = 0,
@@ -970,6 +986,9 @@ class PredictionModelResult(Base,TimestampedRecord):
     model_id = Column(Integer, ForeignKey('predictionmodel.id'))
     ride_id = Column(Integer, ForeignKey('ride.id'))
     result = Column(Float)
+    avspeed = Column(Float)
+    maxspeed = Column(Float)
+    total_time = Column(Float)
 
     model = relationship(PredictionModel,foreign_keys=model_id)
     ride = relationship(Ride,foreign_keys=ride_id)

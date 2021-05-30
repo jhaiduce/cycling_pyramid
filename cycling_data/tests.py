@@ -652,17 +652,19 @@ class ModelTests(BaseTest):
             predictions=model.predict(dataset)
             stats=model.stats
 
+            num_outputs=3
+
             self.assertEqual(dataset.dropna().shape[0],dataset_copy.dropna().shape[0])
             self.assertEqual(dataset.dropna().shape[0],self.useable_ride_count)
             self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
             for a,b in zip(weights,model.model.get_weights()):
                 self.assertTrue(np.allclose(a,b))
-            self.assertEqual(predictions.shape,(self.rideCount,1))
-            self.assertEqual(np.isnan(predictions).sum(),1)
+            self.assertEqual(predictions.shape,(self.rideCount,num_outputs))
+            self.assertEqual(np.isnan(predictions).sum(),num_outputs)
             predictions_new=model.predict(dataset)
             normed_data_new=model.norm(dataset)
-            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count)
-            self.assertEqual(np.sum(np.isfinite(predictions_new)),self.useable_ride_count)
+            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
+            self.assertEqual(np.sum(np.isfinite(predictions_new)),self.useable_ride_count*num_outputs)
             self.assertTrue(np.allclose(stats,model.stats))
             self.assertTrue(np.allclose(
                 normed_data_new.drop(columns=['avspeed']).dropna(),
@@ -674,13 +676,13 @@ class ModelTests(BaseTest):
 
             # Check that get_ride_predictions returns the same results
             ride_predictions=get_ride_predictions(session,rides)
-            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count)
-            self.assertEqual(np.sum(np.isfinite(ride_predictions)),self.useable_ride_count)
-            self.assertEqual(ride_predictions.shape,(self.rideCount,1))
+            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
+            self.assertEqual(np.sum(np.isfinite(ride_predictions)),self.useable_ride_count*num_outputs)
+            self.assertEqual(ride_predictions.shape,(self.rideCount,num_outputs))
             self.assertTrue(np.allclose(predictions[np.isfinite(predictions)],
                                         ride_predictions[np.isfinite(ride_predictions)]))
             single_prediction=get_ride_predictions(session,[session.query(Ride).first()])
-            self.assertEqual(single_prediction.shape,(1,1))
+            self.assertEqual(single_prediction.shape,(1,num_outputs))
             self.assertTrue(np.allclose(single_prediction[0],ride_predictions[0]))
 import webtest
 
