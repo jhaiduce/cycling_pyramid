@@ -429,7 +429,7 @@ class RideViews(object):
         except:
             predictions=None
 
-        if predictions:
+        if predictions is not None:
             predicted_speed=predictions[0,0]
         else:
             predicted_speed=None
