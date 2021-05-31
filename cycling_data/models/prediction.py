@@ -65,17 +65,16 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
     import pandas as pd
     import transaction
     from sqlalchemy.orm import joinedload, subqueryload
+    from pytz import utc
 
     if hasattr(rides,'statement'):
         with transaction.manager:
-            q=rides.with_entities(Ride.id,Ride.start_time,Ride.end_time,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
+            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
     else:
         dataset=pd.DataFrame([
             dict(
                 id=ride.id,
-                start_time=ride.start_time,
-                end_time=ride.end_time,
                 distance=ride.distance,
                 ridergroup_id=ride.ridergroup_id,
                 surface_id=ride.surface_id,
@@ -100,6 +99,12 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
             dataset.loc[i,'fraction_day']=ride.fraction_day
             dataset.loc[i,'grade']=ride.grade
             dataset.loc[i,'crowdist']=ride.crowdist
+            if ride.start_time:
+                dataset.loc[i,'start_time']=pd.to_datetime(
+                    ride.start_time.astimezone(utc))
+            if ride.end_time:
+                dataset.loc[i,'end_time']=pd.to_datetime(
+                    ride.end_time.astimezone(utc))
 
             if ride.wxdata:
                 dataset.loc[i,'tailwind']=ride.tailwind
@@ -117,6 +122,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
                 dataset.loc[i,'endlat']=ride.endloc.lat
                 dataset.loc[i,'endlon']=ride.endloc.lon
             transaction.commit()
+
+    dataset.start_time=pd.to_datetime(dataset.start_time)
+    dataset.end_time=pd.to_datetime(dataset.end_time)
 
     with transaction.manager:
         ridergroups=dbsession.query(RiderGroup)
@@ -146,7 +154,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     dataset.trailer=dataset.trailer.astype(float)
 
-    dataset=dataset[set(predict_columns+['id','distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
+    dataset.start_time=(dataset.start_time-pd.Timestamp('1970-01-01',tz=utc))/pd.Timedelta('1d')
+
+    dataset=dataset[set(predict_columns+['id','start_time','distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
 
     for column, values in (
             ('ridergroup',ridergroups),
