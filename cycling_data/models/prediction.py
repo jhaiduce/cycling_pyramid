@@ -140,7 +140,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     computed_total_time=pd.to_timedelta((dataset.end_time-dataset.start_time).dt.total_seconds()/60)
 
-    dataset.total_time.fillna(computed_total_time)
+    dataset.total_time.fillna(computed_total_time,inplace=True)
 
     dataset.trailer.fillna(False,inplace=True)
 
