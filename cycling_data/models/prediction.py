@@ -68,12 +68,14 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     if hasattr(rides,'statement'):
         with transaction.manager:
-            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
+            q=rides.with_entities(Ride.id,Ride.start_time,Ride.end_time,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
     else:
         dataset=pd.DataFrame([
             dict(
                 id=ride.id,
+                start_time=ride.start_time,
+                end_time=ride.end_time,
                 distance=ride.distance,
                 ridergroup_id=ride.ridergroup_id,
                 surface_id=ride.surface_id,
@@ -135,6 +137,10 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
         dataset.total_time,errors='coerce').dt.total_seconds()/3600
 
     dataset.avspeed.fillna(computed_avspeed,inplace=True)
+
+    computed_total_time=pd.to_timedelta((dataset.end_time-dataset.start_time).dt.total_seconds()/3600)
+
+    dataset.total_time.fillna(computed_total_time)
 
     dataset.trailer.fillna(False,inplace=True)
 
