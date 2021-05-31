@@ -708,7 +708,7 @@ class Ride(Base,TimestampedRecord):
         elif self.distance and self.rolling_time:
             return self.distance/self.rolling_time.total_seconds()*3600
 
-    @property
+    @hybrid_property
     def start_timezone(self):
 
         if self.startloc is None:
@@ -722,11 +722,16 @@ class Ride(Base,TimestampedRecord):
             
         return self.start_timezone_
 
+    @start_timezone.expression
+    def start_timezone(self):
+
+        return self.start_timezone_
+
     @start_timezone.setter
     def start_timezone(self,value):
         self.start_timezone_=value
 
-    @property
+    @hybrid_property
     def end_timezone(self):
 
         if self.endloc is None:
@@ -738,6 +743,11 @@ class Ride(Base,TimestampedRecord):
         if not self.end_timezone_:
             self.end_timezone_=self.endloc.timezone
             
+        return self.end_timezone_
+
+    @end_timezone.expression
+    def end_timezone(self):
+
         return self.end_timezone_
 
     @end_timezone.setter
