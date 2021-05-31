@@ -257,9 +257,10 @@ class RideViews(object):
 
         predicted_vars=['avspeed','maxspeed','total_time']
         predicted_vars_with_suffix=[var+'_pred' for var in predicted_vars]
+        resid_vars=[var+'_resid' for var in predicted_vars]
         
         # List of valid variable names
-        valid_vars=Ride.__table__.columns.keys()+WeatherData.__table__.columns.keys()+RideWeatherData.__table__.columns.keys()+computed_vars+hybrid_properties+predicted_vars_with_suffix
+        valid_vars=Ride.__table__.columns.keys()+WeatherData.__table__.columns.keys()+RideWeatherData.__table__.columns.keys()+computed_vars+hybrid_properties+predicted_vars_with_suffix+resid_vars
         
         # Make sure xvar is a valid column name
         if xvar not in valid_vars:
@@ -278,6 +279,8 @@ class RideViews(object):
                 fetch_entities.append(getattr(WeatherData,var))
             elif var in RideWeatherData.__table__.columns.keys():
                 fetch_entities.append(getattr(RideWeatherData,var))
+            if var.endswith('_resid'):
+                fetch_entities.append(getattr(Ride,var[:-6]))
 
         # Fetch the data
         ride_query=self.request.dbsession.query(Ride).join(Ride.wxdata,isouter=True)
@@ -291,7 +294,7 @@ class RideViews(object):
         dbsession_factory = self.request.registry['dbsession_factory']
         df=pd.read_sql_query(rides.statement,rides.session.bind)
 
-        if xvar in predicted_vars_with_suffix or yvar in predicted_vars_with_suffix:
+        if xvar in predicted_vars_with_suffix or yvar in predicted_vars_with_suffix or xvar in resid_vars or yvar in resid_vars:
             prediction_query=dbsession_factory().query(PredictionModelResult).with_entities(PredictionModelResult.ride_id,PredictionModelResult.avspeed,PredictionModelResult.maxspeed,PredictionModelResult.total_time)
             df_predictions=pd.read_sql_query(
                 prediction_query.statement,
@@ -307,7 +310,7 @@ class RideViews(object):
             df=df.merge(df_predictions,on='id')
 
         # Fill in missing average speeds
-        if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar]:
+        if 'avspeed_est' in [xvar,yvar] or 'avspeed' in [xvar,yvar] or 'avspeed_resid' in [xvar,yvar]:
             rolling_time_hours=df['rolling_time']/np.timedelta64(1,'h')
             df['avspeed_est']=pd.Series(df['distance']/rolling_time_hours,index=df.index)
         if 'avspeed' in list(df.columns)+[xvar,yvar]:
@@ -320,6 +323,10 @@ class RideViews(object):
         for column in 'rolling_time', 'total_time':
             if column in df:
                 df[column]=df[column].dt.total_seconds()/60
+
+        for var in predicted_vars:
+            if var+'_resid' in (xvar,yvar):
+                df[var+'_resid']=df[var+'_pred']-df[var]
 
         # Get x and y data
         x=df[xvar]
