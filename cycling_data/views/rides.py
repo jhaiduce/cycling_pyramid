@@ -270,7 +270,7 @@ class RideViews(object):
             raise ValueError('Invalid field {0}'.format(yvar))
 
         # Build list of columns to fetch
-        fetch_entities=[Ride.id,Ride.distance,Ride.rolling_time]
+        fetch_entities=[Ride.id,Ride.distance,Ride.rolling_time,Ride.start_time,Ride.end_time,Ride.total_time]
         for var in xvar,yvar:
             if var in Ride.__table__.columns.keys() or var in hybrid_properties:
                 fetch_entities.append(getattr(Ride,var))
@@ -312,6 +312,10 @@ class RideViews(object):
             df['avspeed_est']=pd.Series(df['distance']/rolling_time_hours,index=df.index)
         if 'avspeed' in list(df.columns)+[xvar,yvar]:
             df['avspeed']=df['avspeed'].fillna(df['avspeed_est'])
+
+        # fill in missing total time
+        computed_total_time=pd.to_timedelta((df.end_time-df.start_time).dt.total_seconds()/60)
+        df.total_time.fillna(computed_total_time)
 
         for column in 'rolling_time', 'total_time':
             if column in df:
