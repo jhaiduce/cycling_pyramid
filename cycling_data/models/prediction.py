@@ -5,6 +5,8 @@ tfd = tfp.distributions
 from tensorflow import keras
 from tensorflow.keras import layers
 
+predict_vars=['avspeed','maxspeed','total_time']
+
 tf.keras.backend.set_floatx('float64')
 
 # Specify the surrogate posterior over `keras.layers.Dense` `kernel` and `bias`.
@@ -171,20 +173,20 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
 
     return dataset
 
-def get_model(dbsession):
+def get_model(dbsession,predict_var='avspeed'):
     from .cycling_models import PredictionModel
 
     from sqlalchemy.orm.exc import NoResultFound
 
     try:
-        model=dbsession.query(PredictionModel).one()
+        model=dbsession.query(PredictionModel).filter(PredictionModel.predict_columns_.like('%{}%'.format(predict_var))).one()
     except NoResultFound:
         model=PredictionModel()
         dbsession.add(model)
 
     return model
 
-def get_ride_predictions(session,rides):
+def get_ride_predictions(session,rides,predict_var='avspeed'):
 
     import numpy as np
 

@@ -383,7 +383,7 @@ class MetarTests(BaseTest):
         
         self.init_database()
 
-    @patch('cycling_data.processing.regression.train_model.delay')
+    @patch('cycling_data.processing.regression.train_all_models.delay')
     @patch('cycling_data.celery.session_factory')
     @patch('cycling_data.processing.weather.fetch_metars',return_value=mock_ogimet_response)
     def test_fetch_metars_for_ride(self,fetch_metars,session_factory,train_model):
@@ -679,7 +679,7 @@ class ModelTests(BaseTest):
             predictions=model.predict(dataset)
             stats=model.stats
 
-            num_outputs=3
+            num_outputs=1
 
             self.assertEqual(dataset.dropna().shape[0],dataset_copy.dropna().shape[0])
             self.assertEqual(dataset.dropna().shape[0],self.useable_ride_count)

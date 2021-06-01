@@ -2,17 +2,19 @@ from ..celery import celery
 
 from celery.utils.log import get_task_logger
 
+from celery import group
+
 logger = get_task_logger(__name__)
 
 import transaction
 
-from ..models.prediction import get_model
+from ..models.prediction import get_model, predict_vars
 from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 
 @celery.task(ignore_result=False)
-def train_model(*args,epochs=1000,patience=100):
+def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
     from ..celery import session_factory
     from ..models import get_tm_session
@@ -28,7 +30,7 @@ def train_model(*args,epochs=1000,patience=100):
 
     with transaction.manager:
 
-        model=get_model(dbsession)
+        model=get_model(dbsession,predict_var)
 
         if model.training_in_progress:
             logger.debug('Training already in progress, exiting.')
@@ -58,7 +60,7 @@ def train_model(*args,epochs=1000,patience=100):
 
         from ..models.prediction import get_data
 
-        predict_columns=['avspeed','maxspeed','total_time']
+        predict_columns=[predict_var]
         train_dataset=get_data(dbsession,predict_columns)
 
         if train_dataset is None:
@@ -90,13 +92,16 @@ def train_model(*args,epochs=1000,patience=100):
                     ride_prediction=PredictionModelResult(
                         model_id=model.id, ride_id=ride_id)
 
-                ride_prediction.result=prediction[0] if not np.isnan(prediction[0]) else None
-                ride_prediction.avspeed=prediction[0] if not np.isnan(prediction[0]) else None
-                ride_prediction.maxspeed=prediction[1] if not np.isnan(prediction[0]) else None
-                ride_prediction.total_time=prediction[2] if not np.isnan(prediction[0]) else None
+                if predict_var=='avspeed':
+                    ride_prediction.result=prediction[0] if not np.isnan(prediction[0]) else None
+
+                setattr(ride_prediction,predict_var,prediction[0] if not np.isnan(prediction[0]) else None)
+
                 dbsession.add(ride_prediction)
                 dbsession.commit()
 
         dbsession.commit()
 
     return train_dataset_size
+
+train_all_models=group(train_model.s(var) for var in predict_vars)
