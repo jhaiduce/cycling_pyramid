@@ -594,6 +594,33 @@ class ModelTests(BaseTest):
 
             self.session.add(ride)
 
+        ride_null_total_time=Ride(
+            start_time=datetime(2005,1,1,20),
+            end_time=datetime(2005,1,1,20,15),
+            startloc=locations[0],
+            endloc=locations[1],
+            total_time=None,
+            rolling_time=timedelta(seconds=60*12),
+            distance=7,
+            odometer=357,
+            avspeed=28,
+            maxspeed=40,
+            equipment_id=0,
+            ridergroup_id=0,
+            surface_id=0,
+            wxdata=RideWeatherData(
+                temperature=22,
+                dewpoint=12,
+                winddir=250,
+                windspeed=12,
+                pressure = 1050,
+                rain=0,
+                snow=0
+            )
+        )
+        self.session.add(ride_null_total_time)
+        self.rideCount+=1
+
         self.useable_ride_count=self.rideCount
 
         ride_null_end_time=Ride(
