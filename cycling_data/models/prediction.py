@@ -141,12 +141,12 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
     computed_avspeed=(dataset.distance/rolling_time.dt.total_seconds()*3600).astype('float64')
     pd.options.mode.use_inf_as_na = True
 
-    dataset.total_time=pd.to_timedelta(
-        dataset.total_time,errors='coerce').dt.total_seconds()/60
+    dataset.total_time=(pd.to_timedelta(
+        dataset.total_time,errors='coerce').dt.total_seconds()/60)
 
     dataset.avspeed.fillna(computed_avspeed,inplace=True)
 
-    computed_total_time=pd.to_timedelta((dataset.end_time-dataset.start_time).dt.total_seconds()/60)
+    computed_total_time=(dataset.end_time-dataset.start_time).dt.total_seconds()/60
 
     dataset.total_time.fillna(computed_total_time,inplace=True)
 
