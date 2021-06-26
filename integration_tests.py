@@ -311,6 +311,24 @@ class BaseTest(unittest.TestCase):
         from datetime import datetime, timedelta
         from pytz import timezone
 
+        resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+            data=dict(
+                name='KMLB',
+                __start__='coordinates:mapping',
+                lat='28.1',
+                lon='-80.65',
+                elevation='11',
+                __end__='coordinates:mapping',
+                description='',
+                remarks='',
+                loctype='2',
+                submit='submit'
+            ))
+
+        # Check that we got redirected
+        self.assertEqual(resp.history[0].status_code,302)
+
         random.seed(100)
 
         locationCount=20
