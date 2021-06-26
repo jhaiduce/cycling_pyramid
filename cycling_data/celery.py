@@ -72,16 +72,21 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     
     session_factory=models.get_session_factory(engine)
 
-try:
-    backend=config['celery']['backend_url']
-except KeyError:
-    backend='rpc://cycling_test_rabbitmq'
+def create_app():
+    try:
+        backend=config['celery']['backend_url']
+    except KeyError:
+        backend='rpc://cycling_test_rabbitmq'
 
-try:
-    broker=config['celery']['broker_url']
-except KeyError:
-    broker='pyamqp://guest@cycling_test_rabbitmq'
+    try:
+        broker=config['celery']['broker_url']
+    except KeyError:
+        broker='pyamqp://guest@cycling_test_rabbitmq'
 
-celery=Celery(backend=backend, broker=broker)
-celery.config_from_object('cycling_data.celeryconfig')
-celery.conf.task_default_queue='task_default'
+    celery=Celery(backend=backend, broker=broker)
+    celery.config_from_object('cycling_data.celeryconfig')
+    celery.conf.task_default_queue='task_default'
+
+    return celery
+
+celery=create_app()
