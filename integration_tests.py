@@ -307,6 +307,73 @@ class BaseTest(unittest.TestCase):
 
     def test_fill_missing_weather(self):
 
+        import random
+        from datetime import datetime, timedelta
+        from pytz import timezone
+
+        random.seed(100)
+
+        locationCount=20
+
+        locations=[]
+        for i in range(locationCount):
+            resp=self.session.post(
+            'http://cycling_test_cycling_web/locations/add',
+                data=dict(
+                    name='Location {}'.format(i),
+                    __start__='coordinates:mapping',
+                    lat=str(random.gauss(28.084,0.05)),
+                    lon=str(random.gauss(-80.5901,0.05)),
+                    elevation=str(100*random.lognormvariate(0,1)),
+                    __end__='coordinates:mapping',
+                    description='',
+                    remarks='',
+                    loctype='1',
+                    submit='submit'
+                ))
+
+            # Check that we got redirected
+            self.assertEqual(resp.history[0].status_code,302)
+
+        odo=0
+        rideCount=10
+        for i in range(rideCount):
+
+            start_time=datetime(2005,1,1,tzinfo=timezone('America/Detroit')) \
+                + timedelta(
+                    seconds=random.random()*24*365*3600*20)
+            end_time=start_time+timedelta(
+                seconds=1800*random.lognormvariate(0,1))
+            distance=random.lognormvariate(0,1)*10
+            odo+=distance
+            temperature=random.gauss(25,5)
+
+            # Post a ride with new locations referenced by name
+            resp=self.session.post(
+                'http://cycling_test_cycling_web/rides/add',
+                data=dict_to_postdata(dict(
+                    start_time={'date':start_time.strftime('%Y-%m-%d'),'time':start_time.strftime('%H:%M:00')},
+                    end_time={'date':end_time.strftime('%Y-%m-%d'),'time':end_time.strftime('%H:%M:00')},
+                    total_time=str(int((end_time-start_time).total_seconds())),
+                    rolling_time=str(int((end_time-start_time).total_seconds()*0.9)),
+                    distance=str(distance),
+                    odometer=str(odo),
+                    avspeed=str(random.gauss(18,8)),
+                    maxspeed=str(random.gauss(30,8)),
+                    equipment_id='0',
+                    ridergroup_id='0',
+                    surface_id='0',
+                    submit='submit',
+                    startloc='Location {}'.format(
+                        random.randrange(locationCount)),
+                    endloc='Location {}'.format(
+                        random.randrange(locationCount))
+                ))
+            )
+
+            # Check that we got redirected
+            self.assertEqual(resp.history[0].status_code,302)
+
         # Trigger a fill_missing_weather task and get its id
         resp=self.session.get('http://cycling_test_cycling_web/fill_missing_weather')
         task_id=json.loads(resp.text)['fill_missing_weather_task_id']
