@@ -396,8 +396,6 @@ def fill_missing_weather():
 
     ride_ids=[ride.id for ride in rides_without_weather]
 
-    import pdb; pdb.set_trace()
-
     if rides_without_weather.count()>0:
         # Update ride weather for all rides and re-train prediction model when
         # finished
