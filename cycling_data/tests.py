@@ -17,6 +17,41 @@ from pytz import timezone, UTC
 
 import numpy as np
 
+from .models import Location
+
+washington_monument=Location(
+        name='Washington Monument',
+        lat=38.88920847908595,
+        lon=-77.03452329465938,
+        elevation=9.911861419677734
+    )
+us_capitol=Location(
+        name='US Capitol',
+        lat=38.889794641870104,
+        lon=-77.0102077819937,
+        elevation=12.86381340026855
+)
+
+new_intersection=Location(
+        name='New intersection'
+)
+
+dca=Location(
+    name='KDCA',
+    lat=38.86,
+    lon=-77.03,
+    elevation=16.076,
+    loctype_id=2
+)
+bwi=Location(
+    name='KBWI',
+    lat=39.19,
+    lon=-76.67,
+    elevation=147.966,
+    loctype_id=2
+)
+
+
 def dict_to_postdata(inputdict):
 
     import collections
@@ -401,37 +436,6 @@ class MetarTests(BaseTest):
 
         session_factory.return_value=session
 
-        washington_monument=Location(
-                name='Washington Monument',
-                lat=38.88920847908595,
-                lon=-77.03452329465938,
-                elevation=9.911861419677734
-            )
-        us_capitol=Location(
-                name='US Capitol',
-                lat=38.889794641870104,
-                lon=-77.0102077819937,
-                elevation=12.86381340026855
-        )
-
-        new_intersection=Location(
-                name='New intersection'
-        )
-
-        dca=Location(
-            name='KDCA',
-            lat=38.86,
-            lon=-77.03,
-            elevation=16.076,
-            loctype_id=2
-        )
-        bwi=Location(
-            name='KBWI',
-            lat=39.19,
-            lon=-76.67,
-            elevation=147.966,
-            loctype_id=2
-        )
         
         ride = Ride(
             start_time=datetime(2005,1,1,10),
