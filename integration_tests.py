@@ -355,13 +355,17 @@ class BaseTest(unittest.TestCase):
 
         odo=0
         rideCount=10
+
+        last_end_time=datetime(2005,1,1,tzinfo=timezone('America/Detroit'))
+
         for i in range(rideCount):
 
-            start_time=datetime(2005,1,1,tzinfo=timezone('America/Detroit')) \
+            start_time=last_end_time \
                 + timedelta(
-                    seconds=random.random()*24*365*3600*20)
+                    seconds=random.random()*24*3600*5)
             end_time=start_time+timedelta(
                 seconds=1800*random.lognormvariate(0,1))
+            last_end_time=end_time
             distance=random.lognormvariate(0,1)*10
             odo+=distance
             temperature=random.gauss(25,5)
