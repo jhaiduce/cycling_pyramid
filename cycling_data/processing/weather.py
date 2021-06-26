@@ -375,7 +375,7 @@ def update_location_rides_weather(location_id):
     # finished
     chord(
         update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride in enumerate(location_rides)
-    )(train_all_models.s())
+    )(train_all_models)
 
     return location_id
 
@@ -396,12 +396,14 @@ def fill_missing_weather():
 
     ride_ids=[ride.id for ride in rides_without_weather]
 
+    import pdb; pdb.set_trace()
+
     if rides_without_weather.count()>0:
         # Update ride weather for all rides and re-train prediction model when
         # finished
         chord(
             update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride_id in enumerate(ride_ids)
-        )(train_all_models.s())
+        )(train_all_models)
 
     return ride_ids
 
