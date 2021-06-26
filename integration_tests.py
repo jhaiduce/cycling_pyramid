@@ -305,6 +305,16 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/login?next=http%3A%2F%2Fcycling_test_cycling_web%2Frides')
 
+    def test_fill_missing_weather(self):
+
+        # Trigger a fill_missing_weather task and get its id
+        resp=self.session.get('http://cycling_test_cycling_web/fill_missing_weather')
+        task_id=json.loads(resp.text)['fill_missing_weather_task_id']
+
+        from celery.result import AsyncResult
+        task_result=AsyncResult(task_id,app=celery)
+        task_result.wait(40)
+
     def test_equipment_list(self):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         equipment_count=int(re.search(r'(\d+) total',resp.text).group(1))
