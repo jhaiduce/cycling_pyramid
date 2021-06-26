@@ -94,6 +94,9 @@ class BaseTest(unittest.TestCase):
 
         self.session = get_tm_session(session_factory, transaction.manager)
 
+        from .celery import celery
+        celery.conf.update(CELERY_ALWAYS_EAGER=True)
+
     def init_database(self):
         from .models.meta import Base
         Base.metadata.create_all(self.engine)
