@@ -34,7 +34,13 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     from pyramid.paster import bootstrap
     from sqlalchemy.pool import StaticPool
 
-    settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+    try:
+        settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+    except FileNotFoundError:
+        import warnings
+        warnings.warn('Settings file does not exist. Not configuring database session factory.')
+        return
+
     settings['sqlalchemy.poolclass']=StaticPool
 
     engine=models.get_engine(settings,prefix='worker_sqlalchemy.')
