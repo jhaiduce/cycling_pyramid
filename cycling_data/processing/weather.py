@@ -148,7 +148,6 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
                 raise e
     finally:
         dbsession.add(requestlog)
-        dbsession.commit()
 
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
@@ -208,7 +207,6 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
                 wxdata=q.first()
             else:
                 session.add(wxdata)
-                session.commit()
             stored_metars.append(wxdata)
 
     return stored_metars
