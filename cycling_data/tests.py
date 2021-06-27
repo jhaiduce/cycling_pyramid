@@ -422,115 +422,120 @@ class MetarTests(BaseTest):
         self.init_database()
 
     @patch('cycling_data.processing.regression.train_all_models.delay')
-    @patch('cycling_data.celery.session_factory')
     @patch('cycling_data.processing.weather.fetch_metars',return_value=mock_ogimet_response)
-    def test_fetch_metars_for_ride(self,fetch_metars,session_factory,train_model):
+    def test_fetch_metars_for_ride(self,fetch_metars,train_model):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
         from .models.cycling_models import RideWeatherData
 
         from datetime import datetime, timedelta
-        from .models import get_session_factory
+        from .models import get_session_factory, get_tm_session
 
         sessionmaker=get_session_factory(self.engine)
 
         session=sessionmaker()
 
-        session_factory.return_value=session
+        import cycling_data
+        with patch.object(cycling_data.celery,'session_factory',wraps=sessionmaker) as session_factory:
 
-        
-        ride = Ride(
-            start_time=datetime(2005,1,1,10),
-            end_time=datetime(2005,1,1,10,15),
-            startloc=washington_monument,
-            endloc=us_capitol
-        )
-        ride_with_incomplete_endpoint = Ride(
-            start_time=datetime(2005,1,1,10),
-            end_time=datetime(2005,1,1,10,15),
-            startloc=washington_monument,
-            endloc=new_intersection
-        )
-        ride_that_produces_negative_windspeed = Ride(
-            start_time=datetime(2020,7,21,18,55),
-            end_time=datetime(2020,7,21,19,36),
-            startloc=washington_monument,
-            endloc=us_capitol
-        )
-        session.add(ride)
-        session.add(ride_with_incomplete_endpoint)
-        session.add(ride_that_produces_negative_windspeed)
-        session.add(dca)
-        session.add(bwi)
-        session.commit()
-        
-        locations=self.session.query(Location)
+            import transaction
 
-        window_expansion=timedelta(seconds=3600*4)
+            tmp_tm = transaction.TransactionManager(explicit=True)
+            with tmp_tm:
+                tmp_dbsession = get_tm_session(session_factory, tmp_tm)
+                tmp_dbsession.expire_on_commit=False
+                ride = Ride(
+                    start_time=datetime(2005,1,1,10),
+                    end_time=datetime(2005,1,1,10,15),
+                    startloc=washington_monument,
+                    endloc=us_capitol
+                )
+                ride_with_incomplete_endpoint = Ride(
+                    start_time=datetime(2005,1,1,10),
+                    end_time=datetime(2005,1,1,10,15),
+                    startloc=washington_monument,
+                    endloc=new_intersection
+                )
+                ride_that_produces_negative_windspeed = Ride(
+                    start_time=datetime(2020,7,21,18,55),
+                    end_time=datetime(2020,7,21,19,36),
+                    startloc=washington_monument,
+                    endloc=us_capitol
+                )
+                tmp_dbsession.add(ride)
+                tmp_dbsession.add(ride_with_incomplete_endpoint)
+                tmp_dbsession.add(ride_that_produces_negative_windspeed)
+                tmp_dbsession.add(dca)
+                tmp_dbsession.add(bwi)
 
-        from cycling_data.processing.weather import ride_times_utc
-        dtstart,dtend=ride_times_utc(ride)
+                window_expansion=timedelta(seconds=3600*4)
 
-        metars=fetch_metars_for_ride(session,ride)
-        
-        self.assertEqual(metars[0].station.name,'KDCA')
-        fetch_metars.assert_called_with(
-           'KDCA',
-           dtstart-window_expansion,
-           dtend+window_expansion,
-           url='https://www.ogimet.com/display_metars2.php'
-        )
+                from cycling_data.processing.weather import ride_times_utc
+                dtstart,dtend=ride_times_utc(ride)
 
-        self.session.expire_on_commit=False
+                metars=fetch_metars_for_ride(tmp_dbsession,ride)
 
-        mock_ogimet_response=Mock()
-        mock_ogimet_response.text=MetarTests.ogimet_text_dca_21jul
-        mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
-        mock_ogimet_response.status_code=200
+                self.assertEqual(metars[0].station.name,'KDCA')
+                fetch_metars.assert_called_with(
+                   'KDCA',
+                   dtstart-window_expansion,
+                   dtend+window_expansion,
+                   url='https://www.ogimet.com/display_metars2.php'
+                )
 
-        from .processing import weather
+            self.session.expire_on_commit=False
 
-        with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response) as fetch_metars_21jul:
-            metars=fetch_metars_for_ride(session,ride_that_produces_negative_windspeed)
+            mock_ogimet_response=Mock()
+            mock_ogimet_response.text=MetarTests.ogimet_text_dca_21jul
+            mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
+            mock_ogimet_response.status_code=200
 
-            update_ride_weather(ride_that_produces_negative_windspeed.id)
+            from .processing import weather
 
-        self.assertGreater(ride_that_produces_negative_windspeed.wxdata.windspeed,0)
+            with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response) as fetch_metars_21jul:
+                metars=fetch_metars_for_ride(session,ride_that_produces_negative_windspeed)
 
-        from time import sleep
-        sleep(1)
-        
-        update_ride_weather(ride.id)
+                update_ride_weather(ride_that_produces_negative_windspeed.id)
 
-        fetch_metars.assert_called_with(
-            'KDCA',
-            dtstart-window_expansion,
-            dtend+window_expansion,
-            url='https://www.ogimet.com/display_metars2.php'
-        )
+            ride_that_produces_negative_windspeed=session.query(Ride).filter(Ride.id==ride_that_produces_negative_windspeed.id).one()
+            self.assertGreater(ride_that_produces_negative_windspeed.wxdata.windspeed,0)
 
-        train_model.assert_called()
+            from time import sleep
+            sleep(1)
 
-        for key in MetarTests.ride_average_weather.keys():
-            self.assertEqual(getattr(ride.wxdata,key),
-                             MetarTests.ride_average_weather[key],
-                             'Discrepancy for key {}'.format(key))
-            query=self.session.query(RideWeatherData).with_entities(
-                    getattr(RideWeatherData,key)
-            ).filter(RideWeatherData.id==ride.wxdata_id)
-            self.assertEqual(
-                getattr(query.one(),key),
-                MetarTests.ride_average_weather[key])
+            update_ride_weather(ride.id)
 
-        # Reset call info for fetch_metars mock
-        fetch_metars.reset_mock()
+            fetch_metars.assert_called_with(
+                'KDCA',
+                dtstart-window_expansion,
+                dtend+window_expansion,
+                url='https://www.ogimet.com/display_metars2.php'
+            )
 
-        # Update ride weather for ride without coordinate data for an endpoint
-        update_ride_weather(ride_with_incomplete_endpoint.id)
+            train_model.assert_called()
 
-        # Without coordinates, fetch_metars should not be called
-        fetch_metars.assert_not_called()
+            ride=session.query(Ride).filter(Ride.id==ride.id).one()
+
+            for key in MetarTests.ride_average_weather.keys():
+                self.assertEqual(getattr(ride.wxdata,key),
+                                 MetarTests.ride_average_weather[key],
+                                 'Discrepancy for key {}'.format(key))
+                query=self.session.query(RideWeatherData).with_entities(
+                        getattr(RideWeatherData,key)
+                ).filter(RideWeatherData.id==ride.wxdata_id)
+                self.assertEqual(
+                    getattr(query.one(),key),
+                    MetarTests.ride_average_weather[key])
+
+            # Reset call info for fetch_metars mock
+            fetch_metars.reset_mock()
+
+            # Update ride weather for ride without coordinate data for an endpoint
+            update_ride_weather(ride_with_incomplete_endpoint.id)
+
+            # Without coordinates, fetch_metars should not be called
+            fetch_metars.assert_not_called()
 
 class ModelTests(BaseTest):
 

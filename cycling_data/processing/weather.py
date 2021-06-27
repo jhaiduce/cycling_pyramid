@@ -427,35 +427,32 @@ def update_ride_weather(self,ride_id, train_model=True):
         ride=tmp_dbsession.query(Ride).filter(Ride.id==ride_id).one()
         metars=fetch_metars_for_ride(tmp_dbsession,ride,task=self)
 
-    if len(metars)>0:
-        dtstart,dtend=ride_times_utc(ride)
-        if dtstart is None or dtend is None:
-            return
 
-        metar_times=[metar.report_time.replace(tzinfo=utc) for metar in metars]
+        if len(metars)>0:
+            dtstart,dtend=ride_times_utc(ride)
+            if dtstart is None or dtend is None:
+                return
 
-        if max(metar_times)<dtend or min(metar_times)>dtstart:
-            # METARs do not span time of ride
-            return
+            metar_times=[metar.report_time.replace(tzinfo=utc) for metar in metars]
 
-        altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
-        averages=average_weather(metars,dtstart,dtend,altitude)
-        logger.debug('Ride weather average values: {}'.format(averages))
+            if max(metar_times)<dtend or min(metar_times)>dtstart:
+                # METARs do not span time of ride
+                return
 
-        if len(averages)>0:
-            tmp_tm = transaction.TransactionManager(explicit=True)
-            with tmp_tm:
-                tmp_dbsession = get_tm_session(session_factory, tmp_tm)
-                tmp_dbsession.expire_on_commit=False
-                ride=tmp_dbsession.query(Ride).filter(Ride.id==ride.id).one()
+            altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
+
+            averages=average_weather(metars,dtstart,dtend,altitude)
+            logger.debug('Ride weather average values: {}'.format(averages))
+
+            if len(averages)>0:
                 if ride.wxdata is None:
                     ride.wxdata=RideWeatherData()
                 for key,value in averages.items():
                     setattr(ride.wxdata,key,value)
                 ride.wxdata.station=metars[0].station
 
-        if train_model:
-            from .regression import train_all_models
-            train_all_models.delay()
+            if train_model:
+                from .regression import train_all_models
+                train_all_models.delay()
 
     return ride_id
