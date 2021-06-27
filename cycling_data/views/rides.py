@@ -326,7 +326,7 @@ class RideViews(object):
 
         for var in predicted_vars:
             if var+'_resid' in (xvar,yvar):
-                df[var+'_resid']=df[var+'_pred']-df[var]
+                df[var+'_resid']=df[var]-df[var+'_pred']
 
         # Get x and y data
         x=df[xvar]
