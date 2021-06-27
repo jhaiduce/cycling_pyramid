@@ -402,7 +402,7 @@ class BaseTest(unittest.TestCase):
 
         from celery.result import AsyncResult
         task_result=AsyncResult(task_id,app=celery)
-        task_result.wait(40)
+        task_result.wait(60)
 
     def test_equipment_list(self):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
