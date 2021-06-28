@@ -252,7 +252,7 @@ class RideViews(object):
 
         self.request.dbsession.autoflush=False
 
-        computed_vars=['avspeed_est']
+        computed_vars=['avspeed_est','fraction_day']
         hybrid_properties=['grade','azimuth','tailwind','crosswind']
 
         predicted_vars=['avspeed','maxspeed','total_time']
@@ -292,7 +292,7 @@ class RideViews(object):
 
         from ..models.prediction import get_ride_predictions, prepare_model_dataset, get_model
         dbsession_factory = self.request.registry['dbsession_factory']
-        df=pd.read_sql_query(rides.statement,rides.session.bind)
+        df=pd.read_sql_query(rides.statement,rides.session.bind).set_index('id')
 
         if xvar in predicted_vars_with_suffix or yvar in predicted_vars_with_suffix or xvar in resid_vars or yvar in resid_vars:
             prediction_query=dbsession_factory().query(PredictionModelResult).with_entities(PredictionModelResult.ride_id,PredictionModelResult.avspeed,PredictionModelResult.maxspeed,PredictionModelResult.total_time)
@@ -327,6 +327,11 @@ class RideViews(object):
         for var in predicted_vars:
             if var+'_resid' in (xvar,yvar):
                 df[var+'_resid']=df[var]-df[var+'_pred']
+
+        if 'fraction_day' in (xvar,yvar):
+            ride_objects=self.request.dbsession.query(Ride)
+            ride_ids,fraction_day=zip(*[(ride.id,ride.fraction_day) for ride in ride_objects])
+            df['fraction_day']=pd.Series(data=fraction_day,index=ride_ids)
 
         # Get x and y data
         x=df[xvar]
