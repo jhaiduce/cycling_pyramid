@@ -524,8 +524,12 @@ class StationWeatherData(WeatherData):
             altitude=loc
 
         wx=self.copy()
-        wx.pressure=wx.pressure*exp(-altitude/((wx.temperature+273.15)*29.263))
-        wx.temperature=wx.temperature-(altitude-wx.station.elevation)*6.4/1000
+        if altitude is not None:
+            if wx.pressure is not None and wx.temperature is not None:
+                wx.pressure=wx.pressure*exp(
+                    -altitude/((wx.temperature+273.15)*29.263))
+            if wx.temperature is not None and wx.station.elevation is not None:
+                wx.temperature=wx.temperature-(altitude-wx.station.elevation)*6.4/1000
         return wx
 
     def copy(self):
