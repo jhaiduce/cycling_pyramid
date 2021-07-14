@@ -16,21 +16,26 @@ import numpy as np
 @celery.task(ignore_result=False)
 def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
-    from ..celery import session_factory
+    from ..celery import session_factory, settings
     from ..models import get_tm_session
-    from ..models.cycling_models import Ride, PredictionModelResult
+    from ..models.cycling_models import Ride, PredictionModel, PredictionModelResult
     from sqlalchemy import func
+    from ..models.prediction import get_data
 
     logger.debug('Received train model task')
 
     train_dataset_size=None
 
-    dbsession=session_factory()
-    dbsession.expire_on_commit=False
+    import transaction
 
-    with transaction.manager:
+    dbsession=settings['request'].session
+    tm=settings['request'].tm
+
+    with tm:
 
         model=get_model(dbsession,predict_var)
+        dbsession.flush()
+        model_id=model.id
 
         if model.training_in_progress:
             logger.debug('Training already in progress, exiting.')
@@ -53,37 +58,46 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
     if training_due:
 
-        with transaction.manager:
+        with tm:
+            model=dbsession.query(PredictionModel).filter(
+                PredictionModel.id==model_id).one()
             model.training_in_progress=True
-
-        dbsession.commit()
-
-        from ..models.prediction import get_data
+            dbsession.commit()
 
         predict_columns=[predict_var]
-        train_dataset=get_data(dbsession,predict_columns)
+
+        train_dataset=get_data(dbsession,predict_columns,tm=tm)
 
         if train_dataset is None:
             raise ValueError('Empty training dataset')
 
         try:
 
-            with transaction.manager:
+            with tm:
+                model=dbsession.query(PredictionModel).filter(
+                    PredictionModel.id==model_id).one()
                 model.train(train_dataset,predict_columns,
                             epochs=epochs,patience=patience)
 
                 train_dataset_size=model.train_dataset_size
+                dbsession.commit()
 
         finally:
-            with transaction.manager:
-                model.training_in_progress=False
-                dbsession.commit()
+            with tm:
+                try:
+                    model=dbsession.query(PredictionModel).filter(
+                        PredictionModel.id==model_id).one()
+                except NoResultFound:
+                    pass
+                else:
+                    model.training_in_progress=False
+                    dbsession.commit()
 
         predictions=model.predict(train_dataset)
 
         for ride_id,prediction in zip(train_dataset['id'],predictions):
             logger.debug('Recording regression result for ride {}'.format(ride_id))
-            with transaction.manager:
+            with tm:
                 try:
                     ride_prediction=dbsession.query(PredictionModelResult).filter(
                         PredictionModelResult.model_id==model.id,
@@ -98,9 +112,6 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
                 setattr(ride_prediction,predict_var,prediction[0] if not np.isnan(prediction[0]) else None)
 
                 dbsession.add(ride_prediction)
-                dbsession.commit()
-
-        dbsession.commit()
 
     return train_dataset_size
 

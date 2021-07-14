@@ -7,6 +7,7 @@ import configparser
 logger = get_task_logger(__name__)
 
 session_factory=None
+settings=None
 
 config=configparser.ConfigParser()
 config.read('/run/secrets/production.ini')
@@ -35,6 +36,7 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     from sqlalchemy.pool import StaticPool
 
     try:
+        global settings
         settings = bootstrap('/run/secrets/production.ini')['registry'].settings
     except FileNotFoundError:
         import warnings

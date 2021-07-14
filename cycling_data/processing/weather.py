@@ -355,16 +355,19 @@ def ride_times_utc(ride):
 
 @celery.task()
 def update_location_rides_weather(location_id):
-    from ..celery import session_factory
-    from ..models import get_tm_session
+    from ..celery import settings
 
-    dbsession=get_tm_session(session_factory,transaction.manager)
+    dbsession=settings['request'].session
+    dbsession.expire_on_commit=False
+    tm=settings['request'].tm
 
-    logger.debug('Received update location rides weather task for location {}'.format(location_id))
+    with tm:
 
-    location_rides=dbsession.query(Ride).filter(
-        ( Ride.startloc_id == location_id ) |
-        ( Ride.endloc_id == location_id ) )
+        logger.debug('Received update location rides weather task for location {}'.format(location_id))
+
+        location_rides=dbsession.query(Ride).filter(
+            ( Ride.startloc_id == location_id ) |
+            ( Ride.endloc_id == location_id ) )
 
     from celery import chord
     from .regression import train_all_models
@@ -379,27 +382,29 @@ def update_location_rides_weather(location_id):
 
 @celery.task(ignore_result=False)
 def fill_missing_weather():
-    from ..celery import session_factory
-    from ..models import get_tm_session
+    from ..celery import settings
     from sqlalchemy import or_
 
-    dbsession=get_tm_session(session_factory,transaction.manager)
+    dbsession=settings['request'].session
+    dbsession.expire_on_commit=False
+    tm=settings['request'].tm
 
-    rides_without_weather=dbsession.query(Ride).filter(
-        or_(Ride.wxdata==None, RideWeatherData.wx_station==None)
-    ).outerjoin(RideWeatherData,Ride.wxdata_id == RideWeatherData.id)
+    with tm:
+        rides_without_weather=dbsession.query(Ride).filter(
+            or_(Ride.wxdata==None, RideWeatherData.wx_station==None)
+        ).outerjoin(RideWeatherData,Ride.wxdata_id == RideWeatherData.id)
 
-    from celery import chord, group
-    from .regression import train_all_models
+        from celery import chord, group
+        from .regression import train_all_models
 
-    ride_ids=[ride.id for ride in rides_without_weather]
+        ride_ids=[ride.id for ride in rides_without_weather]
 
-    if rides_without_weather.count()>0:
-        # Update ride weather for all rides and re-train prediction model when
-        # finished
-        chord(
-            update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride_id in enumerate(ride_ids)
-        )(train_all_models)
+        if rides_without_weather.count()>0:
+            # Update ride weather for all rides and re-train prediction model when
+            # finished
+            chord(
+                update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride_id in enumerate(ride_ids)
+            )(train_all_models)
 
     return ride_ids
 
@@ -412,21 +417,19 @@ def schedule_fill_missing_weather(sender,**kwargs):
 def update_ride_weather(self,ride_id, train_model=True):
 
     from pytz import utc
-    from ..celery import session_factory
-    from ..models import get_tm_session
+    from ..celery import settings
 
     logger.debug('Received update weather task for ride {}'.format(ride_id))
 
-    import transaction
+    dbsession=settings['request'].session
+    dbsession.expire_on_commit=False
+    tm=settings['request'].tm
 
-    tmp_tm = transaction.TransactionManager(explicit=True)
-    with tmp_tm:
-        tmp_dbsession = get_tm_session(session_factory, tmp_tm)
-        tmp_dbsession.expire_on_commit=False
+    with tm:
+        dbsession.expire_on_commit=False
 
-        ride=tmp_dbsession.query(Ride).filter(Ride.id==ride_id).one()
-        metars=fetch_metars_for_ride(tmp_dbsession,ride,task=self)
-
+        ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+        metars=fetch_metars_for_ride(dbsession,ride,task=self)
 
         if len(metars)>0:
             dtstart,dtend=ride_times_utc(ride)

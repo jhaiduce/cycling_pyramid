@@ -435,54 +435,57 @@ class MetarTests(BaseTest):
         sessionmaker=get_session_factory(self.engine)
 
         session=sessionmaker()
+        import transaction
+
+        tmp_tm = transaction.TransactionManager()
 
         import cycling_data
-        with patch.object(cycling_data.celery,'session_factory',wraps=sessionmaker) as session_factory:
+        request=Mock()
+        request.session=session
+        request.tm=tmp_tm
+        with patch.object(cycling_data.celery,'settings',
+                          {'request':request}) as settings:
 
-            import transaction
+            cycling_data.celery.settings['request'].tm
 
-            tmp_tm = transaction.TransactionManager(explicit=True)
-            with tmp_tm:
-                tmp_dbsession = get_tm_session(session_factory, tmp_tm)
-                tmp_dbsession.expire_on_commit=False
-                ride = Ride(
-                    start_time=datetime(2005,1,1,10),
-                    end_time=datetime(2005,1,1,10,15),
-                    startloc=washington_monument,
-                    endloc=us_capitol
-                )
-                ride_with_incomplete_endpoint = Ride(
-                    start_time=datetime(2005,1,1,10),
-                    end_time=datetime(2005,1,1,10,15),
-                    startloc=washington_monument,
-                    endloc=new_intersection
-                )
-                ride_that_produces_negative_windspeed = Ride(
-                    start_time=datetime(2020,7,21,18,55),
-                    end_time=datetime(2020,7,21,19,36),
-                    startloc=washington_monument,
-                    endloc=us_capitol
-                )
-                tmp_dbsession.add(ride)
-                tmp_dbsession.add(ride_with_incomplete_endpoint)
-                tmp_dbsession.add(ride_that_produces_negative_windspeed)
-                tmp_dbsession.add(dca)
-                tmp_dbsession.add(bwi)
+            ride = Ride(
+                start_time=datetime(2005,1,1,10),
+                end_time=datetime(2005,1,1,10,15),
+                startloc=washington_monument,
+                endloc=us_capitol
+            )
+            ride_with_incomplete_endpoint = Ride(
+                start_time=datetime(2005,1,1,10),
+                end_time=datetime(2005,1,1,10,15),
+                startloc=washington_monument,
+                endloc=new_intersection
+            )
+            ride_that_produces_negative_windspeed = Ride(
+                start_time=datetime(2020,7,21,18,55),
+                end_time=datetime(2020,7,21,19,36),
+                startloc=washington_monument,
+                endloc=us_capitol
+            )
+            session.add(ride)
+            session.add(ride_with_incomplete_endpoint)
+            session.add(ride_that_produces_negative_windspeed)
+            session.add(dca)
+            session.add(bwi)
 
-                window_expansion=timedelta(seconds=3600*4)
+            window_expansion=timedelta(seconds=3600*4)
 
-                from cycling_data.processing.weather import ride_times_utc
-                dtstart,dtend=ride_times_utc(ride)
+            from cycling_data.processing.weather import ride_times_utc
+            dtstart,dtend=ride_times_utc(ride)
 
-                metars=fetch_metars_for_ride(tmp_dbsession,ride)
+            metars=fetch_metars_for_ride(session,ride)
 
-                self.assertEqual(metars[0].station.name,'KDCA')
-                fetch_metars.assert_called_with(
-                   'KDCA',
-                   dtstart-window_expansion,
-                   dtend+window_expansion,
-                   url='https://www.ogimet.com/display_metars2.php'
-                )
+            self.assertEqual(metars[0].station.name,'KDCA')
+            fetch_metars.assert_called_with(
+               'KDCA',
+               dtstart-window_expansion,
+               dtend+window_expansion,
+               url='https://www.ogimet.com/display_metars2.php'
+            )
 
             self.session.expire_on_commit=False
 
@@ -663,66 +666,76 @@ class ModelTests(BaseTest):
         from .models.prediction import prepare_model_dataset
         import numpy as np
 
-        transaction.commit()
-
         session_factory=get_session_factory(self.engine)
         session=session_factory()
 
+        tmp_tm = transaction.TransactionManager()
+
+        request=Mock()
+        request.session=session
+        request.tm=tmp_tm
         with patch.object(
-                celery,'session_factory',
-                return_value=session) as session_factory:
+                celery,'settings',
+                {'request':request}) as settings:
             train_dataset_size=train_model(epochs=10)
 
         self.assertEqual(train_dataset_size,self.useable_ride_count)
 
-        with transaction.manager:
-            rides=session.query(Ride)
+        rides=session.query(Ride)
+
+        with patch.object(
+                celery,'settings',
+                {'request':request}) as settings:
+            train_dataset_size=train_model(epochs=10)
+
             dataset=prepare_model_dataset(rides,session,['avspeed'])
-            dataset=dataset.drop(columns=['id'])
 
-        with transaction.manager:
-            model=session.query(PredictionModel).one()
-            weights=model.model.get_weights()
+        dataset=dataset.drop(columns=['id'])
 
-            self.assertIsNotNone(model.weightsbuf)
+        session.flush()
+        model=session.query(PredictionModel).one()
+        weights=model.model.get_weights()
 
-            dataset_copy=dataset.copy()
-            normed_data=model.norm(dataset)
-            predictions=model.predict(dataset)
-            stats=model.stats
+        self.assertIsNotNone(model.weightsbuf)
 
-            num_outputs=1
+        dataset_copy=dataset.copy()
+        normed_data=model.norm(dataset)
+        predictions=model.predict(dataset)
+        stats=model.stats
 
-            self.assertEqual(dataset.dropna().shape[0],dataset_copy.dropna().shape[0])
-            self.assertEqual(dataset.dropna().shape[0],self.useable_ride_count)
-            self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
-            for a,b in zip(weights,model.model.get_weights()):
-                self.assertTrue(np.allclose(a,b))
-            self.assertEqual(predictions.shape,(self.rideCount,num_outputs))
-            self.assertEqual(np.isnan(predictions).sum(),num_outputs)
-            predictions_new=model.predict(dataset)
-            normed_data_new=model.norm(dataset)
-            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
-            self.assertEqual(np.sum(np.isfinite(predictions_new)),self.useable_ride_count*num_outputs)
-            self.assertTrue(np.allclose(stats,model.stats))
-            self.assertTrue(np.allclose(
-                normed_data_new.drop(columns=['avspeed']).dropna(),
-                normed_data.drop(columns=['avspeed']).dropna()))
-            self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
-            self.assertTrue(np.allclose(predictions_new[np.isfinite(predictions_new)],predictions[np.isfinite(predictions)]))
+        num_outputs=1
 
-            from .models.prediction import get_ride_predictions
+        self.assertEqual(dataset.dropna().shape[0],dataset_copy.dropna().shape[0])
+        self.assertEqual(dataset.dropna().shape[0],self.useable_ride_count)
+        self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
+        for a,b in zip(weights,model.model.get_weights()):
+            self.assertTrue(np.allclose(a,b))
+        self.assertEqual(predictions.shape,(self.rideCount,num_outputs))
+        self.assertEqual(np.isnan(predictions).sum(),num_outputs)
+        predictions_new=model.predict(dataset)
+        normed_data_new=model.norm(dataset)
+        self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
+        self.assertEqual(np.sum(np.isfinite(predictions_new)),self.useable_ride_count*num_outputs)
+        self.assertTrue(np.allclose(stats,model.stats))
+        self.assertTrue(np.allclose(
+            normed_data_new.drop(columns=['avspeed']).dropna(),
+            normed_data.drop(columns=['avspeed']).dropna()))
+        self.assertTrue(np.allclose(dataset.dropna(),dataset_copy.dropna()))
+        self.assertTrue(np.allclose(predictions_new[np.isfinite(predictions_new)],predictions[np.isfinite(predictions)]))
 
-            # Check that get_ride_predictions returns the same results
-            ride_predictions=get_ride_predictions(session,rides)
-            self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
-            self.assertEqual(np.sum(np.isfinite(ride_predictions)),self.useable_ride_count*num_outputs)
-            self.assertEqual(ride_predictions.shape,(self.rideCount,num_outputs))
-            self.assertTrue(np.allclose(predictions[np.isfinite(predictions)],
-                                        ride_predictions[np.isfinite(ride_predictions)]))
-            single_prediction=get_ride_predictions(session,[session.query(Ride).first()])
-            self.assertEqual(single_prediction.shape,(1,num_outputs))
-            self.assertTrue(np.allclose(single_prediction[0],ride_predictions[0]))
+        from .models.prediction import get_ride_predictions
+
+        # Check that get_ride_predictions returns the same results
+        ride_predictions=get_ride_predictions(session,rides)
+        self.assertEqual(np.sum(np.isfinite(predictions)),self.useable_ride_count*num_outputs)
+        self.assertEqual(np.sum(np.isfinite(ride_predictions)),self.useable_ride_count*num_outputs)
+        self.assertEqual(ride_predictions.shape,(self.rideCount,num_outputs))
+        self.assertTrue(np.allclose(predictions[np.isfinite(predictions)],
+                                    ride_predictions[np.isfinite(ride_predictions)]))
+        single_prediction=get_ride_predictions(session,[session.query(Ride).first()])
+        self.assertEqual(single_prediction.shape,(1,num_outputs))
+        self.assertTrue(np.allclose(single_prediction[0],ride_predictions[0]))
+
 import webtest
 
 class FunctionalTests(unittest.TestCase):

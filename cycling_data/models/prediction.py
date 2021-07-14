@@ -53,25 +53,28 @@ def build_model(train_set_size,input_size,output_size):
     model.build([None,input_size])
     return model
 
-def get_data(dbsession,predict_columns,extra_fields=[]):
+def get_data(dbsession,predict_columns,extra_fields=[],tm=None):
 
     from .cycling_models import Ride
     import pandas as pd
 
     rides=dbsession.query(Ride)
 
-    return prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=extra_fields)
+    return prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=extra_fields,tm=tm)
 
-def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
+def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=None):
     from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment, Location
     import pandas as pd
     import transaction
     from sqlalchemy.orm import joinedload, subqueryload
     from pytz import utc
 
+    if tm is None:
+        tm=transaction.manager
+
     if hasattr(rides,'statement'):
-        with transaction.manager:
-            q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
+        q=rides.with_entities(Ride.id,Ride.distance,Ride.ridergroup_id,Ride.surface_id,Ride.equipment_id,Ride.trailer,Ride.rolling_time,Ride.avspeed,Ride.maxspeed,Ride.total_time,*extra_fields)
+        with tm:
             dataset=pd.read_sql_query(q.statement,dbsession.bind)
     else:
         dataset=pd.DataFrame([
@@ -96,7 +99,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
         dataset[column_name]=pd.Series(np.nan, index=dataset.index, dtype=float)
 
     for i,ride_id in enumerate(dataset['id']):
-        with transaction.manager:
+        with tm:
             ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
             dataset.loc[i,'fraction_day']=ride.fraction_day
             dataset.loc[i,'grade']=ride.grade
@@ -123,7 +126,6 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[]):
             if ride.endloc:
                 dataset.loc[i,'endlat']=ride.endloc.lat
                 dataset.loc[i,'endlon']=ride.endloc.lon
-            transaction.commit()
 
     dataset.start_time=pd.to_datetime(dataset.start_time)
     dataset.end_time=pd.to_datetime(dataset.end_time)
