@@ -8,6 +8,7 @@ logger = get_task_logger(__name__)
 
 session_factory=None
 settings=None
+env=None
 
 config=configparser.ConfigParser()
 config.read('/run/secrets/production.ini')
@@ -36,8 +37,9 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     from sqlalchemy.pool import StaticPool
 
     try:
-        global settings
-        settings = bootstrap('/run/secrets/production.ini')['registry'].settings
+        global settings, env
+        env = bootstrap('/run/secrets/production.ini')
+        settings = env['registry'].settings
     except FileNotFoundError:
         import warnings
         warnings.warn('Settings file does not exist. Not configuring database session factory.')

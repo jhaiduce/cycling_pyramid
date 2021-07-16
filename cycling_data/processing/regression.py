@@ -16,7 +16,7 @@ import numpy as np
 @celery.task(ignore_result=False)
 def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
-    from ..celery import session_factory, settings
+    from ..celery import session_factory, env
     from ..models import get_tm_session
     from ..models.cycling_models import Ride, PredictionModel, PredictionModelResult
     from sqlalchemy import func
@@ -28,8 +28,8 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
     import transaction
 
-    dbsession=settings['request'].session
-    tm=settings['request'].tm
+    dbsession=env['request'].session
+    tm=env['request'].tm
 
     with tm:
 

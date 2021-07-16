@@ -443,10 +443,8 @@ class MetarTests(BaseTest):
         request=Mock()
         request.session=session
         request.tm=tmp_tm
-        with patch.object(cycling_data.celery,'settings',
-                          {'request':request}) as settings:
-
-            cycling_data.celery.settings['request'].tm
+        with patch.object(cycling_data.celery,'env',
+                          {'request':request}) as env:
 
             ride = Ride(
                 start_time=datetime(2005,1,1,10),
@@ -675,7 +673,7 @@ class ModelTests(BaseTest):
         request.session=session
         request.tm=tmp_tm
         with patch.object(
-                celery,'settings',
+                celery,'env',
                 {'request':request}) as settings:
             train_dataset_size=train_model(epochs=10)
 
@@ -684,8 +682,8 @@ class ModelTests(BaseTest):
         rides=session.query(Ride)
 
         with patch.object(
-                celery,'settings',
-                {'request':request}) as settings:
+                celery,'env',
+                {'request':request}) as env:
             train_dataset_size=train_model(epochs=10)
 
             dataset=prepare_model_dataset(rides,session,['avspeed'])

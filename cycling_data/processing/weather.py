@@ -355,11 +355,11 @@ def ride_times_utc(ride):
 
 @celery.task()
 def update_location_rides_weather(location_id):
-    from ..celery import settings
+    from ..celery import env
 
-    dbsession=settings['request'].session
+    dbsession=env['request'].session
     dbsession.expire_on_commit=False
-    tm=settings['request'].tm
+    tm=env['request'].tm
 
     with tm:
 
@@ -382,12 +382,12 @@ def update_location_rides_weather(location_id):
 
 @celery.task(ignore_result=False)
 def fill_missing_weather():
-    from ..celery import settings
+    from ..celery import env
     from sqlalchemy import or_
 
-    dbsession=settings['request'].session
+    dbsession=env['request'].session
     dbsession.expire_on_commit=False
-    tm=settings['request'].tm
+    tm=env['request'].tm
 
     with tm:
         rides_without_weather=dbsession.query(Ride).filter(
@@ -417,13 +417,13 @@ def schedule_fill_missing_weather(sender,**kwargs):
 def update_ride_weather(self,ride_id, train_model=True):
 
     from pytz import utc
-    from ..celery import settings
+    from ..celery import env
 
     logger.debug('Received update weather task for ride {}'.format(ride_id))
 
-    dbsession=settings['request'].session
+    dbsession=env['request'].session
     dbsession.expire_on_commit=False
-    tm=settings['request'].tm
+    tm=env['request'].tm
 
     with tm:
         dbsession.expire_on_commit=False
