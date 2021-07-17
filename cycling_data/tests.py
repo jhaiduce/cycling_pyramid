@@ -440,11 +440,8 @@ class MetarTests(BaseTest):
         tmp_tm = transaction.TransactionManager()
 
         import cycling_data
-        request=Mock()
-        request.session=session
-        request.tm=tmp_tm
-        with patch.object(cycling_data.celery,'env',
-                          {'request':request}) as env:
+        with patch.object(cycling_data.celery,'session_factory',
+                          return_value=session) as session_factory:
 
             ride = Ride(
                 start_time=datetime(2005,1,1,10),
@@ -469,6 +466,7 @@ class MetarTests(BaseTest):
             session.add(ride_that_produces_negative_windspeed)
             session.add(dca)
             session.add(bwi)
+            session.commit()
 
             window_expansion=timedelta(seconds=3600*4)
 
@@ -673,8 +671,8 @@ class ModelTests(BaseTest):
         request.session=session
         request.tm=tmp_tm
         with patch.object(
-                celery,'env',
-                {'request':request}) as settings:
+                celery,'session_factory',
+                return_value=session):
             train_dataset_size=train_model(epochs=10)
 
         self.assertEqual(train_dataset_size,self.useable_ride_count)
@@ -682,8 +680,7 @@ class ModelTests(BaseTest):
         rides=session.query(Ride)
 
         with patch.object(
-                celery,'env',
-                {'request':request}) as env:
+                celery,'session_factory',return_value=session):
             train_dataset_size=train_model(epochs=10)
 
             dataset=prepare_model_dataset(rides,session,['avspeed'])

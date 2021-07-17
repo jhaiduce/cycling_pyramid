@@ -6,9 +6,7 @@ import configparser
 
 logger = get_task_logger(__name__)
 
-session_factory=None
-settings=None
-env=None
+session=None
 
 config=configparser.ConfigParser()
 config.read('/run/secrets/production.ini')
@@ -30,7 +28,7 @@ class after_commit_task_hook(object):
 @worker_process_init.connect
 def bootstrap_pyramid(signal, sender, **kwargs):
 
-    global session_factory
+    global session
     
     import os
     from pyramid.paster import bootstrap
@@ -74,7 +72,13 @@ def bootstrap_pyramid(signal, sender, **kwargs):
         conn.close()
         break
     
-    session_factory=models.get_session_factory(engine)
+    from sqlalchemy.orm import Session
+
+    session=Session(engine)
+
+def session_factory():
+    global session
+    return session
 
 def create_app():
     try:
