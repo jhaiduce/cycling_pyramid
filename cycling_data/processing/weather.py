@@ -441,18 +441,23 @@ def update_ride_weather(self,ride_id, train_model=True):
     with tm:
 
         ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
-        metars=fetch_metars_for_ride(dbsession,ride,task=self)
-
-    if len(metars)>0:
         dtstart,dtend=ride_times_utc(ride)
         if dtstart is None or dtend is None:
             return
 
-        metar_times=[metar.report_time.replace(tzinfo=utc) for metar in metars]
+    metars=fetch_metars_for_ride(dbsession,ride,task=self)
 
-        if max(metar_times)<dtend or min(metar_times)>dtstart:
-            # METARs do not span time of ride
-            return
+    if len(metars)==0: return
+
+    metar_times=[metar.report_time.replace(tzinfo=utc) for metar in metars]
+
+    if max(metar_times)<dtend or min(metar_times)>dtstart:
+        # METARs do not span time of ride
+        return
+
+    with tm:
+
+        metars=[dbsession.query(type(metar)).get(metar.id) for metar in metars]
 
         altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
 
@@ -460,16 +465,15 @@ def update_ride_weather(self,ride_id, train_model=True):
         logger.debug('Ride weather average values: {}'.format(averages))
 
         if len(averages)>0:
-            with tm:
-                ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
-                if ride.wxdata is None:
-                    ride.wxdata=RideWeatherData()
-                for key,value in averages.items():
-                    setattr(ride.wxdata,key,value)
-                ride.wxdata.station=metars[0].station
+            ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            if ride.wxdata is None:
+                ride.wxdata=RideWeatherData()
+            for key,value in averages.items():
+                setattr(ride.wxdata,key,value)
+            ride.wxdata.station=metars[0].station
 
-        if train_model:
-            from .regression import train_all_models
-            train_all_models.delay()
+    if train_model:
+        from .regression import train_all_models
+        train_all_models.delay()
 
     return ride_id
