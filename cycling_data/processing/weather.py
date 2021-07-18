@@ -148,6 +148,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
                 raise e
     finally:
         dbsession.add(requestlog)
+        dbsession.commit()
 
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
