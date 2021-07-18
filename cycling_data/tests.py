@@ -467,7 +467,6 @@ class MetarTests(BaseTest):
             session.add(ride_that_produces_negative_windspeed)
             session.add(dca)
             session.add(bwi)
-            session.commit()
 
             window_expansion=timedelta(seconds=3600*4)
 
