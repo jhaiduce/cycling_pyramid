@@ -26,6 +26,9 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
     train_dataset_size=None
 
+    if not(isinstance(predict_var,str)):
+        raise TypeError('predict_var should be a string, got {} (type {})'.format(predict_var, type(predict_var)))
+
     import transaction
 
     dbsession=session_factory()
