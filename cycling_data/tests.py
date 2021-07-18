@@ -432,9 +432,10 @@ class MetarTests(BaseTest):
         from datetime import datetime, timedelta
         from .models import get_session_factory, get_tm_session
 
-        sessionmaker=get_session_factory(self.engine)
+        from sqlalchemy.orm import Session
+        from zope.sqlalchemy import ZopeTransactionExtension
 
-        session=sessionmaker()
+        session=Session(self.engine, extension=ZopeTransactionExtension())
         import transaction
 
         tmp_tm = transaction.TransactionManager()
@@ -662,8 +663,11 @@ class ModelTests(BaseTest):
         from .models.prediction import prepare_model_dataset
         import numpy as np
 
-        session_factory=get_session_factory(self.engine)
-        session=session_factory()
+        from sqlalchemy.orm import Session
+        from zope.sqlalchemy import ZopeTransactionExtension
+
+        session=Session(self.engine, extension=ZopeTransactionExtension())
+        import transaction
 
         tmp_tm = transaction.TransactionManager()
 
