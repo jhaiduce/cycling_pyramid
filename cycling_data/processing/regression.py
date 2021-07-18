@@ -65,7 +65,8 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
 
         predict_columns=[predict_var]
 
-        train_dataset=get_data(dbsession,predict_columns,tm=tm)
+        with tm:
+            train_dataset=get_data(dbsession,predict_columns,tm=tm)
 
         if train_dataset is None:
             raise ValueError('Empty training dataset')
@@ -79,7 +80,6 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
                             epochs=epochs,patience=patience)
 
                 train_dataset_size=model.train_dataset_size
-                dbsession.commit()
 
         finally:
             with tm:
@@ -90,20 +90,22 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
                     pass
                 else:
                     model.training_in_progress=False
-                    dbsession.commit()
 
-        predictions=model.predict(train_dataset)
+        with tm:
+            model=dbsession.query(PredictionModel).filter(
+                PredictionModel.id==model_id).one()
+            predictions=model.predict(train_dataset)
 
         for ride_id,prediction in zip(train_dataset['id'],predictions):
             logger.debug('Recording regression result for ride {}'.format(ride_id))
             with tm:
                 try:
                     ride_prediction=dbsession.query(PredictionModelResult).filter(
-                        PredictionModelResult.model_id==model.id,
+                        PredictionModelResult.model_id==model_id,
                         PredictionModelResult.ride_id==ride_id).one()
                 except NoResultFound:
                     ride_prediction=PredictionModelResult(
-                        model_id=model.id, ride_id=ride_id)
+                        model_id=model_id, ride_id=ride_id)
 
                 if predict_var=='avspeed':
                     ride_prediction.result=prediction[0] if not np.isnan(prediction[0]) else None
