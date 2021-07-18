@@ -510,11 +510,16 @@ class RideViews(object):
         from datetime import datetime
         equipment_id=int(self.request.GET['equipment_id'])
         start_time=datetime.strptime(self.request.GET['start_time'],'%Y-%m-%d %H:%M:%S')
-        
+        ride_id=int(self.request.GET.get('ride_id',None))
+
         ride=self.request.dbsession.query(Ride).filter(
             Ride.equipment_id==equipment_id,
-            Ride.end_time<=start_time
-        ).order_by(
+            Ride.end_time<=start_time,
+        )
+        if ride_id is not None:
+            ride=ride.filter(Ride.id!=ride_id)
+
+        ride=ride.order_by(
             Ride.start_time.desc()).first()
 
         return dict(odometer=ride.odometer)

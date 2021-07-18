@@ -220,6 +220,9 @@ $(document).ready(function() {
 			equipment_id:function(){
 			    return $("select[name='equipment'] option:selected").val()
 			},
+			ride_id:function(){
+			    return $("input[name='id']").val()
+			},
 			start_time:function(){
 			    return $("input[name='start_time']").val()
 			}
