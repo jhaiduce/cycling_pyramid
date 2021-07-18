@@ -436,9 +436,10 @@ class MetarTests(BaseTest):
         from zope.sqlalchemy import ZopeTransactionExtension
 
         session=Session(self.engine, extension=ZopeTransactionExtension())
+        session.expire_on_commit=False
         import transaction
 
-        tmp_tm = transaction.TransactionManager()
+        tmp_tm = transaction.manager
 
         import cycling_data
         with patch.object(cycling_data.celery,'session_factory',
@@ -462,11 +463,12 @@ class MetarTests(BaseTest):
                 startloc=washington_monument,
                 endloc=us_capitol
             )
-            session.add(ride)
-            session.add(ride_with_incomplete_endpoint)
-            session.add(ride_that_produces_negative_windspeed)
-            session.add(dca)
-            session.add(bwi)
+            with tmp_tm:
+                session.add(ride)
+                session.add(ride_with_incomplete_endpoint)
+                session.add(ride_that_produces_negative_windspeed)
+                session.add(dca)
+                session.add(bwi)
 
             window_expansion=timedelta(seconds=3600*4)
 
@@ -483,7 +485,7 @@ class MetarTests(BaseTest):
                url='https://www.ogimet.com/display_metars2.php'
             )
 
-            self.session.expire_on_commit=False
+            session.expire_on_commit=False
 
             mock_ogimet_response=Mock()
             mock_ogimet_response.text=MetarTests.ogimet_text_dca_21jul
@@ -520,7 +522,7 @@ class MetarTests(BaseTest):
                 self.assertEqual(getattr(ride.wxdata,key),
                                  MetarTests.ride_average_weather[key],
                                  'Discrepancy for key {}'.format(key))
-                query=self.session.query(RideWeatherData).with_entities(
+                query=session.query(RideWeatherData).with_entities(
                         getattr(RideWeatherData,key)
                 ).filter(RideWeatherData.id==ride.wxdata_id)
                 self.assertEqual(
