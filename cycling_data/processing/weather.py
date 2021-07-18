@@ -230,17 +230,19 @@ def fetch_metars_for_ride(session,ride,task=None):
 
     lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
     lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
-    nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
 
     with tm:
         dtstart,dtend=ride_times_utc(ride)
 
-    for station in nearby_stations:
+    with tm:
+        nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
+
+        for station in nearby_stations:
+
+            metars=get_metars(session,station,dtstart,dtend,task=task)
         
-        metars=get_metars(session,station,dtstart,dtend,task=task)
-        
-        if len(metars)>0:
-            return metars
+            if len(metars)>0:
+                return metars
         
     return []
 
@@ -350,11 +352,13 @@ def ride_times_utc(ride):
 
     dtstart=ride.start_time.replace(
         tzinfo=timezone(ride.start_timezone)
-    ).astimezone(utc) if ride.start_time is not None else None
+    ).astimezone(utc) if (ride.start_time is not None and
+                          ride.start_timezone is not None) else None
     
     dtend=ride.end_time.replace(
         tzinfo=timezone(ride.end_timezone)
-    ).astimezone(utc) if ride.end_time is not None else None
+    ).astimezone(utc) if (ride.end_time is not None and
+                          ride.end_timezone is not None) else None
 
     return dtstart,dtend
 
