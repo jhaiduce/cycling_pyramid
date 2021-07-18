@@ -104,3 +104,4 @@ scheme=http
 [celery]
 backend_url = redis://cycling_test_redis
 broker_url = pyamqp://guest@cycling_test_rabbitmq
+train_model_default_epochs=300

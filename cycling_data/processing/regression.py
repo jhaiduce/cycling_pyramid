@@ -14,13 +14,16 @@ from sqlalchemy.orm.exc import NoResultFound
 import numpy as np
 
 @celery.task(ignore_result=False)
-def train_model(predict_var='avspeed',epochs=1000,patience=100):
+def train_model(predict_var='avspeed',epochs=None,patience=100):
 
-    from ..celery import session_factory
+    from ..celery import session_factory, settings
     from ..models import get_tm_session
     from ..models.cycling_models import Ride, PredictionModel, PredictionModelResult
     from sqlalchemy import func
     from ..models.prediction import get_data
+
+    if epochs is None:
+        epochs=settings.get('celery','train_model_default_epochs',1000)
 
     logger.debug('Received train model task')
 

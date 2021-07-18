@@ -7,6 +7,7 @@ import configparser
 logger = get_task_logger(__name__)
 
 engine=None
+settings=None
 
 config=configparser.ConfigParser()
 config.read('/run/secrets/production.ini')
