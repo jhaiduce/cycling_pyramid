@@ -74,10 +74,11 @@ def bootstrap_pyramid(signal, sender, **kwargs):
     
 def session_factory():
     from sqlalchemy.orm import Session
+    from zope.sqlalchemy import ZopeTransactionExtension
 
     global engine
 
-    session=Session(engine)
+    session=Session(engine, extension=ZopeTransactionExtension())
 
     return session
 
