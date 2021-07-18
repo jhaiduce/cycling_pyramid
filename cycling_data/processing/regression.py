@@ -62,7 +62,6 @@ def train_model(predict_var='avspeed',epochs=1000,patience=100):
             model=dbsession.query(PredictionModel).filter(
                 PredictionModel.id==model_id).one()
             model.training_in_progress=True
-            dbsession.commit()
 
         predict_columns=[predict_var]
 
