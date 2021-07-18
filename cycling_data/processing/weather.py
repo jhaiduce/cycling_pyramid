@@ -380,13 +380,12 @@ def update_location_rides_weather(location_id):
             ( Ride.endloc_id == location_id ) )
 
     from celery import chord
-    from .regression import train_all_models
 
     # Update ride weather for all rides and re-train prediction model when
     # finished
     chord(
-        update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride in enumerate(location_rides)
-    )(train_all_models)
+       update_ride_weather.signature((ride.id,),dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride in enumerate(location_rides)
+    )(after_fetch_tasks.s())
 
     return location_id
 
@@ -406,7 +405,6 @@ def fill_missing_weather():
         ).outerjoin(RideWeatherData,Ride.wxdata_id == RideWeatherData.id)
 
         from celery import chord, group
-        from .regression import train_all_models
 
         ride_ids=[ride.id for ride in rides_without_weather]
 
@@ -415,7 +413,7 @@ def fill_missing_weather():
             # finished
             chord(
                 update_ride_weather.signature((ride_id,), dict(train_model=False), countdown=random_delay(i*2+1)) for i,ride_id in enumerate(ride_ids)
-            )(train_all_models)
+            )(after_fetch_tasks.s())
 
     return ride_ids
 
@@ -477,3 +475,17 @@ def update_ride_weather(self,ride_id, train_model=True):
         train_all_models.delay()
 
     return ride_id
+
+@celery.task(ignore_result=False)
+def after_fetch_tasks(ride_ids):
+
+    if len(ride_ids)==0:
+        return
+
+    if all(ride_id is None for ride_id in ride_ids):
+        return
+
+    from .regression import train_all_models
+    train_all_models.delay()
+
+    return ride_ids
