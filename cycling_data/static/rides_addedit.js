@@ -6,6 +6,16 @@ function parseDate(fieldNum) {
     return new Date(datetimestr);
 }
 
+function formatDate(date) {
+    year=String(date.getFullYear())
+    mon=String(date.getMonth()+1).padStart(2,'0')
+    day=String(date.getDate()).padStart(2,'0')
+    hour=String(date.getHours()).padStart(2,'0')
+    minute=String(date.getMinutes()).padStart(2,'0')
+    second=String(date.getSeconds()).padStart(2,'0')
+    return year+'-'+mon+'-'+day+' '+hour+':'+minute+':'+second
+}
+
 function seconds_to_time_string(t){
     h=Math.floor(t/3600)
     m=Math.floor((t/3600-h)*60)
@@ -224,7 +234,7 @@ $(document).ready(function() {
 			    return $("input[name='id']").val()
 			},
 			start_time:function(){
-			    return $("input[name='start_time']").val()
+			    return formatDate(parseDate('3'))
 			}
 		    }
 		},

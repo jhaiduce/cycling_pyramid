@@ -510,7 +510,8 @@ class RideViews(object):
         from datetime import datetime
         equipment_id=int(self.request.GET['equipment_id'])
         start_time=datetime.strptime(self.request.GET['start_time'],'%Y-%m-%d %H:%M:%S')
-        ride_id=int(self.request.GET.get('ride_id',None))
+        ride_id=self.request.GET.get('ride_id',None)
+        if ride_id: ride_id=int(ride_id)
 
         ride=self.request.dbsession.query(Ride).filter(
             Ride.equipment_id==equipment_id,
