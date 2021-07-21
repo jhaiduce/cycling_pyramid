@@ -525,7 +525,7 @@ class RideViews(object):
 
         return dict(odometer=ride.odometer)
 
-    def get_last_ride(self,equipment_id,start_time=None):
+    def get_last_ride(self,equipment_id,start_time=None,ride_id=None):
         
         last_ride_query=self.request.dbsession.query(Ride).filter(
             Ride.equipment_id==equipment_id
@@ -537,6 +537,8 @@ class RideViews(object):
             last_ride_query=last_ride_query.filter(
                 Ride.end_time<=start_time
             )
+        if ride_id is not None:
+            last_ride_query=last_ride_query.filter(Ride.id!=ride_id)
         
         last_ride=last_ride_query.order_by(Ride.start_time.desc()).first()
         
@@ -547,7 +549,9 @@ class RideViews(object):
         from datetime import datetime
 
         equipment_id=int(self.request.POST['equipment_id'])
-        
+        ride_id=self.request.POST.get('ride_id',None)
+        if ride_id: ride_id=int(ride_id)
+
         try:
             start_time=datetime.strptime(self.request.POST['start_time'],'%Y-%m-%d %H:%M:%S')
         except ValueError:
@@ -563,7 +567,7 @@ class RideViews(object):
         except ValueError:
             return 'true'
 
-        last_ride=self.get_last_ride(equipment_id,start_time)
+        last_ride=self.get_last_ride(equipment_id,start_time,ride_id)
 
         if(abs(last_ride.odometer+distance-odometer)>0.1):
             return "Ride distance should be between {:0.1f} and {:0.1f} based on odometer entry".format(
