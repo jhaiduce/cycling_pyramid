@@ -65,7 +65,7 @@ $(document).ready(function() {
 
 	interval_s=(end_time-start_time)/1000
 
-	total_time_s=$("input[name='total_time']").val()
+	total_time_s=parseInt($("input[name='total_time']").val())
 	if(isNaN(total_time_s) || isNaN(interval_s) || total_time_s == 0 ) return true;
 
 	delta=Math.abs(interval_s-total_time_s)
@@ -88,8 +88,8 @@ $(document).ready(function() {
     
     jQuery.validator.addMethod('check_total_time_gte_rolling_time',function(value,element){
 	try{
-	    total_time_s=$("input[name='total_time']").val()
-	    rolling_time_s=$("input[name='rolling_time']").val()
+	    total_time_s=parseInt($("input[name='total_time']").val())
+	    rolling_time_s=parseInt($("input[name='rolling_time']").val())
 	}
 	catch(err){
 	    return true
@@ -115,7 +115,7 @@ $(document).ready(function() {
 	    return true;
 	}
 	try{
-	    hours=$("input[name='rolling_time']").val()/3600.0
+	    hours=parseInt($("input[name='rolling_time']").val())/3600.0
 	}
 	catch(err){
 	    return true;
@@ -129,7 +129,7 @@ $(document).ready(function() {
 	else return true;
     },function(params,element){
 	distance=parseFloat($("input[name='distance']").val())
-	hours=$("input[name='rolling_time']").val()/3600.0
+	hours=parseInt($("input[name='rolling_time']").val())/3600.0
 	calcspeed=distance/hours
 	min=calcspeed*0.99
 	max=calcspeed*1.02
