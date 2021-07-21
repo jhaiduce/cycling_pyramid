@@ -284,8 +284,8 @@ def average_weather(metars,dtstart,dtend,altitude):
     total_time=min(metars[-1].report_time.replace(tzinfo=utc),dtend)-max(metars[0].report_time.replace(tzinfo=utc),dtstart)
 
     values={
-        'windspeed':0,
-        'winddir':0,
+        'wind_e':0,
+        'wind_n':0,
         'temperature':0,
         'gust':0,
         'dewpoint':0,
@@ -311,12 +311,19 @@ def average_weather(metars,dtstart,dtend,altitude):
                             month=metar.report_time.month,
                             utcdelta=0).weather) for metar in metars]
 
+    winddir=np.array([metar.winddir for metar in metars],dtype=float)
+    windspeed=np.array([metar.windspeed for metar in metars],dtype=float)
+
     for key in values.keys():
 
         if key == 'rain':
             obs = np.array([precip[0] for precip in rainsnow]).astype(float)
         elif key == 'snow':
             obs = np.array([precip[1] for precip in rainsnow]).astype(float)
+        elif key=='wind_e':
+            obs=np.cos((90-winddir)*np.pi/180)*windspeed
+        elif key=='wind_n':
+            obs=np.sin((90-winddir)*np.pi/180)*windspeed
         else:
             obs=np.array([getattr(metar.weather_at_altitude(altitude),key) for metar in metars]).astype(float)
 
@@ -344,6 +351,15 @@ def average_weather(metars,dtstart,dtend,altitude):
         )/(dtend64-dtstart64).astype(float)
 
         values[key] = obs_avg
+
+    # Convert wind components to polar coordinates
+    winddir=(90-np.arctan2(values['wind_n']*180/np.pi,values['wind_e']))%360
+    values['winddir']=winddir
+    values['windspeed']=np.sqrt(values['wind_n']**2+values['wind_e']**2)
+
+    # Delete Cartesian wind components
+    del values['wind_n']
+    del values['wind_e']
 
     return values
 
