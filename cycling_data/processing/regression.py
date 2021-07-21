@@ -23,7 +23,7 @@ def train_model(predict_var='avspeed',epochs=None,patience=100):
     from ..models.prediction import get_data
 
     if epochs is None:
-        epochs=settings.get('celery','train_model_default_epochs',1000)
+        epochs=settings.get('celery','train_model_default_epochs',fallback=1000)
 
     logger.debug('Received train model task')
 
