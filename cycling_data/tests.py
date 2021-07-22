@@ -427,7 +427,7 @@ class MetarTests(BaseTest):
 
         from .processing.weather import fetch_metars_for_ride, update_ride_weather
         from .models import Ride, Location
-        from .models.cycling_models import RideWeatherData
+        from .models.cycling_models import RideWeatherData, SentRequestLog
 
         from datetime import datetime, timedelta
         from .models import get_session_factory, get_tm_session
@@ -470,6 +470,26 @@ class MetarTests(BaseTest):
                 session.add(dca)
                 session.add(bwi)
 
+            from .processing import weather
+
+            with tmp_tm:
+                session.query(SentRequestLog).delete()
+
+            ogimet_ratelimited_response=Mock()
+            ogimet_ratelimited_response.text='#Sorry'
+            ogimet_ratelimited_response.url='https://ogimet.com/display_metars2.php'
+            ogimet_ratelimited_response.status_code=200
+            with patch.object(weather,'fetch_metars', return_value=ogimet_ratelimited_response) as fetch_metars_21jul:
+                with self.assertRaisesRegex(ValueError,'OGIMET quota limit reached'):
+                    metars=fetch_metars_for_ride(session,ride)
+
+            with tmp_tm:
+                req=session.query(SentRequestLog).order_by(SentRequestLog.time.desc()).first()
+
+                self.assertTrue(req.rate_limited)
+
+                session.delete(req)
+
             window_expansion=timedelta(seconds=3600*4)
 
             from cycling_data.processing.weather import ride_times_utc
@@ -485,6 +505,9 @@ class MetarTests(BaseTest):
                url='https://www.ogimet.com/display_metars2.php'
             )
 
+            with tmp_tm:
+                session.query(SentRequestLog).delete()
+
             session.expire_on_commit=False
 
             mock_ogimet_response=Mock()
@@ -492,18 +515,26 @@ class MetarTests(BaseTest):
             mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
             mock_ogimet_response.status_code=200
 
-            from .processing import weather
-
             with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response) as fetch_metars_21jul:
-                metars=fetch_metars_for_ride(session,ride_that_produces_negative_windspeed)
 
-                update_ride_weather(ride_that_produces_negative_windspeed.id)
+                metars=fetch_metars_for_ride(
+                    session,ride_that_produces_negative_windspeed)
+
+                fetch_metars_21jul.assert_called_with(
+                    'KDCA',
+                    ride_that_produces_negative_windspeed.start_time-window_expansion,
+                    ride_that_produces_negative_windspeed.end_time+window_expansion,
+                    url='https://www.ogimet.com/display_metars2.php'
+                )
+
+                fetch_metars_21jul.reset_mock()
+
+                update_ride_weather(
+                    ride_that_produces_negative_windspeed.id)
+                fetch_metars_21jul.assert_not_called()
 
             ride_that_produces_negative_windspeed=session.query(Ride).filter(Ride.id==ride_that_produces_negative_windspeed.id).one()
             self.assertGreater(ride_that_produces_negative_windspeed.wxdata.windspeed,0)
-
-            from time import sleep
-            sleep(1)
 
             update_ride_weather(ride.id)
 

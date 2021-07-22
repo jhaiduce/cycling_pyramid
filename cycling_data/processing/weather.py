@@ -88,8 +88,11 @@ def extract_metars_from_ogimet(text):
 def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     import random
+    import transaction
     
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
+
+    tm=transaction.manager
 
     from pyramid.paster import bootstrap
     try:
@@ -98,8 +101,9 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     except:
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
-    last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
-    requests_last_hour=dbsession.query(SentRequestLog).filter(
+    with tm:
+        last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
+        requests_last_hour=dbsession.query(SentRequestLog).filter(
         SentRequestLog.time>datetime.now()-timedelta(seconds=3600*60)).count()
     min_delay_seconds=1
     random_delay_scale=1
@@ -147,7 +151,8 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
             else:
                 raise e
     finally:
-        dbsession.add(requestlog)
+        with tm:
+            dbsession.add(requestlog)
 
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
@@ -168,24 +173,28 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
 
     from pytz import utc
+    import transaction
 
     logger.debug('Getting METARS from range {} - {}'.format(dtstart,dtend))
 
-    stored_metars=session.query(StationWeatherData).filter(
-        StationWeatherData.station==station
-    ).filter(
-        StationWeatherData.report_time>dtstart-window_expansion
-    ).filter(
-        StationWeatherData.report_time<dtend+window_expansion
-    ).order_by(StationWeatherData.report_time).all()
+    tm=transaction.manager
 
-    if len(stored_metars)>0:
-        logger.debug('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
+    with tm:
+        stored_metars=session.query(StationWeatherData).filter(
+            StationWeatherData.station==station
+        ).filter(
+            StationWeatherData.report_time>dtstart-window_expansion
+        ).filter(
+            StationWeatherData.report_time<dtend+window_expansion
+        ).order_by(StationWeatherData.report_time).all()
 
-        data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend
-    else:
-        logger.debug('No stored METARS found')
-        data_spans_interval=False
+        if len(stored_metars)>0:
+            logger.debug('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
+
+            data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend
+        else:
+            logger.debug('No stored METARS found')
+            data_spans_interval=False
 
     if not data_spans_interval:
         fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session,task=task)
@@ -206,7 +215,8 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
             if q.count()>=1:
                 wxdata=q.first()
             else:
-                session.add(wxdata)
+                with tm:
+                    session.add(wxdata)
             stored_metars.append(wxdata)
 
     return stored_metars
@@ -237,12 +247,12 @@ def fetch_metars_for_ride(session,ride,task=None):
     with tm:
         nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
 
-        for station in nearby_stations:
+    for station in nearby_stations:
 
-            metars=get_metars(session,station,dtstart,dtend,task=task)
+        metars=get_metars(session,station,dtstart,dtend,task=task)
         
-            if len(metars)>0:
-                return metars
+        if len(metars)>0:
+            return metars
         
     return []
 
