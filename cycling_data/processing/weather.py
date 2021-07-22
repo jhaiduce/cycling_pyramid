@@ -104,7 +104,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     with tm:
         last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
         requests_last_hour=dbsession.query(SentRequestLog).filter(
-        SentRequestLog.time>datetime.now()-timedelta(seconds=3600*60)).count()
+        SentRequestLog.time>datetime.now()-timedelta(seconds=3600)).count()
     min_delay_seconds=1
     random_delay_scale=1
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
