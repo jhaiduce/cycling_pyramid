@@ -109,7 +109,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     random_delay_scale=1
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
-    if requests_last_hour>=40:
+    if requests_last_hour>=25:
         if task is not None:
             raise task.retry(
                 exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
