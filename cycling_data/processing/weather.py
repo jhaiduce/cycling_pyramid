@@ -127,12 +127,14 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     # Download METARs
     ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
 
-    requestlog=SentRequestLog(
-        time=datetime.now(),
-        status_code=ogimet_result.status_code,
-        url=ogimet_result.url)
+    with tm:
+        requestlog=SentRequestLog(
+            time=datetime.now(),
+            status_code=ogimet_result.status_code,
+            url=ogimet_result.url)
 
-    ogimet_text=ogimet_result.text
+        ogimet_text=ogimet_result.text
+        dbsession.add(requestlog)
 
     try:
         if(ogimet_text.find('#Sorry')>-1):
@@ -152,7 +154,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
                 raise e
     finally:
         with tm:
-            dbsession.add(requestlog)
+            dbsession.merge(requestlog)
 
     # Get dates and METAR codes from returned text
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
