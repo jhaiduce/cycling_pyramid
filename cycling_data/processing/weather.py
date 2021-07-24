@@ -450,7 +450,7 @@ def schedule_fill_missing_weather(sender,**kwargs):
     from celery.schedules import crontab
     sender.add_periodic_task(crontab(minute=5), fill_missing_weather.s())
 
-@celery.task(bind=True,ignore_result=False)
+@celery.task(bind=True,ignore_result=False,rate_limit='1/s')
 def update_ride_weather(self,ride_id, train_model=True):
 
     from pytz import utc
