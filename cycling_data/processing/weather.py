@@ -108,8 +108,8 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
             last_request=dbsession.query(SentRequestLog).order_by(SentRequestLog.time.desc()).first()
         except NoResultFound:
             last_request=None
-        requests_last_hour=dbsession.query(SentRequestLog).filter(
-        SentRequestLog.time>datetime.now()-timedelta(seconds=3600)).count()
+        recent_request_count=dbsession.query(SentRequestLog).filter(
+        SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
 
     min_delay_seconds=1
     random_delay_scale=1
@@ -120,7 +120,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     if last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
         raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
 
-    if requests_last_hour>=25:
+    if recent_request_count>=25:
         if task is not None:
             raise task.retry(
                 exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
