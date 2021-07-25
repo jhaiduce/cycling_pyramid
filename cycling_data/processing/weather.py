@@ -2,7 +2,7 @@ from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideW
 from metar import Metar
 from datetime import datetime, timedelta
 from sqlalchemy import func
-
+from sqlalchemy.orm.exc import NoResultFound
 from ..celery import celery
 
 from celery.utils.log import get_task_logger
@@ -102,13 +102,19 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
     with tm:
-        last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
+        try:
+            last_request=dbsession.query(SentRequestLog).order_by(SentRequestLog.time.desc()).first()
+        except NoResultFound:
+            last_request=None
         requests_last_hour=dbsession.query(SentRequestLog).filter(
         SentRequestLog.time>datetime.now()-timedelta(seconds=3600)).count()
 
     min_delay_seconds=1
     random_delay_scale=1
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
+
+    if last_request is not None and (datetime.now()-last_request.time).total_seconds() < 3600 and last_request.rate_limited:
+        raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
 
     if requests_last_hour>=25:
         if task is not None:
@@ -117,8 +123,8 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         else:
             sleep(retry_delay)
 
-    if last_request_time is not None and \
-       (datetime.now()-last_request_time).total_seconds() < min_delay_seconds:
+    if last_request is not None and \
+       (datetime.now()-last_request.time).total_seconds() < min_delay_seconds:
         if task is not None:
             raise task.retry(
                 exc=RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
