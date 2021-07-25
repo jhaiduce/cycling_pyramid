@@ -89,20 +89,12 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     import random
     import transaction
-    from time import sleep
 
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
     tm=transaction.manager
 
     from pyramid.paster import bootstrap
-
-    min_delay_seconds=1
-    random_delay_scale=1
-    retry_delay=random_delay(min_delay_seconds,random_delay_scale)
-
-    sleep(retry_delay)
-
     try:
         settings = bootstrap('/run/secrets/production.ini')['registry'].settings
         ogimet_url=settings['ogimet_url']
@@ -113,6 +105,10 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         last_request_time=dbsession.query(func.max(SentRequestLog.time).label('time')).one().time
         requests_last_hour=dbsession.query(SentRequestLog).filter(
         SentRequestLog.time>datetime.now()-timedelta(seconds=3600)).count()
+
+    min_delay_seconds=1
+    random_delay_scale=1
+    retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
     if requests_last_hour>=25:
         if task is not None:
