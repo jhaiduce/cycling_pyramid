@@ -15,6 +15,8 @@ import requests
 
 from time import sleep
 
+update_weather_group_max=100
+
 def random_delay(min_delay=1,random_scale=None):
 
     import random
@@ -414,7 +416,7 @@ def update_location_rides_weather(location_id):
 
         location_rides=dbsession.query(Ride).filter(
             ( Ride.startloc_id == location_id ) |
-            ( Ride.endloc_id == location_id ) )
+            ( Ride.endloc_id == location_id ) ).order_by(func.random()).limit(update_weather_group_max)
 
     from celery import chord
 
@@ -439,7 +441,9 @@ def fill_missing_weather():
     with tm:
         rides_without_weather=dbsession.query(Ride).filter(
             or_(Ride.wxdata==None, RideWeatherData.wx_station==None)
-        ).outerjoin(RideWeatherData,Ride.wxdata_id == RideWeatherData.id)
+        ).outerjoin(
+            RideWeatherData,Ride.wxdata_id == RideWeatherData.id
+        ).order_by(func.random()).limit(update_weather_group_max)
 
         from celery import chord, group
 
