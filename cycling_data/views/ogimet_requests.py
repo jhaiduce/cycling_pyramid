@@ -29,7 +29,7 @@ class ogimet_views(object):
         request_log=request_log.set_index('time')
 
         #windows=np.arange(np.timedelta64(5,'m'),np.timedelta64(125,'m'),np.timedelta64(5,'m'))
-        windows=np.arange(5,1440,5)
+        windows=np.arange(15,2880,15)
 
         counts=np.zeros([len(windows),len(request_log)],dtype=int)
         rate_limited=np.zeros([len(windows),len(request_log)])
