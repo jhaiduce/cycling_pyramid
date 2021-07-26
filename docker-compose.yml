@@ -62,7 +62,7 @@ services:
       replicas: 2
       resources:
         reservations:
-          memory: 1G
+          memory: 600M
     command: ["/usr/local/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--concurrency","2","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/local/bin/python3","/app/celery_healthcheck.py"]
