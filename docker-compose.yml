@@ -92,7 +92,7 @@ services:
     logging:
       driver: journald
   rabbitmq:
-    image: rabbitmq
+    image: rabbitmq:3.8
     container_name: cycling_stack_rabbitmq
     deploy:
       resources:
