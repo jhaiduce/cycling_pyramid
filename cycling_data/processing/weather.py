@@ -149,7 +149,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     try:
         if(ogimet_text.find('#Sorry')>-1):
-            e=ValueError('OGIMET quota limit reached')
+            e=ValueError('OGIMET quota limit reached, response was: "{}"'.format(ogimet_text))
             e.text=ogimet_text
             requestlog.rate_limited=True
             if task is not None:
