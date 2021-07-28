@@ -111,8 +111,8 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         recent_request_count=dbsession.query(SentRequestLog).filter(
         SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
 
-    min_delay_seconds=1
-    random_delay_scale=1
+    min_delay_seconds=30
+    random_delay_scale=30
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
     rate_limited_retry_delay=random_delay(3600*8,3600*8)
