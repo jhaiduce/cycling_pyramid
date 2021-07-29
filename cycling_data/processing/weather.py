@@ -111,11 +111,11 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         recent_request_count=dbsession.query(SentRequestLog).filter(
         SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
 
-    min_delay_seconds=60
-    random_delay_scale=60
+    min_delay_seconds=60*2
+    random_delay_scale=60*2
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
-    rate_limited_retry_delay=random_delay(3600*4,3600*4)
+    rate_limited_retry_delay=random_delay(3600*2,3600*2)
 
     if last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
         raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
