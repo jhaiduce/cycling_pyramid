@@ -120,7 +120,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     if last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
         raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
 
-    if recent_request_count>=25:
+    if recent_request_count>=5:
         if task is not None:
             raise task.retry(
                 exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
