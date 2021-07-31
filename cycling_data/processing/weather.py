@@ -91,8 +91,11 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     import random
     import transaction
+    from pytz import utc
 
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
+
+    slow_query=((datetime.utcnow().replace(tzinfo=utc)-dtstart).days > 84)
 
     tm=transaction.manager
 
@@ -117,7 +120,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     rate_limited_retry_delay=random_delay(3600*3,3600*3)
 
-    if last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
+    if slow_query and last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
         raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
 
     if recent_request_count>=55:
@@ -127,7 +130,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         else:
             sleep(retry_delay)
 
-    if last_request is not None and \
+    if slow_query and last_request is not None and \
        (datetime.now()-last_request.time).total_seconds() < min_delay_seconds:
         if task is not None:
             raise task.retry(
