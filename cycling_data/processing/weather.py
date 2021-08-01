@@ -87,6 +87,46 @@ def extract_metars_from_ogimet(text):
 
     return dates,metars
 
+def check_ogimet_request_rate(dbsession,task=None):
+
+    import random
+    import transaction
+    from pytz import utc
+
+    tm=transaction.manager
+
+    with tm:
+        try:
+            last_request=dbsession.query(SentRequestLog).order_by(SentRequestLog.time.desc()).first()
+        except NoResultFound:
+            last_request=None
+        recent_request_count=dbsession.query(SentRequestLog).filter(
+                SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
+
+    min_delay_seconds=60*3
+    random_delay_scale=60*2
+    retry_delay=random_delay(min_delay_seconds,random_delay_scale)
+
+    rate_limited_retry_delay=random_delay(3600*3,3600*3)
+
+    if last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
+        raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
+
+    if recent_request_count>=55:
+        if task is not None:
+            raise task.retry(
+                exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
+        else:
+            sleep(retry_delay)
+
+    if last_request is not None and \
+       (datetime.now()-last_request.time).total_seconds() < min_delay_seconds:
+        if task is not None:
+            raise task.retry(
+                exc=RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
+        else:
+            sleep(retry_delay)
+
 def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     import random
@@ -106,49 +146,26 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     except:
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
+    if slow_query:
+        # Check past ogimet requests to avoid hitting rate limits
+        check_ogimet_request_rate(dbsession,task)
+
     with tm:
-        try:
-            last_request=dbsession.query(SentRequestLog).order_by(SentRequestLog.time.desc()).first()
-        except NoResultFound:
-            last_request=None
-        recent_request_count=dbsession.query(SentRequestLog).filter(
-        SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
+        requestlog=SentRequestLog(time=datetime.now())
+        dbsession.add(requestlog)
+
+    # Download METARs
+    ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
+    ogimet_text=ogimet_result.text
 
     min_delay_seconds=60*3
     random_delay_scale=60*2
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
-    rate_limited_retry_delay=random_delay(3600*3,3600*3)
-
-    if slow_query and last_request is not None and (datetime.now()-last_request.time).total_seconds() < rate_limited_retry_delay and last_request.rate_limited:
-        raise RuntimeError('Last OGIMET request was {} minutes ago and was rate limited'.format((datetime.now()-last_request.time).total_seconds()/60))
-
-    if recent_request_count>=55:
-        if task is not None:
-            raise task.retry(
-                exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
-        else:
-            sleep(retry_delay)
-
-    if slow_query and last_request is not None and \
-       (datetime.now()-last_request.time).total_seconds() < min_delay_seconds:
-        if task is not None:
-            raise task.retry(
-                exc=RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
-        else:
-            sleep(retry_delay)
-
-    # Download METARs
-    ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
-
     with tm:
-        requestlog=SentRequestLog(
-            time=datetime.now(),
-            status_code=ogimet_result.status_code,
-            url=ogimet_result.url)
-
-        ogimet_text=ogimet_result.text
-        dbsession.add(requestlog)
+        dbsession.merge(requestlog)
+        requestlog.status_code=ogimet_result.status_code
+        requestlog.url=ogimet_result.url
 
     try:
         if(ogimet_text.find('#Sorry')>-1):
