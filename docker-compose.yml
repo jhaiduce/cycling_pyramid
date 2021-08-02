@@ -175,7 +175,7 @@ volumes:
   mysql-data:
 configs:
   mysql-config-cycling:
-    name: mysql-config-cycling.5
+    name: mysql-config-cycling.6
     file: ./mysql-config-cycling.cnf
   nginx-conf-cycling:
     name: nginx-conf-cycling.3

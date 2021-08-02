@@ -132,6 +132,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     import random
     import transaction
     from pytz import utc
+    from sqlite3 import Connection as sqliteConnection
 
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
@@ -147,12 +148,25 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
     if slow_query:
-        # Check past ogimet requests to avoid hitting rate limits
-        check_ogimet_request_rate(dbsession,task)
 
-    with tm:
-        requestlog=SentRequestLog(time=datetime.now())
-        dbsession.add(requestlog)
+        conn=dbsession.bind
+
+        if conn.dialect.name!='sqlite':
+            conn.execute('LOCK TABLES sent_request_log WRITE')
+
+        try:
+
+            # Check past ogimet requests to avoid hitting rate limits
+            check_ogimet_request_rate(dbsession,task)
+
+            with tm:
+                requestlog=SentRequestLog(time=datetime.now())
+                dbsession.add(requestlog)
+
+        finally:
+            if conn.dialect.name!='sqlite':
+                conn.execute('UNLOCK TABLES')
+            pass
 
     # Download METARs
     ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
