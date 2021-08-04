@@ -103,7 +103,7 @@ def check_ogimet_request_rate(dbsession,task=None):
         recent_request_count=dbsession.query(SentRequestLog).filter(
                 SentRequestLog.time>datetime.now()-timedelta(seconds=3600*2)).count()
 
-    min_delay_seconds=60*3
+    min_delay_seconds=60*4
     random_delay_scale=60*2
     retry_delay=random_delay(min_delay_seconds,random_delay_scale)
 
