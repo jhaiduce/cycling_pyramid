@@ -4,6 +4,7 @@ USER root
 
 WORKDIR /test
 
+RUN apt-get --allow-releaseinfo-change update
 RUN apt-get -y install curl libmariadb-dev libmariadb-dev-compat
 
 COPY requirements.test.txt /test
