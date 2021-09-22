@@ -409,7 +409,7 @@ class MetarTests(BaseTest):
     
     ogimet_text_quota_exceeded="""#Sorry, Your quota limit for slow queries rate has been reached"""
 
-    ride_average_weather={'windspeed': 11.269047352721849, 'winddir': 91.57387380345287, 'temperature': 8.809170907242839, 'gust': None, 'dewpoint': 5.229166666666665, 'relative_humidity': 0.7822210166871647, 'rain': 0.0, 'snow': 0.0, 'pressure': 1027.706784398859}
+    ride_average_weather={'windspeed': 11.269047352721849, 'winddir': 190.0, 'temperature': 8.809170907242839, 'gust': None, 'dewpoint': 5.229166666666665, 'relative_humidity': 0.7822210166871647, 'rain': 0.0, 'snow': 0.0, 'pressure': 1027.706784398859}
 
     def setUp(self):
         super(MetarTests, self).setUp()

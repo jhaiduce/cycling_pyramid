@@ -409,7 +409,7 @@ def average_weather(metars,dtstart,dtend,altitude):
         values[key] = obs_avg
 
     # Convert wind components to polar coordinates
-    winddir=(90-np.arctan2(values['wind_n']*180/np.pi,values['wind_e']))%360
+    winddir=(90-np.arctan2(values['wind_n'],values['wind_e'])*180/np.pi)%360
     values['winddir']=winddir
     values['windspeed']=np.sqrt(values['wind_n']**2+values['wind_e']**2)
 
