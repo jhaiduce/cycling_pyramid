@@ -147,6 +147,8 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     except:
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
+    requestlog=SentRequestLog(time=datetime.now())
+
     if slow_query:
 
         conn=dbsession.bind
@@ -160,7 +162,6 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
             check_ogimet_request_rate(dbsession,task)
 
             with tm:
-                requestlog=SentRequestLog(time=datetime.now())
                 dbsession.add(requestlog)
 
         finally:
