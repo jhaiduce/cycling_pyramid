@@ -386,11 +386,11 @@ def average_weather(metars,dtstart,dtend,altitude):
         obs_valid=np.isfinite(obs)
 
         if np.count_nonzero(obs_valid)<2:
-            values[key] = None
+            values[key] = np.nan
             continue
 
         if times[obs_valid][0]>dtstart64 or times[obs_valid][-1]<dtend64:
-            values[key] = None
+            values[key] = np.nan
             continue
 
         interpolator=interp1d(times[obs_valid].astype(float),obs[obs_valid])
@@ -502,6 +502,7 @@ def update_ride_weather(self,ride_id, train_model=True):
     from pytz import utc
     from ..celery import session_factory
     import transaction
+    import numpy as np
 
     logger.debug('Received update weather task for ride {}'.format(ride_id))
 
@@ -541,7 +542,12 @@ def update_ride_weather(self,ride_id, train_model=True):
             if ride.wxdata is None:
                 ride.wxdata=RideWeatherData()
             for key,value in averages.items():
-                setattr(ride.wxdata,key,value)
+                if np.isnan(value):
+                    # Store NaN values as None
+                    setattr(ride.wxdata,key,None)
+                else:
+                    # Store the value
+                    setattr(ride.wxdata,key,value)
             ride.wxdata.station=metars[0].station
 
     if train_model:
