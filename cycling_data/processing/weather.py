@@ -147,27 +147,25 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     except:
         ogimet_url='https://www.ogimet.com/display_metars2.php'
 
-    requestlog=SentRequestLog(time=datetime.now())
+    conn=dbsession.bind
 
-    if slow_query:
+    if conn.dialect.name!='sqlite':
+        conn.execute('LOCK TABLES sent_request_log WRITE')
 
-        conn=dbsession.bind
+    try:
 
-        if conn.dialect.name!='sqlite':
-            conn.execute('LOCK TABLES sent_request_log WRITE')
-
-        try:
-
+        if slow_query:
             # Check past ogimet requests to avoid hitting rate limits
             check_ogimet_request_rate(dbsession,task)
 
-            with tm:
-                dbsession.add(requestlog)
+        with tm:
+            requestlog=SentRequestLog(time=datetime.now())
+            dbsession.add(requestlog)
 
-        finally:
-            if conn.dialect.name!='sqlite':
-                conn.execute('UNLOCK TABLES')
-            pass
+    finally:
+        if conn.dialect.name!='sqlite':
+            conn.execute('UNLOCK TABLES')
+        pass
 
     # Download METARs
     ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
