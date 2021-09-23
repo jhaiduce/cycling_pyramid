@@ -15,7 +15,7 @@ import requests
 
 from time import sleep
 
-update_weather_group_max=50
+update_weather_group_max=150
 
 def random_delay(min_delay=1,random_scale=None):
 
