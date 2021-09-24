@@ -256,7 +256,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         stored_metars=[]
 
         for metar,parse_error in fetched_metars:
-            wxdata=StationWeatherData(session,metar)
+            wxdata=StationWeatherData(session,metar=metar,parse_error=parse_error)
 
             q=session.query(StationWeatherData).filter(
                 StationWeatherData.station==wxdata.station
