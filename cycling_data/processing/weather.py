@@ -207,12 +207,20 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         logger.warn('No METARS found for {}, {} - {}, OGIMET response was {}'.format(station,dtstart,dtend,ogimet_text))
 
     # Parse metar codes
-    metars=[
-        Metar.Metar(metar_code,year=date.year,month=date.month,utcdelta=0)
-        for date,metar_code in zip(dates,metar_codes)]
+    metars=[]
+    for date, metar_code in zip(dates,metar_codes):
+        try:
+            metar=Metar.Metar(
+                metar_code,year=date.year,month=date.month,utcdelta=0)
+        except Metar.ParserError:
+            parse_error=True
+        else:
+            parse_error=True
+
+        metars.append((metar,parse_error))
 
     # Sort in chronological order
-    metars=sorted(metars,key=lambda m: m.time)
+    metars=sorted(metars,key=lambda m: m[0].time)
     
     return metars
 
@@ -247,7 +255,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
         stored_metars=[]
 
-        for metar in fetched_metars:
+        for metar,parse_error in fetched_metars:
             wxdata=StationWeatherData(session,metar)
 
             q=session.query(StationWeatherData).filter(
@@ -365,7 +373,8 @@ def average_weather(metars,dtstart,dtend,altitude):
                 Metar.Metar(metar.metar,
                             year=metar.report_time.year,
                             month=metar.report_time.month,
-                            utcdelta=0).weather) for metar in metars]
+                            utcdelta=0,strict=False).weather)
+                for metar in metars]
 
     winddir=np.array([metar.winddir for metar in metars],dtype=float)
     windspeed=np.array([metar.windspeed for metar in metars],dtype=float)

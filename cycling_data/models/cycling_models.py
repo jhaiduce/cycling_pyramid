@@ -510,6 +510,8 @@ class StationWeatherData(WeatherData):
     metar = Column(Text)
     report_time = Column(DateTime)
     weather = Column(String(255))
+    parse_error = Column(Boolean)
+
     __mapper_args__ = {
         'polymorphic_identity':'stationweatherdata'
         }
