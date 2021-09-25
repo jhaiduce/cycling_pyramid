@@ -215,7 +215,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         except Metar.ParserError:
             parse_error=True
         else:
-            parse_error=True
+            parse_error=False
 
         metars.append((metar,parse_error))
 
@@ -256,7 +256,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         stored_metars=[]
 
         for metar,parse_error in fetched_metars:
-            wxdata=StationWeatherData(session,metar=metar,parse_error=parse_error)
+            wxdata=StationWeatherData(session,obs=metar,parse_error=parse_error)
 
             q=session.query(StationWeatherData).filter(
                 StationWeatherData.station==wxdata.station
