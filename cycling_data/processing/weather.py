@@ -209,10 +209,15 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     # Parse metar codes
     metars=[]
     for date, metar_code in zip(dates,metar_codes):
+
         try:
             metar=Metar.Metar(
                 metar_code,year=date.year,month=date.month,utcdelta=0)
         except Metar.ParserError:
+            # Try parsing with strict=False
+            metar=Metar.Metar(
+                metar_code,year=date.year,month=date.month,utcdelta=0,
+                strict=False)
             parse_error=True
         else:
             parse_error=False
