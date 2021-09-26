@@ -282,6 +282,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
 def fetch_metars_for_ride(session,ride,task=None):
     from .locations import get_nearby_locations
+    from pytz import utc
     import transaction
 
     tm = transaction.manager
@@ -309,8 +310,10 @@ def fetch_metars_for_ride(session,ride,task=None):
     for station in nearby_stations:
 
         metars=get_metars(session,station,dtstart,dtend,task=task)
-        
-        if len(metars)>0:
+
+        data_spans_interval=metars[0].report_time.replace(tzinfo=utc)<dtstart and metars[-1].report_time.replace(tzinfo=utc)>dtend
+
+        if len(metars)>0 and data_spans_interval:
             return metars
         
     return []
