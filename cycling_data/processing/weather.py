@@ -359,7 +359,10 @@ def fetch_metars_for_ride(session,ride,task=None):
 
         metars=get_metars(session,station,dtstart,dtend,task=task)
 
-        data_spans_interval=metars[0].report_time.replace(tzinfo=utc)<dtstart and metars[-1].report_time.replace(tzinfo=utc)>dtend
+        if len(metars)>0:
+            data_spans_interval=metars[0].report_time.replace(tzinfo=utc)<dtstart and metars[-1].report_time.replace(tzinfo=utc)>dtend
+        else:
+            data_spans_interval=False
 
         if len(metars)>0 and data_spans_interval:
             return metars
