@@ -247,7 +247,7 @@ def download_metars_singleday(station,dtstart,dtend,dbsession=None,task=None):
         requestlog.url=ogimet_result.url
 
     try:
-        if(ogimet_text.find('#Sorry')>-1):
+        if ogimet_text.find('#Sorry')>-1:
             e=ValueError('OGIMET quota limit reached, response was: "{}"'.format(ogimet_text))
             e.text=ogimet_text
             requestlog.rate_limited=True
