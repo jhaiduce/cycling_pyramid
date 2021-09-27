@@ -517,13 +517,15 @@ class MetarTests(BaseTest):
 
             with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response) as fetch_metars_21jul:
 
-                metars=fetch_metars_for_ride(
-                    session,ride_that_produces_negative_windspeed)
+                with self.assertRaisesRegex(
+                        RuntimeError,'Too soon since last OGIMET query'):
+                    metars=fetch_metars_for_ride(
+                        session,ride_that_produces_negative_windspeed)
 
                 fetch_metars_21jul.assert_called_with(
                     'KDCA',
                     ride_that_produces_negative_windspeed.start_time-window_expansion,
-                    ride_that_produces_negative_windspeed.end_time+window_expansion,
+                    ride_that_produces_negative_windspeed.start_time.astimezone(UTC).replace(hour=23,minute=59,second=59),
                     url='https://www.ogimet.com/display_metars2.php'
                 )
 

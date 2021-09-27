@@ -117,7 +117,7 @@ def check_ogimet_request_rate(dbsession,task=None):
             raise task.retry(
                 exc=RuntimeError('Too many recent OGIMET queries. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
         else:
-            sleep(retry_delay)
+            raise RuntimeError('Too many recent OGIMET queries.')
 
     if last_request is not None and \
        (datetime.now()-last_request.time).total_seconds() < min_delay_seconds:
@@ -125,14 +125,79 @@ def check_ogimet_request_rate(dbsession,task=None):
             raise task.retry(
                 exc=RuntimeError('Too soon since last OGIMET query. Retrying in {} seconds'.format(retry_delay)),countdown=retry_delay)
         else:
-            sleep(retry_delay)
+            raise RuntimeError('Too soon since last OGIMET query.')
+
+def parse_and_store_metars(metars,session=None):
+
+    import transaction
+
+    tm=transaction.manager
+
+    stored_metars=[]
+
+    for metar,parse_error in metars:
+        wxdata=StationWeatherData(session,obs=metar,parse_error=parse_error)
+
+        q=session.query(StationWeatherData).filter(
+            StationWeatherData.station==wxdata.station
+        ).filter(
+            StationWeatherData.report_time==wxdata.report_time
+        ).filter(
+            StationWeatherData.metar==wxdata.metar
+        )
+
+        if q.count()>=1:
+            wxdata=q.first()
+        else:
+            with tm:
+                session.add(wxdata)
+        stored_metars.append(wxdata)
+
+    return stored_metars
 
 def download_metars(station,dtstart,dtend,dbsession=None,task=None):
+
+    from pytz import utc
+
+    # Convert times to UTC
+    dtstart=dtstart.astimezone(utc)
+    dtend=dtend.astimezone(utc)
+
+    interval_start=dtstart
+
+    parsed_metars=[]
+
+    while interval_start<dtend:
+
+        day_start=interval_start.replace(
+            hour=0,minute=0,second=0,microsecond=0)
+
+        day_end=day_start+timedelta(1)-timedelta(seconds=1)
+
+        interval_end=min(day_end,dtend)
+
+        metars=download_metars_singleday(
+            station,interval_start,interval_end,dbsession,task)
+
+        parsed_metars+=parse_and_store_metars(metars,dbsession)
+
+        # Start next interval at beginning of the next day
+        interval_start=day_start+timedelta(1)
+
+    return parsed_metars
+
+def download_metars_singleday(station,dtstart,dtend,dbsession=None,task=None):
 
     import random
     import transaction
     from pytz import utc
     from sqlite3 import Connection as sqliteConnection
+
+    if dtstart.day!=dtend.day:
+        raise ValueError('dtstart and dtend must be different times on the same day')
+
+    if dtend<=dtstart:
+        raise ValueError('dtend must be greater than dtstart')
 
     logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
 
@@ -256,27 +321,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
             data_spans_interval=False
 
     if not data_spans_interval:
-        fetched_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session,task=task)
-
-        stored_metars=[]
-
-        for metar,parse_error in fetched_metars:
-            wxdata=StationWeatherData(session,obs=metar,parse_error=parse_error)
-
-            q=session.query(StationWeatherData).filter(
-                StationWeatherData.station==wxdata.station
-            ).filter(
-                StationWeatherData.report_time==wxdata.report_time
-            ).filter(
-                StationWeatherData.metar==wxdata.metar
-            )
-
-            if q.count()>=1:
-                wxdata=q.first()
-            else:
-                with tm:
-                    session.add(wxdata)
-            stored_metars.append(wxdata)
+        stored_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session,task=task)
 
     return stored_metars
 
