@@ -255,7 +255,9 @@ def download_metars_singleday(station,dtstart,dtend,dbsession=None,task=None):
                 raise task.retry(exc=e,countdown=retry_delay)
             else:
                 raise e
-        if(ogimet_text.find('SELECT command denied')>-1):
+        if not ogimet_text.find('METAR')>-1 \
+           and not ogimet_text.find('SPECI')>-1 \
+           and ogimet_text.find('SELECT command denied')>-1:
             e=ValueError('OGIMET internal database error')
             e.text=ogimet_text
             if task is not None:
