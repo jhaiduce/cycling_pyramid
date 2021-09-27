@@ -38,7 +38,7 @@ def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metar
     params={
         'lang':'en',
         'lugar':station,
-        'tipo':'SA',
+        'tipo':'ALL',
         'ord':'DIR',
         'nil':'NO',
         'fmt':'txt',
@@ -83,7 +83,8 @@ def extract_metars_from_ogimet(text):
             dates.append(date)
             metar=head[13:]
             if(metar.endswith('$')): metar=metar[:-1]
-            metars.append(metar)
+            if metar.startswith('METAR') or metar.startswith('SPECI'):
+                metars.append(metar)
 
     return dates,metars
 
