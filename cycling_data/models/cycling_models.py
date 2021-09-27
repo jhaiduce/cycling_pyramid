@@ -892,11 +892,17 @@ class Ride(Base,TimestampedRecord):
         if (self.startloc is not None
             and self.startloc.lat is not None
             and self.startloc.lon is not None):
-            loc=location_to_locationinfo(self.startloc)
+            try:
+                loc=location_to_locationinfo(self.startloc)
+            except:
+                return None
         elif (self.endloc is not None
               and self.endloc.lat is not None
               and self.endloc.lon is not None):
-            loc=location_to_locationinfo(self.endloc)
+            try:
+                loc=location_to_locationinfo(self.endloc)
+            except:
+                return None
         else:
             return None
 
