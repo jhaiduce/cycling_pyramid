@@ -1,4 +1,4 @@
-from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog
+from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog, WeatherFetchLog
 from metar import Metar
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -164,26 +164,10 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     dtstart=dtstart.astimezone(utc)
     dtend=dtend.astimezone(utc)
 
-    interval_start=dtstart
+    metars=download_metars_singleday(
+        station,dtstart,dtend,dbsession,task)
 
-    parsed_metars=[]
-
-    while interval_start<dtend:
-
-        day_start=interval_start.replace(
-            hour=0,minute=0,second=0,microsecond=0)
-
-        day_end=day_start+timedelta(1)-timedelta(seconds=1)
-
-        interval_end=min(day_end,dtend)
-
-        metars=download_metars_singleday(
-            station,interval_start,interval_end,dbsession,task)
-
-        parsed_metars+=parse_and_store_metars(metars,dbsession)
-
-        # Start next interval at beginning of the next day
-        interval_start=day_start+timedelta(1)
+    parsed_metars=parse_and_store_metars(metars,dbsession)
 
     return parsed_metars
 
@@ -306,25 +290,109 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
 
     tm=transaction.manager
 
+    # Convert times to UTC
+    dtstart=dtstart.astimezone(utc)
+    dtend=dtend.astimezone(utc)
+
+    # Apply window expansion
+    dtstart_exp=dtstart-window_expansion
+    dtend_exp=dtend+window_expansion
+
     with tm:
-        stored_metars=session.query(StationWeatherData).filter(
-            StationWeatherData.station==station
-        ).filter(
-            StationWeatherData.report_time>dtstart-window_expansion
-        ).filter(
-            StationWeatherData.report_time<dtend+window_expansion
-        ).order_by(StationWeatherData.report_time).all()
+        stored_metars=get_stored_metars(session,station,dtstart_exp,dtend_exp)
+
+        # Check whether stored METARs span the requested interval
+        if len(stored_metars)>0:
+            data_spans_full_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend
+        else:
+            data_spans_full_interval=False
+
+    if data_spans_full_interval:
+        return stored_metars
+            
+    interval_start=dtstart_exp
+
+    metars=[]
+
+    while interval_start<dtend_exp:
+
+        day_start=interval_start.replace(
+            hour=0,minute=0,second=0,microsecond=0)
+
+        day_end=day_start+timedelta(1)-timedelta(seconds=1)
+
+        interval_end=min(day_end,dtend_exp)
 
         if len(stored_metars)>0:
-            logger.debug('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
-
-            data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend
+            data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<max(interval_start,dtstart) and stored_metars[-1].report_time.replace(tzinfo=utc)>min(interval_end,dtend)
         else:
-            logger.debug('No stored METARS found')
+            data_spans_interval=False        
+
+        metars+=get_metars_singleday(session,station,interval_start,interval_end,window_expansion,task)
+
+        # Start next interval at beginning of the next day
+        interval_start=day_start+timedelta(1)
+
+    return metars
+
+def get_stored_metars(session,station,dtstart,dtend):
+
+    from pytz import utc
+    import transaction
+
+    stored_metars=session.query(StationWeatherData).filter(
+        StationWeatherData.station==station
+    ).filter(
+        StationWeatherData.report_time>=dtstart
+    ).filter(
+        StationWeatherData.report_time<=dtend
+    ).order_by(StationWeatherData.report_time).all()
+
+    if len(stored_metars)>0:
+        logger.debug('Stored METARS span range {} - {}'.format(stored_metars[0].report_time,stored_metars[-1].report_time))
+
+    else:
+        logger.debug('No stored METARS found')
+
+    return stored_metars
+
+def get_metars_singleday(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
+
+    from pytz import utc
+    import transaction
+
+    tm=transaction.manager
+
+    with tm:
+
+        stored_metars=get_stored_metars(session,station,dtstart,dtend)
+
+        if len(stored_metars)>0:
+            data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart+timedelta(seconds=3600) and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend-timedelta(seconds=3600)
+        else:
             data_spans_interval=False
 
-    if not data_spans_interval:
-        stored_metars=download_metars(station.name,dtstart-window_expansion,dtend+window_expansion,dbsession=session,task=task)
+        fetch_log=session.query(WeatherFetchLog).filter(
+            WeatherFetchLog.station==station
+        ).filter(
+            WeatherFetchLog.dtstart==dtstart
+        ).filter(
+            WeatherFetchLog.dtend==dtend
+        ).order_by(WeatherFetchLog.time.desc()).first()
+
+    if fetch_log is None:
+        download_needed=True
+    else:
+        download_needed=(fetch_log.time.replace(tzinfo=utc)<dtend+timedelta(seconds=7200))
+
+    if download_needed:
+        stored_metars=download_metars(station.name,dtstart,dtend,dbsession=session,task=task)
+        with tm:
+            log=WeatherFetchLog(time=datetime.utcnow(),
+                                station=station,
+                                dtstart=dtstart,
+                                dtend=dtend)
+            session.add(log)
 
     return stored_metars
 
