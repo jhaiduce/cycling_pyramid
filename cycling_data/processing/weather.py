@@ -158,25 +158,13 @@ def parse_and_store_metars(metars,session=None):
 
 def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
-    from pytz import utc
-
-    # Convert times to UTC
-    dtstart=dtstart.astimezone(utc)
-    dtend=dtend.astimezone(utc)
-
-    metars=download_metars_singleday(
-        station,dtstart,dtend,dbsession,task)
-
-    parsed_metars=parse_and_store_metars(metars,dbsession)
-
-    return parsed_metars
-
-def download_metars_singleday(station,dtstart,dtend,dbsession=None,task=None):
-
     import random
     import transaction
     from pytz import utc
     from sqlite3 import Connection as sqliteConnection
+
+    dtstart=dtstart.astimezone(utc)
+    dtend=dtend.astimezone(utc)
 
     if dtstart.day!=dtend.day:
         raise ValueError('dtstart and dtend must be different times on the same day')
@@ -279,7 +267,9 @@ def download_metars_singleday(station,dtstart,dtend,dbsession=None,task=None):
     # Sort in chronological order
     metars=sorted(metars,key=lambda m: m[0].time)
     
-    return metars
+    parsed_metars=parse_and_store_metars(metars,dbsession)
+
+    return parsed_metars
 
 def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
 
