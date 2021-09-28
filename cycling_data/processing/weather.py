@@ -1,4 +1,4 @@
-from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog, WeatherFetchLog
+from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog
 from metar import Metar
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -328,7 +328,13 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         else:
             data_spans_interval=False        
 
-        metars+=get_metars_singleday(session,station,interval_start,interval_end,window_expansion,task)
+        if data_spans_interval:
+            metars+=[metar for metar in stored_metars if
+                     metar.report_time.replace(tzinfo=utc)>interval_start
+                     and metar.report_time.replace(tzinfo=utc)<=interval_end]
+        else:
+            metars+=download_metars(station.name,interval_start,interval_end,
+                                    dbsession=session,task=task)
 
         # Start next interval at beginning of the next day
         interval_start=day_start+timedelta(1)
@@ -353,46 +359,6 @@ def get_stored_metars(session,station,dtstart,dtend):
 
     else:
         logger.debug('No stored METARS found')
-
-    return stored_metars
-
-def get_metars_singleday(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
-
-    from pytz import utc
-    import transaction
-
-    tm=transaction.manager
-
-    with tm:
-
-        stored_metars=get_stored_metars(session,station,dtstart,dtend)
-
-        if len(stored_metars)>0:
-            data_spans_interval=stored_metars[0].report_time.replace(tzinfo=utc)<dtstart+timedelta(seconds=3600) and stored_metars[-1].report_time.replace(tzinfo=utc)>dtend-timedelta(seconds=3600)
-        else:
-            data_spans_interval=False
-
-        fetch_log=session.query(WeatherFetchLog).filter(
-            WeatherFetchLog.station==station
-        ).filter(
-            WeatherFetchLog.dtstart==dtstart
-        ).filter(
-            WeatherFetchLog.dtend==dtend
-        ).order_by(WeatherFetchLog.time.desc()).first()
-
-    if fetch_log is None:
-        download_needed=True
-    else:
-        download_needed=(fetch_log.time.replace(tzinfo=utc)<dtend+timedelta(seconds=7200))
-
-    if download_needed:
-        stored_metars=download_metars(station.name,dtstart,dtend,dbsession=session,task=task)
-        with tm:
-            log=WeatherFetchLog(time=datetime.utcnow(),
-                                station=station,
-                                dtstart=dtstart,
-                                dtend=dtend)
-            session.add(log)
 
     return stored_metars
 

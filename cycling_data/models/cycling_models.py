@@ -1000,18 +1000,6 @@ class SentRequestLog(Base):
         if self.rate_limited is None:
             self.rate_limited=False
 
-class WeatherFetchLog(Base):
-
-    __tablename__='weather_fetch_log'
-
-    id = Column(Integer, Sequence('weatherfetchlog_seq'), primary_key=True)
-    time=Column(DateTime, server_default=func.now())
-    station_id= Column(Integer, ForeignKey('location.id',name='fk_location_id'))
-    dtstart=Column(DateTime)
-    dtend=Column(DateTime)
-
-    station=relationship(Location)
-
 class PredictionModelResult(Base,TimestampedRecord):
     __tablename__ = 'predictionmodel_result'
     __table_args__={'mysql_encrypted':'yes'}
