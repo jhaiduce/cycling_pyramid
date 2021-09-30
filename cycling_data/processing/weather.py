@@ -325,7 +325,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
                 WeatherFetchLog.station==station,
                 WeatherFetchLog.dtstart==interval_start,
                 WeatherFetchLog.dtend==interval_end
-            ).first()
+            ).order_by(WeatherFetchLog.time.desc()).first()
 
         if last_fetch is not None:
 
