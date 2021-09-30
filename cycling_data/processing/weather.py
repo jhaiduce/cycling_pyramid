@@ -377,7 +377,7 @@ def fetch_metars_for_ride(session,ride,task=None):
         dtstart,dtend=ride_times_utc(ride)
 
     with tm:
-        nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10)
+        nearby_stations=get_nearby_locations(session,lat_mid,lon_mid).filter(Location.loctype_id==2).limit(10).all()
 
     for station in nearby_stations:
 
