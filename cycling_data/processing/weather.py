@@ -172,7 +172,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     if dtend<=dtstart:
         raise ValueError('dtend must be greater than dtstart')
 
-    logger.info('Downloading METARS for {}, {} - {}'.format(station,dtstart,dtend))
+    logger.info('Downloading METARS for {}, {} - {}'.format(station.name,dtstart,dtend))
 
     slow_query=((datetime.utcnow().replace(tzinfo=utc)-dtstart).days > 84)
 
@@ -206,7 +206,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         pass
 
     # Download METARs
-    ogimet_result=fetch_metars(station,dtstart,dtend,url=ogimet_url)
+    ogimet_result=fetch_metars(station.name,dtstart,dtend,url=ogimet_url)
     ogimet_text=ogimet_result.text
 
     min_delay_seconds=60*3
@@ -244,7 +244,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     dates,metar_codes=extract_metars_from_ogimet(ogimet_text)
 
     if len(metar_codes)==0:
-        logger.warn('No METARS found for {}, {} - {}, OGIMET response was {}'.format(station,dtstart,dtend,ogimet_text))
+        logger.warn('No METARS found for {}, {} - {}, OGIMET response was {}'.format(station.name,dtstart,dtend,ogimet_text))
 
     # Parse metar codes
     metars=[]
@@ -355,7 +355,7 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
             needs_update = not data_spans_interval
 
         if needs_update:
-            metars+=download_metars(station.name,interval_start,interval_end,
+            metars+=download_metars(station,interval_start,interval_end,
                                     dbsession=session,task=task)
 
         else:
