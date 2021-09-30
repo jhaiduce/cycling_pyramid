@@ -603,6 +603,11 @@ def update_ride_weather(self,ride_id, train_model=True):
     dbsession=session_factory()
     dbsession.expire_on_commit=False
 
+    conn=dbsession.bind
+    if conn.dialect.name!='sqlite':
+        conn.execute('UNLOCK TABLES')
+    pass
+
     with tm:
 
         ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
