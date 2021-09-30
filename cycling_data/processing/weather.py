@@ -269,6 +269,13 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
     
     parsed_metars=parse_and_store_metars(metars,dbsession)
 
+    with tm:
+        log=WeatherFetchLog(time=datetime.utcnow(),
+                            station=station,
+                            dtstart=dtstart,
+                            dtend=dtstart)
+        dbsession.add(log)
+
     return parsed_metars
 
 def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=3600*4),task=None):
@@ -350,13 +357,6 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         if needs_update:
             metars+=download_metars(station.name,interval_start,interval_end,
                                     dbsession=session,task=task)
-
-            with tm:
-                log=WeatherFetchLog(time=datetime.utcnow(),
-                                    station=station,
-                                    dtstart=interval_start,
-                                    dtend=interval_end)
-                session.add(log)
 
         else:
             metars+=[metar for metar in stored_metars if
