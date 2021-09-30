@@ -1,4 +1,4 @@
-from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog
+from ..models.cycling_models import Ride, WeatherData, StationWeatherData, RideWeatherData, Location, SentRequestLog, WeatherFetchLog
 from metar import Metar
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -318,13 +318,50 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         else:
             data_spans_interval=False        
 
-        if data_spans_interval:
+        with tm:
+            last_fetch=session.query(
+                WeatherFetchLog
+            ).filter(
+                WeatherFetchLog.station==station,
+                WeatherFetchLog.dtstart==interval_start,
+                WeatherFetchLog.dtend==interval_end
+            ).first()
+
+        if last_fetch is not None:
+
+            # Label fetches more than 2 days old as stale
+            stale_fetch = (datetime.now() - last_fetch.time) > timedelta(2)
+
+            # Data fetched less than 2 hours after interval_end could have new
+            # reports added
+            data_could_have_changed = (last_fetch.time - interval_end) < timedelta(seconds=3600)
+
+            # We don't want to re-try fetches from the last 15 minutes
+            very_recent_fetch = (datetime.now() - last_fetch.time) < timedelta(seconds=900)
+
+            needs_update = (
+                not data_spans_interval
+                and (stale_fetch or data_could_have_changed)
+                and not very_recent_fetch)
+
+        else:
+            needs_update = not data_spans_interval
+
+        if needs_update:
+            metars+=download_metars(station.name,interval_start,interval_end,
+                                    dbsession=session,task=task)
+
+            with tm:
+                log=WeatherFetchLog(time=datetime.utcnow(),
+                                    station=station,
+                                    dtstart=dtstart,
+                                    dtend=dtend)
+                session.add(log)
+
+        else:
             metars+=[metar for metar in stored_metars if
                      metar.report_time.replace(tzinfo=utc)>interval_start
                      and metar.report_time.replace(tzinfo=utc)<=interval_end]
-        else:
-            metars+=download_metars(station.name,interval_start,interval_end,
-                                    dbsession=session,task=task)
 
         # Start next interval at beginning of the next day
         interval_start=day_start+timedelta(1)
