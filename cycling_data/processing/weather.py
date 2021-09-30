@@ -187,10 +187,10 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
 
     conn=dbsession.bind
 
-    if conn.dialect.name!='sqlite':
-        conn.execute('LOCK TABLES sent_request_log WRITE')
-
     try:
+
+        if conn.dialect.name!='sqlite':
+            conn.execute('LOCK TABLES sent_request_log WRITE')
 
         if slow_query:
             # Check past ogimet requests to avoid hitting rate limits
