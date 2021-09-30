@@ -273,7 +273,7 @@ def download_metars(station,dtstart,dtend,dbsession=None,task=None):
         log=WeatherFetchLog(time=datetime.utcnow(),
                             station=station,
                             dtstart=dtstart,
-                            dtend=dtstart)
+                            dtend=dtend)
         dbsession.add(log)
 
     return parsed_metars
