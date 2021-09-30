@@ -354,8 +354,8 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
             with tm:
                 log=WeatherFetchLog(time=datetime.utcnow(),
                                     station=station,
-                                    dtstart=dtstart,
-                                    dtend=dtend)
+                                    dtstart=interval_start,
+                                    dtend=interval_end)
                 session.add(log)
 
         else:
