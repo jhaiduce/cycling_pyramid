@@ -337,11 +337,11 @@ def get_metars(session,station,dtstart,dtend,window_expansion=timedelta(seconds=
         if last_fetch is not None:
 
             # Label fetches more than 2 days old as stale
-            stale_fetch = (datetime.now() - last_fetch.time) > timedelta(2)
+            stale_fetch = (datetime.utcnow() - last_fetch.time) > timedelta(2)
 
             # Data fetched less than 2 hours after interval_end could have new
             # reports added
-            data_could_have_changed = (last_fetch.time - interval_end) < timedelta(seconds=3600)
+            data_could_have_changed = (last_fetch.time.replace(tzinfo=utc) - interval_end) < timedelta(seconds=3600)
 
             # We don't want to re-try fetches from the last 15 minutes
             very_recent_fetch = (datetime.now() - last_fetch.time) < timedelta(seconds=900)
