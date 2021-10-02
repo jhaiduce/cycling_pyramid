@@ -411,6 +411,8 @@ class MetarTests(BaseTest):
 
     ride_average_weather={'windspeed': 11.269047352721849, 'winddir': 190.0, 'temperature': 8.809170907242839, 'gust': None, 'dewpoint': 5.229166666666665, 'relative_humidity': 0.7822210166871647, 'rain': 0.0, 'snow': 0.0, 'pressure': 1027.706784398859}
 
+    ride_with_incomplete_endpoint_average_weather={'windspeed': 11.269047352721849, 'winddir': 190.0, 'temperature': 8.81861715358073, 'gust': None, 'dewpoint': 5.229166666666665, 'relative_humidity': 0.7817214932483716, 'rain': 0.0, 'snow': 0.0, 'pressure': 1027.8906638714934}
+
     def setUp(self):
         super(MetarTests, self).setUp()
 
@@ -568,8 +570,25 @@ class MetarTests(BaseTest):
             # Update ride weather for ride without coordinate data for an endpoint
             update_ride_weather(ride_with_incomplete_endpoint.id)
 
-            # Without coordinates, fetch_metars should not be called
+            # Start/end time are same as before, so fetch_metars should not be
+            # called
             fetch_metars.assert_not_called()
+
+            # train_model should still be called
+            train_model.assert_called()
+
+            ride_with_incomplete_endpoint=session.query(Ride).filter(Ride.id==ride_with_incomplete_endpoint.id).one()
+
+            for key in MetarTests.ride_average_weather.keys():
+                self.assertEqual(getattr(ride.wxdata,key),
+                                 MetarTests.ride_average_weather[key],
+                                 'Discrepancy for key {}'.format(key))
+                query=session.query(RideWeatherData).with_entities(
+                        getattr(RideWeatherData,key)
+                ).filter(RideWeatherData.id==ride_with_incomplete_endpoint.wxdata_id)
+                self.assertEqual(
+                    getattr(query.one(),key),
+                    MetarTests.ride_with_incomplete_endpoint_average_weather[key])
 
 class ModelTests(BaseTest):
 

@@ -399,16 +399,26 @@ def fetch_metars_for_ride(session,ride,task=None):
     if (
             ride.start_time_ is None
             or ride.end_time_ is None
-            or ride.startloc.lat is None
-            or ride.endloc.lat is None
-            or ride.startloc.lon is None
-            or ride.endloc.lon is None
+            or (
+                (ride.startloc.lat is None
+                 or ride.startloc.lon is None)
+                and
+                (ride.endloc.lat is None
+                 or ride.endloc.lon is None)
+            )
     ):
         # Incomplete time/location data, can't search for METARS
         return []
 
-    lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
-    lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
+    if ride.startloc.lat is None or ride.endloc.lon is None:
+        lat_mid=ride.startloc.lat
+        lon_mid=ride.startloc.lon
+    elif ride.endloc.lat is None or ride.endloc.lon is None:
+        lat_mid=ride.endloc.lat
+        lon_mid=ride.endloc.lon
+    else:
+        lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
+        lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
 
     with tm:
         dtstart,dtend=ride_times_utc(ride)
@@ -555,11 +565,21 @@ def ride_times_utc(ride):
         tzinfo=timezone(ride.start_timezone)
     ).astimezone(utc) if (ride.start_time is not None and
                           ride.start_timezone is not None) else None
-    
+
     dtend=ride.end_time.replace(
         tzinfo=timezone(ride.end_timezone)
     ).astimezone(utc) if (ride.end_time is not None and
                           ride.end_timezone is not None) else None
+
+    if dtstart is None and dtend is not None:
+        dtstart=ride.start_time.replace(
+            tzinfo=timezone(ride.end_timezone)
+        ).astimezone(utc)
+
+    if dtend is None and dtstart is not None:
+        dtend=ride.end_time.replace(
+            tzinfo=timezone(ride.start_timezone)
+        ).astimezone(utc)
 
     return dtstart,dtend
 
@@ -666,7 +686,12 @@ def update_ride_weather(self,ride_id, train_model=True):
 
         metars=[dbsession.query(type(metar)).get(metar.id) for metar in metars]
 
-        altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
+        if ride.startloc.elevation is None:
+            altitude=ride.endloc.elevation
+        elif ride.endloc.elevation is None:
+            altitude=ride.startloc.elevation
+        else:
+            altitude=(ride.startloc.elevation+ride.endloc.elevation)*0.5
 
         averages=average_weather(metars,dtstart,dtend,altitude)
         logger.debug('Ride weather average values: {}'.format(averages))
