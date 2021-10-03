@@ -410,12 +410,12 @@ def fetch_metars_for_ride(session,ride,task=None):
         # Incomplete time/location data, can't search for METARS
         return []
 
-    if ride.startloc.lat is None or ride.endloc.lon is None:
-        lat_mid=ride.startloc.lat
-        lon_mid=ride.startloc.lon
-    elif ride.endloc.lat is None or ride.endloc.lon is None:
+    if ride.startloc.lat is None or ride.startloc.lon is None:
         lat_mid=ride.endloc.lat
         lon_mid=ride.endloc.lon
+    elif ride.endloc.lat is None or ride.endloc.lon is None:
+        lat_mid=ride.startloc.lat
+        lon_mid=ride.startloc.lon
     else:
         lat_mid=(ride.startloc.lat+ride.endloc.lat)*0.5
         lon_mid=(ride.startloc.lon+ride.endloc.lon)*0.5
