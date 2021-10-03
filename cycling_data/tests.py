@@ -459,6 +459,12 @@ class MetarTests(BaseTest):
                 startloc=washington_monument,
                 endloc=new_intersection
             )
+            ride_with_incomplete_startpoint = Ride(
+                start_time=datetime(2005,1,1,10),
+                end_time=datetime(2005,1,1,10,15),
+                startloc=new_intersection,
+                endloc=washington_monument
+            )
             ride_that_produces_negative_windspeed = Ride(
                 start_time=datetime(2020,7,21,18,55),
                 end_time=datetime(2020,7,21,19,36),
@@ -468,6 +474,7 @@ class MetarTests(BaseTest):
             with tmp_tm:
                 session.add(ride)
                 session.add(ride_with_incomplete_endpoint)
+                session.add(ride_with_incomplete_startpoint)
                 session.add(ride_that_produces_negative_windspeed)
                 session.add(dca)
                 session.add(bwi)
@@ -586,6 +593,29 @@ class MetarTests(BaseTest):
                 query=session.query(RideWeatherData).with_entities(
                         getattr(RideWeatherData,key)
                 ).filter(RideWeatherData.id==ride_with_incomplete_endpoint.wxdata_id)
+                self.assertEqual(
+                    getattr(query.one(),key),
+                    MetarTests.ride_with_incomplete_endpoint_average_weather[key])
+
+            # Update ride weather for ride without coordinate data for an endpoint
+            update_ride_weather(ride_with_incomplete_startpoint.id)
+
+            # Start/end time are same as before, so fetch_metars should not be
+            # called
+            fetch_metars.assert_not_called()
+
+            # train_model should still be called
+            train_model.assert_called()
+
+            ride_with_incomplete_startpoint=session.query(Ride).filter(Ride.id==ride_with_incomplete_startpoint.id).one()
+
+            for key in MetarTests.ride_average_weather.keys():
+                self.assertEqual(getattr(ride.wxdata,key),
+                                 MetarTests.ride_average_weather[key],
+                                 'Discrepancy for key {}'.format(key))
+                query=session.query(RideWeatherData).with_entities(
+                        getattr(RideWeatherData,key)
+                ).filter(RideWeatherData.id==ride_with_incomplete_startpoint.wxdata_id)
                 self.assertEqual(
                     getattr(query.one(),key),
                     MetarTests.ride_with_incomplete_endpoint_average_weather[key])
