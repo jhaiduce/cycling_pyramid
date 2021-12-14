@@ -23,17 +23,14 @@ def setup_models(dbsession,ini_file):
 def create_database(engine,settings):
 
     from sqlalchemy.sql import text
-    from MySQLdb import escape_string
     
     conn=engine.connect()
     conn.execute('commit')
     conn.execute('create database if not exists cycling')
-    s=text("create or replace user cycling identified by '{pw}'".format(
-        pw=escape_string(settings['mysql_cycling_password']).decode('ascii')))
-    conn.execute(s)
-    s=text("create or replace user cycling_worker identified by '{pw}'".format(
-        pw=escape_string(settings['mysql_worker_password']).decode('ascii')))
-    conn.execute(s)
+    s="create or replace user cycling identified by %s"
+    conn.execute(s, settings['mysql_cycling_password'])
+    s="create or replace user cycling_worker identified by %s"
+    conn.execute(s, settings['mysql_worker_password'])
     conn.execute("grant all on cycling.* to cycling")
     conn.execute("grant all on cycling.* to cycling_worker")
     conn.execute("use cycling")
