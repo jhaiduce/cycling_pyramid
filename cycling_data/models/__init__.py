@@ -50,10 +50,6 @@ def get_tm_session(session_factory, transaction_manager):
     zope.sqlalchemy.register(
         dbsession, transaction_manager=transaction_manager)
 
-    # Setup marshmallow schemas
-    from .marshmallow_schemas import setup_schema
-    setup_schema(Base,dbsession)()
-    
     return dbsession
 
 

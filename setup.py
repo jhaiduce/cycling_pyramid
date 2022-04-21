@@ -28,7 +28,6 @@ requires = [
     'paginate',
     'plotly',
     'bcrypt',
-    'marshmallow-sqlalchemy',
     'metar',
     'requests',
     'mysqlclient',

@@ -307,35 +307,6 @@ class SerializeTests(BaseTest):
 
         self.init_database()
 
-    def test_sqlalchemy_serialize(self):
-
-        from .views.serialize import dump_backup, load_backup
-
-        backup=dump_backup(self.session)
-
-        self.assertEqual(len(backup['Ride']),1)
-        self.assertEqual(len(backup['User']),1)
-        self.assertEqual(len(backup['Equipment']),0)
-
-        loaded_data=load_backup(backup)
-
-        for class_name in backup.keys():
-            self.assertEqual(len(backup[class_name]),
-                             len(loaded_data[class_name]))
-
-            for instance in loaded_data[class_name]:
-                self.session.merge(instance)
-
-        from .models.cycling_models import Ride, Location
-        from .models.security import User
-
-        test_classes={'Ride':Ride,'Location':Location,'User':User}
-
-        for class_name,cls in test_classes.items():
-            
-            query=self.session.query(cls)
-            self.assertEqual(query.count(),len(backup[class_name]))
-
 class MetarTests(BaseTest):
 
     ogimet_text_dca_21jul = """
