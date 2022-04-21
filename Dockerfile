@@ -3,7 +3,7 @@ FROM python:3.8.6-slim-buster
 WORKDIR /app
 
 RUN apt-get update
-RUN apt-get -y install python-numpy python-mysqldb python-scipy python-pandas python-shapely npm git libmariadb-dev python-cffi python-matplotlib libffi-dev libcap2-bin curl
+RUN apt-get -y install libmariadb-dev libmariadb-dev-compat libffi-dev npm git curl
 
 COPY requirements.txt /app
 RUN pip3 install --no-cache-dir --trusted-host pypi.python.org --upgrade pip
@@ -26,6 +26,8 @@ ENV NAME World
 
 RUN groupadd --system appuser && \
     useradd --system --no-create-home -s /bin/sh -g appuser appuser
+
+RUN apt -y install libcap2-bin
 
 RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/python3.8
 
