@@ -48,7 +48,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: jhaiduce/cycling-pyramid
-    command: ["/usr/local/bin/celery","-A","cycling_data","worker","--app=cycling_data.celery","--loglevel=info"]
+    command: ["/usr/local/bin/celery","--app=cycling_data.celery","worker","--loglevel=info"]
     healthcheck:
       test: ["CMD","/usr/local/bin/python","/app/celery_healthcheck.py"]
     container_name: cycling_test_worker
