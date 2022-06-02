@@ -1,4 +1,4 @@
 pyramid==1.10.2
-waitress==2.1.1
+waitress==2.1.2
 WebOb==1.8.5
 requests==2.21.0
