@@ -21,7 +21,7 @@ Keras==2.8.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.0.1
 kombu==5.2.2
-Mako==1.0.7
+Mako==1.2.2
 MarkupSafe==1.1.1
 git+https://github.com/jhaiduce/python-metar.git@6e930df4858c00e11f1c7dc0fe9808839ef9bb4c
 more-itertools==6.0.0
