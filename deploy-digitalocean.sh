@@ -87,10 +87,13 @@ for i in $(seq 1 $numworkers); do
     fi
 done
 
-docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml $stack_name
+export SSL_CHECKSUM=$(openssl x509 -in production_secrets/fullchain.pem -outform DER \
+			  | sha1sum | head -c 40)
+
+docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml $stack_name
 
 # Update the database
-docker-machine ssh $host_prefix-master docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml -c docker-compose.migrate.yml ${stack_name}
+docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml -c docker-compose.migrate.yml ${stack_name}
 
 function wait_for_migration {
 
