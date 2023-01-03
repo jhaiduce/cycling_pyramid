@@ -21,6 +21,7 @@ def train_model(predict_var='avspeed',epochs=None,patience=100):
     from ..models.cycling_models import Ride, PredictionModel, PredictionModelResult
     from sqlalchemy import func
     from ..models.prediction import get_data
+    from datetime import datetime
 
     if epochs is None:
         try:
@@ -46,7 +47,7 @@ def train_model(predict_var='avspeed',epochs=None,patience=100):
         dbsession.flush()
         model_id=model.id
 
-        if model.training_in_progress:
+        if model.training_in_progress and model.modified_date > datetime.now() - timedelta(hours=1):
             logger.debug('Training already in progress, exiting.')
             return
 
