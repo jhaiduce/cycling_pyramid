@@ -571,12 +571,12 @@ def ride_times_utc(ride):
     ).astimezone(utc) if (ride.end_time is not None and
                           ride.end_timezone is not None) else None
 
-    if dtstart is None and dtend is not None:
+    if dtstart is None and dtend is not None and ride.start_time is not None:
         dtstart=ride.start_time.replace(
             tzinfo=timezone(ride.end_timezone)
         ).astimezone(utc)
 
-    if dtend is None and dtstart is not None:
+    if dtend is None and dtstart is not None and ride.end_time is not None:
         dtend=ride.end_time.replace(
             tzinfo=timezone(ride.start_timezone)
         ).astimezone(utc)
