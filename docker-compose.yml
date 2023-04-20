@@ -158,10 +158,11 @@ secrets:
   mysql_ca:
     file: production_secrets/ca.pem
   mysql_cert:
-    name: mysql_cert.1
-    file: production_secrets/server-cert.pem
+    name: mysql_cert.${SSL_CHECKSUM}
+    file: nginx/ssl/fullchain.pem
   mysql_key:
-    file: production_secrets/server-key.pem
+    name: mysql_key.${SSL_CHECKSUM}
+    file: production_secrets/privkeyrsa.pem
   cycling_rabbitmq_password.2:
     file: production_secrets/cycling_rabbitmq_password
   dhparams:

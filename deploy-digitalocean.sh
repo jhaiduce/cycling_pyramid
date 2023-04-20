@@ -61,6 +61,8 @@ done
 
 join_token=$(docker-machine ssh $host_prefix-master docker swarm join-token -q worker)
 
+openssl rsa -in production_secrets/privkey.pem -out production_secrets/privkeyrsa.pem
+
 transfer_files="docker-compose.yml docker-compose.prod.yml docker-compose.migrate.yml mysql-config-cycling.cnf production_secrets"
 rsync -avz -e "docker-machine ssh $host_prefix-master" $transfer_files :
 
