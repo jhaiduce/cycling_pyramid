@@ -156,7 +156,8 @@ secrets:
     name: production.ini.11
     file: production_secrets/production.ini
   mysql_ca:
-    file: production_secrets/ca.pem
+    name: mysql_ca.${SSL_CHECKSUM}
+    file: production_secrets/isrgrootx1.pem
   mysql_cert:
     name: mysql_cert.${SSL_CHECKSUM}
     file: nginx/ssl/fullchain.pem
