@@ -4,6 +4,7 @@ import tensorflow_probability as tfp
 tfd = tfp.distributions
 from tensorflow import keras
 from tensorflow.keras import layers
+from sqlalchemy import func
 
 predict_vars=['avspeed','maxspeed','total_time']
 
@@ -62,6 +63,40 @@ def get_data(dbsession,predict_columns,extra_fields=[],tm=None):
 
     return prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=extra_fields,tm=tm)
 
+def get_average_interval(dbsession, ride, field):
+    from .cycling_models import Ride
+
+    avg_expr=func.avg(func.strftime('%s',getattr(Ride,field)))
+
+    avg=dbsession.query(avg_expr).filter(
+        Ride.startloc==ride.startloc, Ride.endloc==ride.endloc
+    ).scalar()
+
+    if not avg:
+        avg=dbsession.query(avg_expr).scalar()
+
+    return avg
+
+def est_total_time(ride, dbsession):
+
+    from .cycling_models import Ride
+    from datetime import timedelta
+
+    if ride.start_time and ride.end_time:
+        return ride.end_time - ride.start_time
+
+    else:
+        avg_rolling_time=get_average_interval(dbsession, ride, 'rolling_time')
+        avg_total_time=get_average_interval(dbsession, ride, 'total_time')
+
+        if ride.rolling_time:
+            rolling_time=ride.rolling_time
+        else:
+            avg_speed=dbsession.query(func.avg(Ride.avspeed)).scalar()
+            rolling_time=timedelta(hours=ride.distance/avg_speed)
+
+        return rolling_time*avg_total_time/avg_rolling_time
+
 def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=None):
     from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment, Location
     import pandas as pd
@@ -100,7 +135,18 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
 
     for i,ride_id in enumerate(dataset['id']):
         with tm:
-            ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            if ride_id is not None:
+                ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            else:
+                ride=rides[i]
+                ride.id=-1
+                dataset.loc[i,'id']=-1
+
+            if not ride.total_time:
+                ride.total_time=est_total_time(ride, dbsession)
+            if not ride.end_time:
+                ride.end_time=ride.start_time+ride.total_time
+
             dataset.loc[i,'fraction_day']=ride.fraction_day
             dataset.loc[i,'grade']=ride.grade
             dataset.loc[i,'crowdist']=ride.crowdist
@@ -110,6 +156,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
             if ride.end_time:
                 dataset.loc[i,'end_time']=pd.to_datetime(
                     ride.end_time.astimezone(utc))
+            elif ride.total_time and ride.start_time:
+                dataset.loc[i,'end_time']=pd.to_datetime(
+                    (ride.start_time+ride.total_time).astimezone(utc))
 
             if ride.wxdata:
                 dataset.loc[i,'tailwind']=ride.tailwind
