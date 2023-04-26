@@ -133,22 +133,27 @@ class PredictionViews(object):
     @view_with_header
     @view_config(route_name='ride_prediction_result', renderer='../templates/ride_details.jinja2')
     def ride_prediction_result(self):
-        from datetime import datetime
+        from datetime import datetime, timedelta
 
         dbsession=self.request.dbsession
 
         appstruct=self.predict_form(dbsession).validate(self.request.GET.items())
         ride=appstruct_to_ride(dbsession,appstruct)
-        try:
-            predictions=get_ride_predictions(dbsession,[ride])
-        except:
-            predictions=None
 
-        if predictions is not None:
-            predicted_speed=predictions[0,0]
-        else:
-            predicted_speed=None
+        for var in 'avspeed','maxspeed','total_time':
+            try:
+                var_predictions=get_ride_predictions(dbsession,[ride])
+            except:
+                var_predictions=None
 
-        ride.avspeed=predicted_speed
+            if var_predictions is not None:
+                prediction=var_predictions[0,0]
+            else:
+                prediction=None
 
-        return {'ride':ride, 'wxdata':ride.wxdata,'predicted_speed':predicted_speed}
+            setattr(ride,var,prediction)
+
+        if ride.avspeed:
+            ride.rolling_time=timedelta(hours=ride.distance/ride.avspeed)
+
+        return {'ride':ride, 'wxdata':ride.wxdata,'predicted_speed':ride.avspeed}
