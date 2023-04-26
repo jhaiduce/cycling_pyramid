@@ -66,7 +66,14 @@ def get_data(dbsession,predict_columns,extra_fields=[],tm=None):
 def get_average_interval(dbsession, ride, field):
     from .cycling_models import Ride
 
-    avg_expr=func.avg(func.strftime('%s',getattr(Ride,field)))
+    from sqlite3 import Connection as sqliteConnection
+
+    conn=dbsession.bind
+
+    if isinstance(conn, sqliteConnection):
+        avg_expr=func.avg(func.strftime('%s',getattr(Ride,field)))
+    else:
+        avg_expr=func.avg(getattr(Ride,field))
 
     avg=dbsession.query(avg_expr).filter(
         Ride.startloc==ride.startloc, Ride.endloc==ride.endloc
