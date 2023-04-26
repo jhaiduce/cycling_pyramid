@@ -16,6 +16,8 @@ services:
         constraints: [node.labels.db == true]
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_INITDB_SKIP_TZINFO: "1"
     volumes:
       - mysql-data:/var/lib/mysql
       - type: bind
