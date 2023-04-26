@@ -109,6 +109,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
     import pandas as pd
     import transaction
     from sqlalchemy.orm import joinedload, subqueryload
+    from sqlalchemy.orm.exc import NoResultFound
     from pytz import utc
 
     if tm is None:
@@ -142,9 +143,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
 
     for i,ride_id in enumerate(dataset['id']):
         with tm:
-            if ride_id is not None:
+            try:
                 ride=dbsession.query(Ride).filter(Ride.id==ride_id).one()
-            else:
+            except NoResultFound:
                 ride=rides[i]
                 ride.id=-1
                 dataset.loc[i,'id']=-1
