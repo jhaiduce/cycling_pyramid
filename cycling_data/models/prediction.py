@@ -81,9 +81,9 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
             dict(
                 id=ride.id,
                 distance=ride.distance,
-                ridergroup_id=ride.ridergroup_id,
-                surface_id=ride.surface_id,
-                equipment_id=ride.equipment_id,
+                ridergroup_id=ride.ridergroup.id,
+                surface_id=ride.surface.id,
+                equipment_id=ride.equipment.id,
                 trailer=ride.trailer,
                 rolling_time=ride.rolling_time,
                 avspeed=ride.avspeed,
