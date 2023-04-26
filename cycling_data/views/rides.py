@@ -143,7 +143,8 @@ class RideForm(colander.MappingSchema):
     start_time=colander.SchemaNode(colander.DateTime(),missing=None)
     end_time=colander.SchemaNode(colander.DateTime(),missing=None)
     startloc=colander.SchemaNode(colander.String(),
-        widget=get_location_widget,missing=None)
+                                 title='Start location',
+                                 widget=get_location_widget,missing=None)
     endloc=colander.SchemaNode(colander.String(),
         widget=get_location_widget,missing=None)
     route=colander.SchemaNode(colander.String(),missing=None)
