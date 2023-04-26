@@ -102,7 +102,7 @@ def est_total_time(ride, dbsession):
             avg_speed=dbsession.query(func.avg(Ride.avspeed)).scalar()
             rolling_time=timedelta(hours=ride.distance/avg_speed)
 
-        return rolling_time*avg_total_time/avg_rolling_time
+        return rolling_time*float(avg_total_time/avg_rolling_time)
 
 def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=None):
     from .cycling_models import Ride, RiderGroup, SurfaceType, Equipment, Location
