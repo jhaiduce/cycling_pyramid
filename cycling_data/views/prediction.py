@@ -6,6 +6,7 @@ import colander
 import deform.widget
 from pyramid.httpexceptions import HTTPFound
 from .header import view_with_header
+from ..models.prediction import get_ride_predictions
 
 class RidePredictionForm(colander.MappingSchema):
     equipment=colander.SchemaNode(
