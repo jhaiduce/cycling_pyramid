@@ -153,6 +153,8 @@ class PredictionViews(object):
 
             setattr(ride,var,prediction)
 
+        if ride.total_time is not None:
+            ride.total_time=timedelta(minutes=ride.total_time)
         if ride.avspeed:
             ride.rolling_time=timedelta(hours=ride.distance/ride.avspeed)
 
