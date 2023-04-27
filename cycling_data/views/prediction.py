@@ -158,4 +158,4 @@ class PredictionViews(object):
         if ride.avspeed:
             ride.rolling_time=timedelta(hours=ride.distance/ride.avspeed)
 
-        return {'ride':ride, 'wxdata':ride.wxdata,'predicted_speed':ride.avspeed}
+        return {'ride':ride, 'wxdata':ride.wxdata,'predicted_speed':None}
