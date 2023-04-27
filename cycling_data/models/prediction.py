@@ -249,7 +249,7 @@ def get_ride_predictions(session,rides,predict_var='avspeed'):
 
     import numpy as np
 
-    model=get_model(session)
+    model=get_model(session, predict_var)
 
     prediction_inputs=prepare_model_dataset(rides,session,model.predict_columns)
     if prediction_inputs is not None:
