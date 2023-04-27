@@ -142,7 +142,7 @@ class PredictionViews(object):
 
         for var in 'avspeed','maxspeed','total_time':
             try:
-                var_predictions=get_ride_predictions(dbsession,[ride])
+                var_predictions=get_ride_predictions(dbsession,[ride],var)
             except:
                 var_predictions=None
 
