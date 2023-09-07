@@ -509,6 +509,10 @@ def average_weather(metars,dtstart,dtend,altitude):
     winddir=np.array([metar.winddir for metar in metars],dtype=float)
     windspeed=np.array([metar.windspeed for metar in metars],dtype=float)
 
+    variable_wind=~np.isfinite(winddir)&np.isfinite(windspeed)
+    windspeed[variable_wind]=0
+    winddir[variable_wind]=0
+
     for key in values.keys():
 
         if key == 'rain':

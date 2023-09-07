@@ -51,7 +51,6 @@ bwi=Location(
     loctype_id=2
 )
 
-
 def dict_to_postdata(inputdict):
 
     import collections
@@ -373,6 +372,31 @@ class MetarTests(BaseTest):
 
 """
 
+    ogimet_text_dca_5aug2023="""
+
+
+##########################################################
+# Query made at 09/07/2023 02:50:58 UTC
+# Time interval: from 08/05/2023 13:00  to 08/05/2023 17:59  UTC
+##########################################################
+
+##########################################################
+# KDCA, Washington Dc, Reagan National Airport (United States (the))
+# WMO index: 72405. WIGOS ID: 0-20000-0-72405
+# Latitude 38-51-00N. Longitude 077-01-59W. Altitude 5 m.
+##########################################################
+
+###################################
+#  METAR/SPECI from KDCA
+###################################
+202308051752 METAR KDCA 051752Z 35006KT 10SM SCT033 29/21 A2999 RMK AO2 SLP155 T02890206 10294 20233 56004=
+202308051652 METAR KDCA 051652Z 32006KT 10SM SCT024 28/21 A2999 RMK AO2 SLP156 T02830211=
+202308051552 METAR KDCA 051552Z VRB04KT 10SM BKN024 27/21 A3000 RMK AO2 SLP159 T02670206=
+202308051452 METAR KDCA 051452Z 36006KT 10SM BKN022 26/21 A2999 RMK AO2 SLP156 T02610206 51009=
+202308051426 SPECI KDCA 051426Z 03006KT 10SM BKN022 26/21 A3000 RMK AO2 T02610206=
+202308051352 METAR KDCA 051352Z 03006KT 10SM FEW017 SCT250 26/21 A2999 RMK AO2 SLP155 T02560206=
+"""
+
     mock_ogimet_response=Mock()
     mock_ogimet_response.text=ogimet_text_dca
     mock_ogimet_response.url='https://ogimet.com/display_metars2.php'
@@ -442,11 +466,18 @@ class MetarTests(BaseTest):
                 startloc=washington_monument,
                 endloc=us_capitol
             )
+            ride_with_variable_winddir = Ride(
+                start_time=datetime(2023,8,5,10,12),
+                end_time=datetime(2023,8,5,10,32),
+                startloc=washington_monument,
+                endloc=us_capitol
+            )
             with tmp_tm:
                 session.add(ride)
                 session.add(ride_with_incomplete_endpoint)
                 session.add(ride_with_incomplete_startpoint)
                 session.add(ride_that_produces_negative_windspeed)
+                session.add(ride_with_variable_winddir)
                 session.add(dca)
                 session.add(bwi)
 
@@ -517,6 +548,18 @@ class MetarTests(BaseTest):
 
             ride_that_produces_negative_windspeed=session.query(Ride).filter(Ride.id==ride_that_produces_negative_windspeed.id).one()
             self.assertGreater(ride_that_produces_negative_windspeed.wxdata.windspeed,0)
+
+            mock_ogimet_response_5aug=Mock()
+            mock_ogimet_response_5aug.text=MetarTests.ogimet_text_dca_5aug2023
+            mock_ogimet_response_5aug.url='https://ogimet.com/display_metars2.php'
+            mock_ogimet_response_5aug.status_code=200
+
+            with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response_5aug) as fetch_metars_5aug:
+                update_ride_weather(ride_with_variable_winddir.id)
+                ride_with_variable_winddir=session.query(Ride).filter(Ride.id==ride_with_variable_winddir.id).one()
+                print(ride_with_variable_winddir.wxdata)
+                self.assertAlmostEqual(ride_with_variable_winddir.wxdata.winddir,360)
+                self.assertAlmostEqual(ride_with_variable_winddir.wxdata.windspeed,3.912996868)
 
             update_ride_weather(ride.id)
 
