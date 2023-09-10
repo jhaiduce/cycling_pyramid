@@ -72,7 +72,7 @@ tensorboard==2.9.1
 tensorboard-plugin-wit==1.8.1
 tensorflow==2.9.3
 tensorflow-probability==0.15.0
-git+https://github.com/tensorflow/docs@9266de4a8b3781c75947b25790e2191c32f70292
+git+https://github.com/tensorflow/docs@bfb6df29b92c5f85a1246d69c5097bdbb5105b29
 tensorflow-estimator==2.9.0
 termcolor==1.1.0
 toml==0.10.1
