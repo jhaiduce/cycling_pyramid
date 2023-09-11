@@ -34,7 +34,7 @@ def login(request):
         login=login,
         )
 
-@view_config(route_name='logout')
+@view_config(route_name='logout',permission=NO_PERMISSION_REQUIRED)
 def logout(request):
     headers = forget(request)
     next_url = request.route_url('rides')
