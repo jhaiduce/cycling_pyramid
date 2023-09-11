@@ -14,7 +14,7 @@ def dict_to_postdata(inputdict):
     postdata=[]
 
     for key,value in inputdict.items():
-        if isinstance(value,collections.Mapping):
+        if isinstance(value,collections.abc.Mapping):
             postdata.append(('__start__',key+':mapping'))
             postdata.extend(dict_to_postdata(value))
             postdata.append(('__end__',key+':mapping'))
