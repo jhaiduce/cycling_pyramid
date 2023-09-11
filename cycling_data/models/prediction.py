@@ -217,7 +217,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
 
     dataset.start_time=(dataset.start_time-pd.Timestamp('1970-01-01',tz=utc))/pd.Timedelta('1d')
 
-    dataset=dataset[set(predict_columns+['id','start_time','distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields])]
+    dataset=dataset[list(set(predict_columns+['id','start_time','distance','ridergroup','surfacetype','equipment','trailer','grade','tailwind','crosswind','temperature','pressure','rain','snow','startlat','endlat','startlon','endlon','fraction_day','crowdist']+[field.name for field in extra_fields]))]
 
     for column, values in (
             ('ridergroup',ridergroups),
@@ -230,7 +230,7 @@ def prepare_model_dataset(rides,dbsession,predict_columns,extra_fields=[],tm=Non
             if dummy_name not in dataset:
                 dataset[dummy_name]=0
 
-    return dataset
+    return dataset.astype(float)
 
 def get_model(dbsession,predict_var='avspeed'):
     from .cycling_models import PredictionModel
