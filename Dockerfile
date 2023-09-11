@@ -1,4 +1,4 @@
-FROM python:3.8.18-slim-bookworm
+FROM python:3.11.5-slim-bookworm
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN groupadd --system appuser && \
 
 RUN apt -y install libcap2-bin
 
-RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/python3.8
+RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/python3.11
 
 RUN mkdir celerybeat
 RUN chown appuser:appuser celerybeat
