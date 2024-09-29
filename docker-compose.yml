@@ -121,12 +121,17 @@ services:
           memory: 100M
   nginx:
     image: nginx
+    deploy:
+      placement:
+        constraints: [node.labels.db == true]
     ports:
       - 80:80
       - 443:443
+    environment:
+      - DOMAIN
     configs:
       - source: nginx-conf-cycling
-        target: /etc/nginx/conf.d/cycling.conf
+        target: /etc/nginx/templates/cycling.conf.template
       - source: nginx-conf-common
         target: /etc/nginx/common.conf
       - source: nginx-conf-common-location
@@ -135,6 +140,8 @@ services:
         target: /etc/nginx/ssl.conf
       - source: nginx-conf-default
         target: /etc/nginx/conf.d/default.conf
+      - source: letsencrypt-options-ssl-nginx
+        target: /etc/nginx/letsencrypt/options-ssl-nginx.conf
     secrets:
       - source: ssl_certificate
         target: /etc/ssl/private/fullchain.pem
@@ -142,6 +149,26 @@ services:
         target: /etc/ssl/private/privkey.pem
       - source: dhparams
         target: /etc/nginx/dhparams.pem
+    volumes:
+      - letsencrypt_conf:/etc/letsencrypt:ro # mounting the folder to the nginx container
+      - certbot_webroot:/var/www/certbot:ro
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 12h
+      placement:
+        constraints: [node.labels.db == true]
+    depends_on:
+      - nginx
+    entrypoint: /bin/sh -c "certbot certonly --reinstall --webroot --webroot-path=/var/www/certbot
+             --email ${EMAIL} --agree-tos --no-eff-email -d ${DOMAIN}
+             && chown root:${NGINX_UID} /etc/letsencrypt/live /etc/letsencrypt/archive; chmod 750 /etc/letsencrypt/live /etc/letsencrypt/archive && chown root:${NGINX_UID} /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem && chmod 640 /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem"
+    volumes:
+      - letsencrypt_conf:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
 secrets:
   storage_key.1:
     file: production_secrets/storage_key.keyfile
@@ -179,12 +206,14 @@ secrets:
 volumes:
   cycling-data:
   mysql-data:
+  letsencrypt_conf: {}
+  certbot_webroot: {}
 configs:
   mysql-config-cycling:
     name: mysql-config-cycling.6
     file: ./mysql-config-cycling.cnf
   nginx-conf-cycling:
-    name: nginx-conf-cycling.3
+    name: nginx-conf-cycling.4
     file: ./nginx/cycling.conf
   nginx-conf-common:
     file: ./nginx/common.conf
@@ -194,3 +223,5 @@ configs:
     file: nginx/ssl.conf
   nginx-conf-default:
     file: nginx/default.conf
+  letsencrypt-options-ssl-nginx:
+    file: etc/letsencrypt/options-ssl-nginx.conf

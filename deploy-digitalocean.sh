@@ -18,6 +18,10 @@ sudo docker-compose -f docker-compose.yml build
 
 sudo docker-compose -f docker-compose.yml push
 
+if [ ! -f etc/letsencrypt/options-ssl-nginx.conf ]; then
+    curl -L --create-dirs -o etc/letsencrypt/options-ssl-nginx.conf https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf
+fi
+
 function isSwarmNode(){
     host=$1
     swarm_status="$(docker-machine ssh $host docker info | grep Swarm | sed 's/ Swarm: //g')"
@@ -76,6 +80,8 @@ for file in nginx/dhparams.pem production_secrets/fullchain.pem production_secre
     docker-machine scp $file $host_prefix-master:nginx/ssl
 done
 
+rsync -avz -e "docker-machine ssh $host_prefix-master" etc :
+
 for i in $(seq 1 $numworkers); do
     host=$host_prefix-$i
     isSwarmNode $host
@@ -92,10 +98,10 @@ done
 export SSL_CHECKSUM=$(openssl x509 -in production_secrets/fullchain.pem -outform DER \
 			  | sha1sum | head -c 40)
 
-docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml $stack_name
+docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} DOMAIN=cycling.haiducekcannon.site EMAIL=jhaiduce@gmail.com NGINX_UID=101 docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml $stack_name
 
 # Update the database
-docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml -c docker-compose.migrate.yml ${stack_name}
+docker-machine ssh $host_prefix-master SSL_CHECKSUM=${SSL_CHECKSUM} DOMAIN=cycling.haiducekcannon.site EMAIL=jhaiduce@gmail.com NGINX_UID=101 docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml -c docker-compose.migrate.yml ${stack_name}
 
 function wait_for_migration {
 
