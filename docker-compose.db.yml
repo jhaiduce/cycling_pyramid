@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   db:
-    image: mariadb
+    image: mariadb:11.2.2-jammy
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     volumes:

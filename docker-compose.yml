@@ -6,7 +6,7 @@ networks:
       encrypted: ""
 services:
   db:
-    image: mariadb
+    image: mariadb:11.2.2-jammy
     container_name: cycling_stack_db
     deploy:
       resources:
