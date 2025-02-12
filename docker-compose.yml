@@ -23,6 +23,7 @@ services:
       - type: bind
         source: ./mysql-config-cycling.cnf
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
+      - letsencrypt_conf:/etc/letsencrypt:ro # mounting the folder to the nginx container
     configs:
       - source: mysql-config-cycling
         target: /etc/mysql/conf.d/mysql-config-cycling.cnf
@@ -35,10 +36,21 @@ services:
         target: /etc/mysql/encryption/keyfile
       - source: mysql_ca
         target: /etc/my.cnf.d/certificates/ca.pem
-      - source: mysql_cert
-        target: /etc/my.cnf.d/certificates/server-cert.pem
-      - source: mysql_key
-        target: /etc/my.cnf.d/certificates/server-key.pem
+
+  db_cert_reload:
+    image: mariadb
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 12h
+    depends_on:
+      - db
+    entrypoint: /bin/sh -c 'printf "[client]\npassword=$$(cat /run/secrets/MYSQL_ROOT_PASSWORD)\n" > /my_root.cnf && echo "FLUSH SSL" > mysql --defaults-extra-file /my_root.cnf'
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets:
+      - mysql_root_password
+
   cycling_web:
     build:
       context: .
@@ -163,9 +175,9 @@ services:
         constraints: [node.labels.db == true]
     depends_on:
       - nginx
-    entrypoint: /bin/sh -c "certbot certonly --reinstall --webroot --webroot-path=/var/www/certbot
+    entrypoint: /bin/sh -c "apk add acl && certbot certonly --reinstall --webroot --webroot-path=/var/www/certbot
              --email ${EMAIL} --agree-tos --no-eff-email -d ${DOMAIN}
-             && chown root:${NGINX_UID} /etc/letsencrypt/live /etc/letsencrypt/archive; chmod 750 /etc/letsencrypt/live /etc/letsencrypt/archive && chown root:${NGINX_UID} /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem && chmod 640 /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem"
+             && chown root:${NGINX_UID} /etc/letsencrypt/live /etc/letsencrypt/archive; chmod 750 /etc/letsencrypt/live /etc/letsencrypt/archive && chown root:${NGINX_UID} /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem && chmod 640 /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem && setfacl -m g:999:r-- /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem && setfacl -m g:999:r-x /etc/letsencrypt/live /etc/letsencrypt/archive"
     volumes:
       - letsencrypt_conf:/etc/letsencrypt
       - certbot_webroot:/var/www/certbot
@@ -187,12 +199,6 @@ secrets:
   mysql_ca:
     name: mysql_ca.${SSL_CHECKSUM}
     file: production_secrets/isrgrootx1.pem
-  mysql_cert:
-    name: mysql_cert.${SSL_CHECKSUM}
-    file: nginx/ssl/fullchain.pem
-  mysql_key:
-    name: mysql_key.${SSL_CHECKSUM}
-    file: production_secrets/privkeyrsa.pem
   cycling_rabbitmq_password.2:
     file: production_secrets/cycling_rabbitmq_password
   dhparams:
@@ -210,7 +216,7 @@ volumes:
   certbot_webroot: {}
 configs:
   mysql-config-cycling:
-    name: mysql-config-cycling.6
+    name: mysql-config-cycling.8
     file: ./mysql-config-cycling.cnf
   nginx-conf-cycling:
     name: nginx-conf-cycling.4
