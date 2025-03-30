@@ -81,6 +81,7 @@ for file in nginx/dhparams.pem production_secrets/fullchain.pem production_secre
 done
 
 rsync -avz -e "docker-machine ssh $host_prefix-master" etc :
+rsync -avz -e "docker-machine ssh $host_prefix-master" cron.daily/reload-nginx :/etc/cron.daily
 
 for i in $(seq 1 $numworkers); do
     host=$host_prefix-$i

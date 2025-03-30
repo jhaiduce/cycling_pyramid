@@ -1,0 +1,5 @@
+#!/bin/sh
+
+for id in $(docker ps -q -f name=cycling_stack_nginx); do
+    docker exec $id nginx -s reload
+done
