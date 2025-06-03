@@ -45,7 +45,7 @@ services:
         delay: 12h
     depends_on:
       - db
-    entrypoint: /bin/sh -c 'printf "[client]\nuser=root\npassword='$$(cat /run/secrets/mysql_root_password)'\nssl-verify-server-cert=off\n" > /my_root.cnf && echo "FLUSH SSL" | mariadb --defaults-extra-file=/my_root.cnf -h db --ssl-ca=/etc/my.cnf.d/certificates/ca.pem'
+    entrypoint: /bin/sh -c 'printf "[client]\nhost=db\nuser=root\npassword='$$(cat /run/secrets/mysql_root_password)'\nssl-verify-server-cert=off\n" > /my_root.cnf && echo "FLUSH SSL" | mariadb --defaults-extra-file=/my_root.cnf -h db --ssl-ca=/etc/my.cnf.d/certificates/ca.pem'
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     secrets:
