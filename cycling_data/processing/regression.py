@@ -21,7 +21,7 @@ def train_model(predict_var='avspeed',epochs=None,patience=100):
     from ..models.cycling_models import Ride, PredictionModel, PredictionModelResult
     from sqlalchemy import func
     from ..models.prediction import get_data
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     if epochs is None:
         try:
