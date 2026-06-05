@@ -554,7 +554,7 @@ class MetarTests(BaseTest):
             mock_ogimet_response_5aug.url='https://ogimet.com/display_metars2.php'
             mock_ogimet_response_5aug.status_code=200
 
-            with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response_5aug) as fetch_metars_5aug:
+            with patch.object(weather,'fetch_metars', return_value=mock_ogimet_response_5aug) as fetch_metars_5aug, patch.object(weather, 'check_ogimet_request_rate'):
                 update_ride_weather(ride_with_variable_winddir.id)
                 ride_with_variable_winddir=session.query(Ride).filter(Ride.id==ride_with_variable_winddir.id).one()
                 print(ride_with_variable_winddir.wxdata)
