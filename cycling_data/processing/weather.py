@@ -50,7 +50,7 @@ def fetch_metars(station,dtstart,dtend,url='https://www.ogimet.com/display_metar
         'mesf':'{:02d}'.format(dtend.month),
         'dayf':'{:02d}'.format(dtend.day),
         'horaf':'{:02d}'.format(dtend.hour),
-        'minf':'{:02d}'.format(dtend.minute),
+        'minf':'{:02d}'.format(59),
         'send':'send'
     }
 
