@@ -54,6 +54,10 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/rides')
 
+        resp=self.session.get('http://cycling_test_cycling_web/rides', cookies = self.session.cookies)
+
+        self.assertEqual(resp.status_code,200,msg=resp.text)
+
     def test_rides_list(self):
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         self.assertGreater(resp.text.find('total rides'),0)
