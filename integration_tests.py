@@ -46,6 +46,11 @@ class BaseTest(unittest.TestCase):
                 import time
                 time.sleep(2)
 
+        # Workaround for bug where requests appends .local to the cookie's
+        # domain and then complains that it doesn't match the URL
+        cval = self.session.cookies['auth_tkt']
+        self.session.cookies.set('auth_tkt', cval, domain='')
+
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/rides')
 
@@ -303,10 +308,18 @@ class BaseTest(unittest.TestCase):
         task_result.wait(40)
 
     def tearDown(self):
+
+        # In setUp we set domain='' on the auth_tkt cookie to work around
+        # a bug in Requests; here we reverse the
+        # change so  the logout page works correctly
+        cval = self.session.cookies.get('auth_tkt', domain='')
+        self.session.cookies.set('auth_tkt', None, domain='')
+        self.session.cookies.set('auth_tkt', cval, domain='.cycling_test_cycling_web')
+
         resp=self.session.post('http://cycling_test_cycling_web/logout')
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/rides')
-        
+
         resp=self.session.get('http://cycling_test_cycling_web/rides')
         self.assertEqual(resp.history[0].status_code,302)
         self.assertEqual(resp.history[0].headers['Location'],'http://cycling_test_cycling_web/login?next=http%3A%2F%2Fcycling_test_cycling_web%2Frides')
