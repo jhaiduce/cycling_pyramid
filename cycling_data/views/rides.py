@@ -410,7 +410,11 @@ class RideViews(object):
 
             log.info('Added ride {}'.format(ride_id))
 
-            ride=self.request.dbsession.query(Ride).filter(Ride.id==ride_id).one()
+            tmp_tm = transaction.TransactionManager(explicit=True)
+            with tmp_tm:
+                dbsession_factory = self.request.registry['dbsession_factory']
+                tmp_dbsession = get_tm_session(dbsession_factory, tmp_tm)
+                ride=tmp_dbsession.query(Ride).filter(Ride.id==ride_id).one()
 
             # Queue a task to update ride's weather data
             from ..processing.weather import update_ride_weather
